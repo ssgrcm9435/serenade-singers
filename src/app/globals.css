@@ -2391,3 +2391,167 @@ html {
     line-height:2;
   }
 }
+
+/* MOBILE + TABLET RESPONSIVE */
+@media (max-width: 1024px) {
+
+  .navbar,
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .nav-links a {
+    font-size: 14px;
+  }
+
+  .logo-wrap img,
+  .navbar-logo img {
+    max-width: 110px;
+    height: auto;
+  }
+
+  h1,
+  .hero-title,
+  .blog-title {
+    font-size: 36px !important;
+    line-height: 1.2;
+  }
+
+  p,
+  .blog-text,
+  .blog-lead {
+    font-size: 16px !important;
+    line-height: 1.9;
+  }
+
+  .blog-container,
+  .content-wrap,
+  .page-container,
+  .signup-form-wrap {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .registration-choice-window {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .blog-hero-image img {
+    border-radius: 22px;
+  }
+}
+
+/* MOBILE + TABLET RESPONSIVE */
+@media (max-width: 1024px) {
+
+  .navbar,
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .nav-links a {
+    font-size: 14px;
+  }
+
+  .logo-wrap img,
+  .navbar-logo img {
+    max-width: 110px;
+    height: auto;
+  }
+
+  h1,
+  .hero-title,
+  .blog-title {
+    font-size: 36px !important;
+    line-height: 1.2;
+  }
+
+  p,
+  .blog-text,
+  .blog-lead {
+    font-size: 16px !important;
+    line-height: 1.9;
+  }
+
+  .blog-container,
+  .content-wrap,
+  .page-container,
+  .signup-form-wrap {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .registration-choice-window {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .blog-hero-image img {
+    border-radius: 22px;
+  }
+}
+/* MOBILE + TABLET RESPONSIVE */
+@media (max-width: 1024px) {
+
+  .navbar,
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .nav-links a {
+    font-size: 14px;
+  }
+
+  .logo-wrap img,
+  .navbar-logo img {
+    max-width: 110px;
+    height: auto;
+  }
+
+  h1,
+  .hero-title,
+  .blog-title {
+    font-size: 36px !important;
+    line-height: 1.2;
+  }
+
+  p,
+  .blog-text,
+  .blog-lead {
+    font-size: 16px !important;
+    line-height: 1.9;
+  }
+
+  .blog-container,
+  .content-wrap,
+  .page-container,
+  .signup-form-wrap {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .registration-choice-window {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .blog-hero-image img {
+    border-radius: 22px;
+  }
+}
