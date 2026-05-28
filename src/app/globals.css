@@ -3348,3 +3348,24 @@ html {
     padding-top: 10px;
   }
 }
+@media (max-width: 1024px) {
+
+  .nav-inner {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: space-between !important;
+    gap: 12px;
+  }
+
+  .brand-combined {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mobile-menu-button {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+}
