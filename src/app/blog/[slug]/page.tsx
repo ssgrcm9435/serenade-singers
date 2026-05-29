@@ -1,3 +1,4 @@
+import DisqusComments from "@/components/DisqusComments";
 import { blogs } from "@/data/blogs";
 import { notFound } from "next/navigation";
 
@@ -100,6 +101,7 @@ export default async function BlogDetailPage({ params }: Props) {
             </p>
           );
         })}
+                <DisqusComments slug={blog.slug} title={blog.title} />
       </article>
     </main>
   );

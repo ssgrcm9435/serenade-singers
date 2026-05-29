@@ -1,3 +1,4 @@
+import Analytics from "@/components/Analytics";
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <Navbar />
+        <Analytics />
         {children}
         <Footer />
       </body>

@@ -3442,3 +3442,17 @@ html {
     font-size: 28px;
   }
 }
+
+/* COMMENTS */
+.comments-section {
+  margin-top: 70px;
+  padding-top: 40px;
+  border-top: 1px solid #ece7df;
+}
+
+.comments-title {
+  margin-bottom: 24px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #061A2F;
+}
