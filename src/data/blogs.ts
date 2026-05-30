@@ -227,7 +227,7 @@ export const blogs: BlogPost[] = [
   description:
     "Choir ဆိုတာဘာလဲ၊ SATB voice system, Choir အမျိုးအစားများ၊ rehearsal process, conductor role, harmony, blend, intonation နှင့် choir culture ၏ အရေးပါမှုများအကြောင်း။",
 
-  image: "/og/what-is-choir.png",
+  image: "/og/mozart-requiem.jpg",
 
   alt: "What Is Choir Serenade Singers",
 
@@ -611,7 +611,7 @@ export const blogs: BlogPost[] = [
   description:
     "SATB ဆိုတာဘာလဲ၊ Soprano, Alto, Tenor, Bass voices များ၏ role, harmony, balance, blend နှင့် choir music တွင် အရေးပါပုံအကြောင်း အပြည့်အစုံ။",
 
-  image: "/og/satb-voices-explained.png",
+  image: "/og/mozart-requiem.jpg",
 
   alt: "SATB Voices Explained Serenade Singers",
 
