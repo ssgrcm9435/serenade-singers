@@ -212,7 +212,7 @@ export const blogs: BlogPost[] = [
   },
 
 {
-  slug: "what-is-choir",
+  slug: "about-choir",
 
   title: "Choir ဆိုတာဘာလဲ နှင့် Choir Culture ၏ အနက်ရှိုင်းဆုံး အလှတရား",
 
@@ -595,7 +595,7 @@ export const blogs: BlogPost[] = [
 },
 
 {
-  slug: "satb-voices-explained",
+  slug: "satb-voices",
 
   title:
     "SATB Voices Explained: Why Soprano, Alto, Tenor and Bass Matter in Choir Music",
