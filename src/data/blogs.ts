@@ -213,24 +213,15 @@ export const blogs: BlogPost[] = [
 
 {
   slug: "about-choir",
-
   title: "Choir ဆိုတာဘာလဲ နှင့် Choir Culture ၏ အနက်ရှိုင်းဆုံး အလှတရား",
-
   category: "Choir Education",
-
   date: "2026-05-30",
-
   author: "Serenade Singers",
-
   readTime: "18 min read",
-
   description:
-    "Choir ဆိုတာဘာလဲ၊ SATB voice system, Choir အမျိုးအစားများ၊ rehearsal process, conductor role, harmony, blend, intonation နှင့် choir culture ၏ အရေးပါမှုများအကြောင်း။",
-
+    "Choir ဆိုတာဘာလဲ၊ SATB voice system, Choir အမျိုးအစားများ။",
   image: "/og/mozart-requiem.jpg",
-
   alt: "What Is Choir Serenade Singers",
-
   content: [
     {
       type: "paragraph",
@@ -596,25 +587,16 @@ export const blogs: BlogPost[] = [
 
 {
   slug: "satb-voices",
-
   title:
     "SATB Voices Explained: Why Soprano, Alto, Tenor and Bass Matter in Choir Music",
-
   category: "Choir Education",
-
   date: "2026-05-30",
-
   author: "Serenade Singers",
-
   readTime: "20 min read",
-
   description:
     "SATB ဆိုတာဘာလဲ၊ Soprano, Alto, Tenor, Bass voices များ၏ role, harmony, balance, blend နှင့် choir music တွင် အရေးပါပုံအကြောင်း အပြည့်အစုံ။",
-
   image: "/og/mozart-requiem.jpg",
-
   alt: "SATB Voices Explained Serenade Singers",
-
   content: [
     {
       type: "paragraph",
