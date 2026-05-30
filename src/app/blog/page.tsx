@@ -5,9 +5,13 @@ export default function BlogPage() {
     <main className="blog-page">
       <section className="blog-list-hero">
         <div className="blog-list-wrap">
-          <p className="blog-label blog-gold">Serenade Singers</p>
+          <p className="blog-label blog-gold">
+            Serenade Singers
+          </p>
 
-          <h1 className="blog-list-title">Music Blog</h1>
+          <h1 className="blog-list-title">
+            Music Blog
+          </h1>
 
           <p className="blog-list-subtitle">
             Music education, choir culture, creativity, harmony, and community
@@ -20,19 +24,38 @@ export default function BlogPage() {
         <div className="blog-list-wrap">
           <div className="blog-grid">
             {blogs.map((blog) => (
-              <a key={blog.slug} href={`/blog/${blog.slug}`} className="blog-card">
+              <a
+                key={blog.slug}
+                href={`/blog/${blog.slug}`}
+                className="blog-card"
+              >
                 <div className="blog-card-image">
-                  <img src={blog.image} alt={blog.alt} />
+                  <img
+                    src={blog.image}
+                    alt={blog.alt}
+                  />
                 </div>
 
                 <div className="blog-card-body">
-                  <p className="blog-label">{blog.category}</p>
+                  <p className="blog-label">
+                    {blog.category}
+                  </p>
 
-                  <h2 className="blog-card-title">{blog.title}</h2>
+                  <h2 className="blog-card-title">
+                    {blog.title}
+                  </h2>
 
-                  <p className="blog-text">{blog.description}</p>
+                  <p className="blog-card-meta">
+                    {blog.date} • {blog.readTime}
+                  </p>
 
-                  <strong className="blog-link">Read Article →</strong>
+                  <p className="blog-text">
+                    {blog.description}
+                  </p>
+
+                  <strong className="blog-link">
+                    Read Article →
+                  </strong>
                 </div>
               </a>
             ))}

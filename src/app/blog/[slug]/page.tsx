@@ -1,4 +1,3 @@
-import DisqusComments from "@/components/DisqusComments";
 import { blogs } from "@/data/blogs";
 import { notFound } from "next/navigation";
 
@@ -71,17 +70,35 @@ export default async function BlogDetailPage({ params }: Props) {
         </a>
 
         <div className="blog-hero-image">
-          <img src={blog.image} alt={blog.alt} />
+          <img
+            src={blog.image}
+            alt={blog.alt}
+          />
         </div>
 
-        <p className="blog-label">{blog.category}</p>
+        <p className="blog-label">
+          {blog.category}
+        </p>
 
-        <h1 className="blog-title">{blog.title}</h1>
+        <h1 className="blog-title">
+          {blog.title}
+        </h1>
+
+        <div className="blog-meta">
+          <span>{blog.author}</span>
+          <span>•</span>
+          <span>{blog.date}</span>
+          <span>•</span>
+          <span>{blog.readTime}</span>
+        </div>
 
         {blog.content.map((block, index) => {
           if (block.type === "heading") {
             return (
-              <h2 key={index} className="blog-heading">
+              <h2
+                key={index}
+                className="blog-heading"
+              >
                 {block.text}
               </h2>
             );
@@ -89,19 +106,24 @@ export default async function BlogDetailPage({ params }: Props) {
 
           if (block.type === "quote") {
             return (
-              <blockquote key={index} className="blog-quote">
+              <blockquote
+                key={index}
+                className="blog-quote"
+              >
                 “{block.text}”
               </blockquote>
             );
           }
 
           return (
-            <p key={index} className={index === 0 ? "blog-lead" : "blog-text"}>
+            <p
+              key={index}
+              className={index === 0 ? "blog-lead" : "blog-text"}
+            >
               {block.text}
             </p>
           );
         })}
-                <DisqusComments slug={blog.slug} title={blog.title} />
       </article>
     </main>
   );
