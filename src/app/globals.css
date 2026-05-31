@@ -4324,3 +4324,43 @@ html {
   color: rgba(255,255,255,0.88);
 }
 
+
+.about-flow-hero {
+  position: relative;
+  padding: 120px 0 90px;
+
+  background:
+    linear-gradient(
+      rgba(11,31,66,0.78),
+      rgba(11,31,66,0.78)
+    ),
+    url("/hero-slide-1.jpg");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  color: white;
+}
+
+.about-flow-wrap {
+  position: relative;
+  z-index: 2;
+}
+
+.about-flow-hero .eyebrow {
+  color: #C9A24A;
+}
+
+.about-flow-hero h1 {
+  color: #fff;
+}
+
+.about-flow-hero h1 span {
+  color: #C9A24A;
+}
+
+.about-flow-hero p:not(.eyebrow) {
+  color: rgba(255,255,255,0.88);
+}
+
