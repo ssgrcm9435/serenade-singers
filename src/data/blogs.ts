@@ -835,6 +835,7 @@ export const blogs: BlogPost[] = [
   category: "Classical Music",
   date: "2026-05-31",
   readTime: "18 min read",
+  author: "Serenade Singers",
 
   content: [
     {
