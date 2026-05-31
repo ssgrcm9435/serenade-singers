@@ -830,7 +830,7 @@ export const blogs: BlogPost[] = [
   title: "Requiem, Mass, Passion ဆိုတာတွေက ဘာတွေလဲ?",
   description:
     "Requiem, Mass, Passion, Oratorio, Cantata, Motet စတဲ့ ဂန္ထဝင်ဂီတပုံစံများကို စတင်လေ့လာသူများအတွက် အသေးစိတ်ရှင်းပြထားသော long-form guide။",
-  image: "/images/blog/requiem-mass-passion.jpg",
+  image: "/og/requiem-mass-passion.jpg",
   alt: "Classical sacred music forms including Requiem, Mass and Passion",
   category: "Classical Music",
   date: "2026-05-31",
