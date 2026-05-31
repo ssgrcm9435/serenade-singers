@@ -11,12 +11,10 @@ export default function Footer() {
           Serenade <span className="gold">Singers</span>
         </h2>
 
-        <p>
-          Music • Education • Community
-        </p>
+        <p>Music • Education • Community</p>
 
-        <p>
-          Founded by Piano For ALL International Music Education
+        <p className="footer-mission">
+          Building a stronger musical community through education, performance, and service.
         </p>
 
         <div className="footer-legal-links">
@@ -24,6 +22,7 @@ export default function Footer() {
           <Link href="/privacy">Privacy Policy</Link>
           <Link href="/copyright">Copyright Notice</Link>
           <Link href="/support">Support Us</Link>
+          <Link href="/contact">Contact Us</Link>
         </div>
 
         <p className="footer-contact">
