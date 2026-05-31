@@ -1,6 +1,33 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { blogs } from "@/data/blogs";
 
 export default function BlogPage() {
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("All");
+
+  const categories = useMemo(() => {
+    return ["All", ...Array.from(new Set(blogs.map((blog) => blog.category)))];
+  }, []);
+
+  const filteredBlogs = useMemo(() => {
+    const keyword = search.toLowerCase().trim();
+
+    return blogs.filter((blog) => {
+      const matchesCategory =
+        category === "All" || blog.category === category;
+
+      const matchesSearch =
+        blog.title.toLowerCase().includes(keyword) ||
+        blog.description.toLowerCase().includes(keyword) ||
+        blog.category.toLowerCase().includes(keyword) ||
+        blog.author.toLowerCase().includes(keyword);
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [search, category]);
+
   return (
     <main className="blog-page">
       <section className="blog-list-hero">
@@ -17,49 +44,81 @@ export default function BlogPage() {
             Music education, choir culture, creativity, harmony, and community
             awareness through music.
           </p>
+
+          <div className="blog-search-panel">
+            <input
+              type="search"
+              placeholder="Search articles..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="blog-search-input"
+            />
+
+            <select
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+              className="blog-category-select"
+            >
+              {categories.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </section>
 
       <section className="blog-grid-section">
         <div className="blog-list-wrap">
-          <div className="blog-grid">
-            {blogs.map((blog) => (
-              <a
-                key={blog.slug}
-                href={`/blog/${blog.slug}`}
-                className="blog-card"
-              >
-                <div className="blog-card-image">
-                  <img
-                    src={blog.image}
-                    alt={blog.alt}
-                  />
-                </div>
+          {filteredBlogs.length > 0 ? (
+            <div className="blog-grid">
+              {filteredBlogs.map((blog) => (
+                <a
+                  key={blog.slug}
+                  href={`/blog/${blog.slug}`}
+                  className="blog-card"
+                >
+                  <div className="blog-card-image">
+                    <img
+                      src={blog.image}
+                      alt={blog.alt}
+                    />
+                  </div>
 
-                <div className="blog-card-body">
-                  <p className="blog-label">
-                    {blog.category}
-                  </p>
+                  <div className="blog-card-body">
+                    <p className="blog-label">
+                      {blog.category}
+                    </p>
 
-                  <h2 className="blog-card-title">
-                    {blog.title}
-                  </h2>
+                    <h2 className="blog-card-title">
+                      {blog.title}
+                    </h2>
 
-                  <p className="blog-card-meta">
-                    {blog.date} • {blog.readTime}
-                  </p>
+                    <p className="blog-card-meta">
+                      {blog.date} • {blog.readTime}
+                    </p>
 
-                  <p className="blog-text">
-                    {blog.description}
-                  </p>
+                    <p className="blog-text">
+                      {blog.description}
+                    </p>
 
-                  <strong className="blog-link">
-                    Read Article →
-                  </strong>
-                </div>
-              </a>
-            ))}
-          </div>
+                    <strong className="blog-link">
+                      Read Article →
+                    </strong>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="blog-empty-state">
+              <h2>No articles found</h2>
+              <p>
+                Try searching with another keyword or selecting a different
+                category.
+              </p>
+            </div>
+          )}
         </div>
       </section>
     </main>
