@@ -1,126 +1,96 @@
-const stats = [
-  ["SATB", "Choir Structure"],
-  ["Beginner", "Friendly Training"],
-  ["Live", "Performances"],
-  ["Music", "Community"],
-];
+export const metadata = {
+  title: "About Us | Serenade Singers",
+  description:
+    "Learn about Serenade Singers, a community choir and music education initiative dedicated to music, education, and community.",
+};
 
 const values = [
-  {
-    title: "Vocal Development",
-    text: "Members learn breathing, tone control, resonance, projection, diction, harmony, and musical expression through structured rehearsal.",
-  },
-  {
-    title: "Team Harmony",
-    text: "Choir singing develops listening, discipline, timing, blending, confidence, and teamwork through SATB ensemble practice.",
-  },
-  {
-    title: "Performance Culture",
-    text: "Members receive opportunities to participate in concerts, showcases, community events, webinars, and music projects.",
-  },
-];
-
-const programs = [
-  "Choir Rehearsals",
-  "Vocal Training",
-  "Music Theory",
-  "Piano Lessons",
-  "Live Performances",
-  "Community Events",
-  "Music Workshops",
-  "Webinars",
+  "Music Education",
+  "Choral Culture",
+  "Community Service",
+  "Western & Myanmar Music Appreciation",
+  "Accessible Learning",
+  "Artistic Growth",
 ];
 
 export default function AboutPage() {
   return (
     <main>
-      <section className="about-pro-hero">
-        <div className="about-pro-wrap">
-          <div className="about-pro-left">
-            <p className="eyebrow">About Serenade Singers</p>
+      <section className="about-hero">
+        <div className="container">
+          <p className="eyebrow">About Serenade Singers</p>
 
-            <h1>
-              One Thing.
-              <span> One Voice.</span>
-            </h1>
+          <h1>
+            Music. Education.
+            <br />
+            Community.
+          </h1>
 
-            <p>
-              Serenade Singers is a modern choir and music community for people
-              who love singing, harmony, teamwork, and creative growth. We welcome
-              both complete beginners and experienced singers.
-            </p>
-
-            <div className="about-pro-actions">
-              <a className="btn-primary" href="/signup">Join Our Choir</a>
-              <a className="btn-outline" href="/classes">View Programs</a>
-            </div>
-          </div>
-
-          <div className="about-pro-panel">
-            <p>Our Focus</p>
-            <h2>Music. Harmony. Growth.</h2>
-            <span>
-              Vocal training, choir discipline, musical confidence, friendship,
-              and performance experience in one organized community.
-            </span>
-          </div>
-        </div>
-
-        <div className="about-stats">
-          {stats.map(([big, small]) => (
-            <div className="about-stat" key={big}>
-              <strong>{big}</strong>
-              <span>{small}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="about-pro-section">
-        <div className="about-section-head">
-          <p className="eyebrow">Why Join Us</p>
-          <h2>Built for musical growth and real community.</h2>
-        </div>
-
-        <div className="about-value-grid">
-          {values.map((item) => (
-            <div className="about-value-card" key={item.title}>
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="about-pro-section about-split">
-        <div>
-          <p className="eyebrow">What We Do</p>
-          <h2>Activities & Programs</h2>
           <p>
-            Serenade Singers organizes musical activities, choir rehearsals,
-            training programs, performances, and educational experiences for
-            members and students.
+            Serenade Singers is a community choir and music education initiative
+            dedicated to connecting people through music, promoting choral
+            culture, and making music learning more accessible.
+          </p>
+        </div>
+      </section>
+
+      <section className="container about-section">
+        <div className="about-card about-intro">
+          <h2>Who We Are</h2>
+          <p>
+            Serenade Singers was founded with the belief that music should be
+            accessible, meaningful, and shared. We welcome people from different
+            backgrounds who love music, wish to learn, and want to become part
+            of a positive musical community.
+          </p>
+
+          <p>
+            Our work focuses on choir singing, music education, performance
+            opportunities, volunteer participation, and community-based cultural
+            development.
           </p>
         </div>
 
-        <div className="program-cloud">
-          {programs.map((item) => (
+        <div className="about-grid">
+          <div className="about-card">
+            <h3>Our Mission</h3>
+            <p>
+              To make music education more accessible, support the growth of
+              choral culture in Myanmar, and build a welcoming community where
+              people can sing, learn, grow, and contribute.
+            </p>
+          </div>
+
+          <div className="about-card">
+            <h3>Our Vision</h3>
+            <p>
+              To become a meaningful music education and choral community that
+              inspires people to appreciate both Western Music and traditional
+              Myanmar music while contributing to cultural and artistic growth.
+            </p>
+          </div>
+        </div>
+
+        <div className="about-card">
+          <h2>What We Do</h2>
+          <p>
+            Serenade Singers provides opportunities for members to learn music
+            theory, develop choir and vocal skills, participate in performances,
+            join volunteer programs, and engage in educational and cultural
+            projects.
+          </p>
+
+          <p>
+            We also aim to support young people who may face financial barriers
+            or limited access to quality music learning resources.
+          </p>
+        </div>
+
+        <div className="about-values">
+          {values.map((item) => (
             <span key={item}>{item}</span>
           ))}
         </div>
-      </section>
-
-      <section className="about-cta-pro">
-        <div>
-          <p className="eyebrow">Join Serenade Singers</p>
-          <h2>Come sing with us — we’d love to have you in our team.</h2>
-          <p>
-            No experience is required. If you are willing to learn, attend
-            rehearsals, and grow with a creative team, Serenade Singers welcomes you.
-          </p>
-        </div>
-
-        <a className="btn-primary" href="/signup">Register Now</a>
       </section>
     </main>
   );
