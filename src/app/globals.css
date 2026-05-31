@@ -4281,3 +4281,46 @@ html {
     padding: 82px 0 56px;
   }
 }
+
+/* ===== ABOUT HERO WITH GROUP PHOTO ===== */
+
+.about-flow-hero {
+  position: relative;
+
+  padding: 120px 0 90px;
+
+  background:
+    linear-gradient(
+      rgba(11,31,66,0.78),
+      rgba(11,31,66,0.78)
+    ),
+    url("/images/about/about-hero.jpg");
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  color: white;
+}
+
+.about-flow-wrap {
+  position: relative;
+  z-index: 2;
+}
+
+.about-flow-hero .eyebrow {
+  color: #C9A24A;
+}
+
+.about-flow-hero h1 {
+  color: #ffffff;
+}
+
+.about-flow-hero h1 span {
+  color: #C9A24A;
+}
+
+.about-flow-hero p:not(.eyebrow) {
+  color: rgba(255,255,255,0.88);
+}
+
