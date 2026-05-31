@@ -1,71 +1,59 @@
+export const metadata = {
+  title: "Terms of Use | Serenade Singers",
+  description: "Website terms of use for Serenade Singers.",
+};
+
 const terms = [
   {
-    title: "1. Membership Agreement",
-    text: "By joining Serenade Singers, members agree to participate respectfully, attend rehearsals responsibly, and follow the guidance of the conductor, teachers, and organizers."
+    title: "1. Website Use",
+    text: "By accessing and using the Serenade Singers website, you agree to use this website respectfully, lawfully, and only for appropriate educational, informational, and community-related purposes.",
   },
   {
-    title: "2. Attendance Policy",
-    text: "Members should attend rehearsals, classes, events, and performances on time. If a member cannot attend, they should inform the organizer in advance whenever possible."
+    title: "2. About Serenade Singers",
+    text: "Serenade Singers is a community choir and music education initiative dedicated to promoting music education, choral culture, artistic development, and community engagement in Myanmar.",
   },
   {
-    title: "3. Rehearsal and Class Discipline",
-    text: "During choir rehearsal and music classes, members are expected to stay focused, avoid unnecessary disruption, respect the learning environment, and prepare assigned music or materials."
+    title: "3. Educational Content",
+    text: "Articles, blog posts, learning materials, and educational resources on this website are provided for general learning and informational purposes. They should not be considered formal academic, legal, financial, or professional advice.",
   },
   {
-    title: "4. Event Participation",
-    text: "Participation in concerts, webinars, workshops, community events, or performances may require prior registration or confirmation. Serenade Singers may limit participation based on rehearsal attendance, preparation, or event requirements."
+    title: "4. Accuracy of Information",
+    text: "Serenade Singers strives to provide accurate and updated information. However, we do not guarantee that all website content is complete, current, or free from errors.",
   },
   {
-    title: "5. Media Permission",
-    text: "Photos, videos, and audio recordings may be taken during rehearsals, classes, events, and performances. These materials may be used for Serenade Singers' website, social media, promotional materials, and documentation."
+    title: "5. Programs and Activities",
+    text: "Information about classes, rehearsals, performances, events, volunteer programs, and community projects may be updated or changed when necessary.",
   },
   {
-    title: "6. Profile Photo and Signup Information",
-    text: "Information submitted through the signup form, including name, contact details, music experience, and profile photo, may be used for membership records, communication, class arrangement, and internal organization."
+    title: "6. User Conduct",
+    text: "Users must not misuse the website, attempt unauthorized access, submit harmful content, or engage in harassment, discrimination, abusive behavior, or unlawful activity.",
   },
   {
-    title: "7. Privacy and Data Use",
-    text: "Serenade Singers will use submitted information only for choir, music class, event, communication, and organizational purposes. Personal information will not be sold or shared for unrelated commercial purposes."
+    title: "7. External Links",
+    text: "This website may include links to external websites or third-party platforms. Serenade Singers is not responsible for the content, privacy practices, or policies of external websites.",
   },
   {
-    title: "8. Payment and Class Policy",
-    text: "For paid music classes, workshops, or events, fees, schedules, refund rules, and payment deadlines may be announced separately. Registration may not be confirmed until payment or required confirmation is completed."
+    title: "8. Intellectual Property",
+    text: "All website content, logos, designs, articles, educational materials, graphics, photographs, and media belong to Serenade Singers or their respective owners unless otherwise stated.",
   },
   {
-    title: "9. Respectful Conduct",
-    text: "Members, students, parents, teachers, and organizers must communicate respectfully. Harassment, discrimination, bullying, offensive behavior, or intentional disruption will not be accepted."
+    title: "9. Limitation of Liability",
+    text: "Serenade Singers shall not be liable for any direct, indirect, incidental, or consequential damages resulting from the use of this website or reliance on information provided on the website.",
   },
   {
-    title: "10. Health and Safety",
-    text: "Members should follow safety instructions during rehearsals, classes, travel, stage preparation, and event participation. If a member feels unwell, they should inform the organizer and avoid putting others at risk."
+    title: "10. Changes to These Terms",
+    text: "Serenade Singers reserves the right to update or modify these Terms of Use at any time. Continued use of the website means you accept the latest version of these terms.",
   },
-  {
-    title: "11. Changes to Schedule",
-    text: "Rehearsal times, class schedules, event dates, venues, and program details may change due to organizational needs, venue availability, weather, health concerns, or other unexpected situations."
-  },
-  {
-    title: "12. Intellectual Property",
-    text: "Serenade Singers' name, logo, branding materials, website content, event designs, and promotional materials belong to Serenade Singers and should not be copied or reused without permission."
-  },
-  {
-    title: "13. Agreement Confirmation",
-    text: "By submitting the signup form or participating in Serenade Singers activities, the participant confirms that they have read, understood, and agreed to these terms and conditions."
-  }
 ];
 
 export default function TermsPage() {
   return (
     <main className="container">
-      <p className="eyebrow">Terms & Conditions</p>
-
-      <h1 className="section-title">
-        Serenade Singers Terms and Conditions
-      </h1>
-
+      <p className="eyebrow">Website Policy</p>
+      <h1 className="section-title">Terms of Use</h1>
       <p className="section-text">
-        These terms explain the basic rules, responsibilities, privacy expectations,
-        and participation policies for Serenade Singers members, students, parents,
-        event participants, and visitors.
+        These Terms of Use explain the basic rules and conditions for accessing
+        and using the Serenade Singers website.
       </p>
 
       <div className="terms-list">
@@ -78,11 +66,10 @@ export default function TermsPage() {
       </div>
 
       <div className="terms-note">
-        <h3>Important Note</h3>
+        <h3>Contact</h3>
         <p>
-          These terms may be updated when necessary. Continued participation in
-          Serenade Singers activities means the participant accepts the latest
-          version of these terms.
+          For questions about these terms, please contact
+          info.serenadesingers@gmail.com.
         </p>
       </div>
     </main>

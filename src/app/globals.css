@@ -3545,3 +3545,270 @@ html {
     font-size: 13px;
   }
 }
+
+/* ===== FOOTER LEGAL LINKS ===== */
+
+.footer-legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+  margin: 24px 0 18px;
+}
+
+.footer-legal-links a {
+  color: rgba(255,255,255,0.86);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transition: 0.2s ease;
+}
+
+.footer-legal-links a:hover {
+  color: #C9A24A;
+}
+
+.footer-contact a {
+  color: #C9A24A;
+  font-weight: 800;
+}
+
+.policy-list {
+  margin: 0;
+  padding-left: 22px;
+  color: #405064;
+  line-height: 1.8;
+}
+
+.policy-list li {
+  margin: 8px 0;
+}
+
+.support-hero-note {
+  margin-top: 36px;
+}
+
+/* ===== JOIN / MEMBERS PAGE ===== */
+
+.join-hero {
+  background:
+    linear-gradient(135deg, rgba(7, 20, 43, 0.94), rgba(11, 31, 66, 0.9)),
+    url("/hero-slide-1.jpg") center/cover no-repeat;
+  color: white;
+  padding: 96px 0 76px;
+}
+
+.join-hero-inner {
+  max-width: 980px;
+}
+
+.join-hero h1 {
+  margin: 12px 0 22px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(42px, 7vw, 82px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.join-hero h1 span {
+  color: #C9A24A;
+}
+
+.join-hero p:not(.eyebrow) {
+  max-width: 850px;
+  color: rgba(255,255,255,0.86);
+  font-size: 18px;
+  line-height: 1.8;
+  margin: 12px 0;
+}
+
+.join-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.join-section {
+  padding-top: 72px;
+}
+
+.join-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 34px;
+}
+
+.join-card,
+.join-mission,
+.join-why {
+  background: #ffffff;
+  border: 1px solid rgba(201, 162, 74, 0.26);
+  border-radius: 26px;
+  box-shadow: 0 18px 44px rgba(11, 31, 66, 0.08);
+}
+
+.join-card {
+  padding: 28px;
+}
+
+.join-card h3,
+.join-mission h2,
+.join-why h2 {
+  color: #0B1F42;
+  margin: 0 0 16px;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.join-card ul,
+.join-mission ul {
+  margin: 0;
+  padding-left: 22px;
+  color: #405064;
+  line-height: 1.8;
+}
+
+.join-card li,
+.join-mission li {
+  margin: 8px 0;
+}
+
+.join-mission,
+.join-why {
+  padding: 36px;
+}
+
+.join-mission p,
+.join-why p {
+  color: #405064;
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.join-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 28px 0;
+}
+
+.join-values span {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(201, 162, 74, 0.38);
+  background: rgba(201, 162, 74, 0.08);
+  color: #0B1F42;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 10px 16px;
+}
+
+@media (max-width: 760px) {
+  .join-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .join-hero {
+    padding: 74px 0 56px;
+  }
+
+  .join-card,
+  .join-mission,
+  .join-why {
+    padding: 24px;
+  }
+}
+
+/* ===== CONTACT PAGE ===== */
+
+.contact-hero {
+  padding: 90px 0 50px;
+}
+
+.contact-hero h1 {
+  margin-top: 10px;
+  color: #0B1F42;
+  font-size: clamp(42px, 7vw, 72px);
+  line-height: 1.05;
+  font-family: Georgia, serif;
+}
+
+.contact-lead {
+  max-width: 760px;
+  margin-top: 18px;
+  color: #405064;
+  line-height: 1.8;
+  font-size: 18px;
+}
+
+.contact-section {
+  padding-bottom: 80px;
+}
+
+.contact-main-card {
+  text-align: center;
+  background: white;
+  border-radius: 28px;
+  padding: 42px;
+  border: 1px solid rgba(201,162,74,0.25);
+  box-shadow: 0 18px 40px rgba(11,31,66,0.08);
+}
+
+.contact-main-card h2 {
+  color: #0B1F42;
+}
+
+.contact-email {
+  display: inline-block;
+  margin: 18px 0;
+  color: #C9A24A;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.contact-grid {
+  margin-top: 34px;
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 24px;
+}
+
+.contact-card {
+  background: white;
+  border-radius: 24px;
+  padding: 28px;
+  border: 1px solid rgba(201,162,74,0.22);
+  box-shadow: 0 14px 30px rgba(11,31,66,0.06);
+}
+
+.contact-card h3 {
+  color: #0B1F42;
+  margin-bottom: 12px;
+}
+
+.contact-card p {
+  color: #405064;
+  line-height: 1.7;
+}
+
+.contact-card a {
+  display: inline-block;
+  margin-top: 14px;
+  color: #C9A24A;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-main-card {
+    padding: 28px;
+  }
+
+  .contact-email {
+    font-size: 18px;
+    word-break: break-all;
+  }
+}
