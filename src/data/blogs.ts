@@ -1,6 +1,8 @@
 export type BlogContentBlock = {
-  type: "paragraph" | "heading" | "quote";
-  text: string;
+  type: "paragraph" | "heading" | "quote" | "image";
+  text?: string;
+  url?: string;
+  alt?: string;
 };
 
 export type BlogPost = {
