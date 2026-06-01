@@ -26,7 +26,7 @@ export const blogs: BlogPost[] = [
     date: "2026-05-29",
     author: "Serenade Singers",
     readTime: "5 min read",
-    description:
+    description: by
       "ဂီတပညာ၏ အရေးပါမှု၊ music awareness နှင့် လူမှုအသိုင်းအဝိုင်းအပေါ် ဂီတ၏ အကျိုးသက်ရောက်မှုများအကြောင်း။",
     image: "/og/music-awareness.jpg",
     alt: "Serenade Singers Music Awareness",
@@ -1266,7 +1266,7 @@ export const blogs: BlogPost[] = [
   readTime: "20 min read",
   description:
     "မျက်မမြင်သူများအတွက် ဂီတသင်ကြားမှု၏ အရေးပါမှု၊ အသံအခြေခံနည်းလမ်းများ၊ group learning, accessible instruments၊ cognitive, social, emotional အကျိုးကျေးဇူးများအကြောင်း။",
-  image: "https://images.pexels.com/photos/6156731/pexels-photo-6156731.jpeg",
+  image: "https://www.google.com/imgres?imgurl=https%3A%2F%2Feasylisten.wordpress.com%2Fwp-content%2Fuploads%2F2012%2F02%2Fbraille-music-2.jpg&tbnid=2IcrByVyh7RQRM&vet=1&imgrefurl=https%3A%2F%2Feasylisten.wordpress.com%2F2012%2F02%2F12%2Fbraille-scales%2F&docid=A4JgZsRFzPFqUM&w=500&h=326&source=sh%2Fx%2Fim%2Fm4%2F0&kgs=1c6bac8fd942f9c1#sv=CAMSZBoyKhBlLTBsUk16MklVMzRnaUJNMg4wbFJNejJJVTM0Z2lCTToOZ0JfLUlWT1kzQkh3dE0gBCokCg4wdG85ZzJTcG55UVYxTRIQZS0wbFJNejJJVTM0Z2lCTRgAMAFKBAgBEAIYByDtn9_pCkoIEAIYASACKAE",
   alt: "Music Learning for Blind Students",
   content: [
     {
