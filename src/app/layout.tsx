@@ -1,6 +1,7 @@
 import Analytics from "@/components/Analytics";
 import type { Metadata } from "next";
 import "./globals.css";
+import CookieBanner from "@/components/CookieBanner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -19,7 +20,8 @@ export default function RootLayout({
         <Analytics />
         {children}
         <Footer />
-      </body>
+        <CookieBanner />
+</body>
     </html>
   );
 }
