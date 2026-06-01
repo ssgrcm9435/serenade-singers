@@ -1336,7 +1336,7 @@ export const blogs: BlogPost[] = [
     },
     {
       type: "paragraph",
-      text: "Music learning improves memory, concentration, auditory processing, and sequential thinking. Emotional benefits include stress reduction, enhanced self-expression, confidence, and resilience. Socially, students develop communication, listening skills, and collaborative abilities essential for ensemble performance and community engagement."
+      text: "ဂီတလေ့လာခြင်းသည် အမှတ်စဉ်မှတ်ဉာဏ်၊ ဦးနှောက်အာရုံစူးစိုက်မှု၊ နားထောင်နိုင်စွမ်းနှင့် အဆင့်လိုက်စဉ်ဆင်ခြင်းစွမ်းရည်တို့ကို တိုးတက်စေပါသည်။ စိတ်ပိုင်းဆိုင်ရာ အကျိုးကျေးဇူးများအနက် စိတ်ဖိစီးမှုလျော့နည်းခြင်း၊ ကိုယ်ပိုင်ဖော်ပြနိုင်မှုတိုးတက်ခြင်း၊ ယုံကြည်မှုနှင့် အားစိုက်နိုင်စွမ်း တို့ ပါဝင်ပါသည်။ လူမှုဆက်ဆံရေးအရ ကျောင်းသားများသည် ဆက်သွယ်နိုင်စွမ်း၊ နားထောင်နိုင်စွမ်းနှင့် အဖွဲ့လိုက် အလုပ်လုပ်နိုင်စွမ်းတို့ကို လေ့ကျင့်နိုင်ပြီး ဤစွမ်းရည်များသည် အဖွဲ့လိုက်ဖျော်ဖြေရေးနှင့် community engagement အတွက် အရေးကြီးပါသည်။"
     },
     {
       type: "quote",
