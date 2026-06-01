@@ -1350,6 +1350,6 @@ export const blogs: BlogPost[] = [
       type: "paragraph",
       text: "မျက်မမြင်သူများအတွက် ဂီတသင်ကြားမှုသည် lifelong learning, creative expression, musical literacy, social skills, and confidence building အတွက် အလွန်အသုံးဝင်သော process ဖြစ်သည်။ Accessible resources, choir participation, tactile instruments, braille notation, and supportive teaching strategies များဖြင့် inclusive music education ကို အပြည့်အဝ ပံ့ပိုးနိုင်သည်။"
     }
-  }
-]
+  ]
+}
 ];
