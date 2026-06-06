@@ -4434,3 +4434,8 @@ flex-direction:column;
 align-items:stretch;
 }
 }
+
+
+body {
+  font-family: "Noto Sans Myanmar", "Pyidaungsu", sans-serif;
+}

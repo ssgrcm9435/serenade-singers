@@ -127,7 +127,7 @@ export default function TshirtRegistrationPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-slate-950">
+    <main className="min-h-screen bg-white text-slate-950"><div className="mx-auto max-w-6xl px-6 py-12">
       <section className="mx-auto max-w-6xl px-5 py-16">
         <p className="text-sm font-bold uppercase tracking-[0.3em] text-yellow-700">
           Serenade Singers
@@ -331,7 +331,7 @@ export default function TshirtRegistrationPage() {
           </div>
         </div>
       )}
-    </main>
+    </div></main>
   );
 }
 
