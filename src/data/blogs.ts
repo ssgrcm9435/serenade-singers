@@ -26,7 +26,7 @@ export const blogs: BlogPost[] = [
     date: "2026-05-29",
     author: "Serenade Singers",
     readTime: "5 min read",
-    description: by
+    description:
       "ဂီတပညာ၏ အရေးပါမှု၊ music awareness နှင့် လူမှုအသိုင်းအဝိုင်းအပေါ် ဂီတ၏ အကျိုးသက်ရောက်မှုများအကြောင်း။",
     image: "/og/music-awareness.jpg",
     alt: "Serenade Singers Music Awareness",
