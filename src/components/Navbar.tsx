@@ -8,6 +8,7 @@ import { site } from "@/data/site";
 const links = [
   ["About", "/about"],
   ["Events", "/events"],
+  ["Constitution", "/constitution"],
   ["Activities", "/activities"],
   ["Join Us", "/members"],
   ["Classes", "/classes"],
