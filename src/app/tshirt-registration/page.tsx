@@ -45,6 +45,8 @@ export default function TshirtRegistrationPage() {
   }
 
   async function submitOrder() {
+
+    if (loading) return;
     setMessage("");
 
     if (!verified?.verified) return setMessage("Please verify Gmail first.");
@@ -183,8 +185,18 @@ export default function TshirtRegistrationPage() {
             I have read and agree to the Terms & Conditions.
           </label>
 
-          <button onClick={submitOrder} style={{ ...button, width: "100%", marginTop: 24 }}>
-            Submit T-Shirt Registration
+          <button
+            onClick={submitOrder}
+            disabled={loading}
+            style={{
+              ...button,
+              width: "100%",
+              marginTop: 24,
+              opacity: loading ? 0.7 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+            }}
+          >
+            {loading ? "Submitting..." : "Submit T-Shirt Registration"}
           </button>
         </Card>
 
@@ -196,7 +208,39 @@ export default function TshirtRegistrationPage() {
           </Card>
         )}
       </div>
+    
+      {loading && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(255,255,255,0.92)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+            zIndex: 99999,
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              border: "6px solid #e5e7eb",
+              borderTop: "6px solid #061A2F",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+            }}
+          />
+          <h2 style={{fontWeight:900,color:"#061A2F"}}>
+            Processing Registration...
+          </h2>
+          <p>Please wait. Do not close this page.</p>
+        </div>
+      )}
     </main>
+
   );
 }
 
@@ -228,3 +272,11 @@ const button = {
 
 const th = { padding: 14, textAlign: "left" as const };
 const td = { padding: 14, borderBottom: "1px solid #e2e8f0" };
+
+
+<style jsx global>{`
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+`}</style>
