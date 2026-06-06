@@ -1,40 +1,81 @@
 export default function ConstitutionPage() {
   return (
-    <main className="mx-auto max-w-5xl px-6 py-16">
-      <h1 className="text-5xl font-black text-slate-900">
-        Constitution of Serenade Singers
-      </h1>
+    <main style={{ minHeight: "100vh", background: "#faf8f3", color: "#061A2F" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "56px 24px" }}>
+        <p style={{ fontWeight: 800, letterSpacing: "0.18em", color: "#C9A24A" }}>
+          SERENADE SINGERS
+        </p>
 
-      <p className="mt-4 text-xl text-slate-600">
-        Official Organizational Framework
-      </p>
+        <h1 style={{ marginTop: 16, fontSize: 44, lineHeight: 1.1, fontWeight: 900 }}>
+          Constitution of Serenade Singers
+        </h1>
 
-      <p className="mt-2 text-sm text-slate-500">
-        Last Updated: June 2026
-      </p>
+        <p style={{ marginTop: 12, fontSize: 20, color: "#475569" }}>
+          Official Organizational Framework
+        </p>
 
-      <div className="mt-8 flex gap-4">
-        <a
-          href="/constitution.pdf"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-2xl bg-slate-900 px-6 py-4 font-bold text-white"
+        <p style={{ marginTop: 8, color: "#64748b" }}>
+          Last Updated: June 2026
+        </p>
+
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 28 }}>
+          <a
+            href="/constitution.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-block",
+              background: "#061A2F",
+              color: "white",
+              padding: "14px 22px",
+              borderRadius: 16,
+              fontWeight: 800,
+              textDecoration: "none",
+            }}
+          >
+            📄 Open / Download Constitution PDF
+          </a>
+        </div>
+
+        <section
+          style={{
+            marginTop: 36,
+            background: "white",
+            border: "1px solid #e2e8f0",
+            borderRadius: 28,
+            padding: 24,
+            boxShadow: "0 18px 45px rgba(15,23,42,0.06)",
+          }}
         >
-          📄 Download Constitution (PDF)
-        </a>
+          <h2 style={{ fontSize: 30, fontWeight: 900, marginBottom: 18 }}>
+            Read Online
+          </h2>
+
+          <object
+            data="/constitution.pdf"
+            type="application/pdf"
+            width="100%"
+            height="900"
+            style={{ borderRadius: 18, border: "1px solid #e2e8f0" }}
+          >
+            <embed
+              src="/constitution.pdf"
+              type="application/pdf"
+              width="100%"
+              height="900"
+            />
+
+            <div style={{ padding: 24, background: "#f8fafc", borderRadius: 18 }}>
+              <p style={{ fontWeight: 700 }}>
+                PDF preview is not supported in this browser.
+              </p>
+              <p style={{ marginTop: 8 }}>
+                Please open or download the Constitution PDF using the button above.
+              </p>
+            </div>
+          </object>
+        </section>
       </div>
-
-      <section className="mt-12 rounded-3xl border border-slate-200 bg-white p-6">
-        <h2 className="text-3xl font-black mb-6">
-          Read Online
-        </h2>
-
-        <iframe
-          src="/constitution.pdf"
-          className="w-full h-[1200px] rounded-2xl border"
-          title="Serenade Singers Constitution"
-        />
-      </section>
     </main>
   );
 }
