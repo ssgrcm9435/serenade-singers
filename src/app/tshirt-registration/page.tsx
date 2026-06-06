@@ -143,9 +143,11 @@ export default function TshirtRegistrationPage() {
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-            <div className="flex h-64 items-center justify-center rounded-2xl bg-black text-white">
-              Member T-Shirt Preview
-            </div>
+            <img
+              src="/images/tshirts/member-black.jpg"
+              alt="Members Official Black T-Shirt"
+              className="h-64 w-full rounded-2xl object-cover bg-black"
+            />
             <h2 className="mt-6 text-2xl font-black text-[#061A2F]">
               Members Official T-Shirt
             </h2>
@@ -153,9 +155,11 @@ export default function TshirtRegistrationPage() {
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-            <div className="flex h-64 items-center justify-center rounded-2xl border bg-white text-slate-700">
-              Volunteer T-Shirt Preview
-            </div>
+            <img
+              src="/images/tshirts/volunteer-white.jpg"
+              alt="Volunteers Official White T-Shirt"
+              className="h-64 w-full rounded-2xl border object-cover bg-white"
+            />
             <h2 className="mt-6 text-2xl font-black text-[#061A2F]">
               Volunteers Official T-Shirt
             </h2>
@@ -165,7 +169,14 @@ export default function TshirtRegistrationPage() {
 
         <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-2xl font-black text-[#061A2F]">Size Chart</h2>
-          <div className="mt-4 overflow-x-auto">
+
+          <img
+            src="/images/tshirts/size-chart.jpg"
+            alt="T-Shirt Size Chart"
+            className="mt-5 w-full rounded-3xl border border-slate-200 object-cover"
+          />
+
+          <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[560px] border-collapse text-left">
               <thead>
                 <tr className="bg-[#061A2F] text-white">
@@ -272,15 +283,15 @@ export default function TshirtRegistrationPage() {
         <div className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6">
           <h2 className="text-2xl font-black text-[#061A2F]">Terms & Conditions</h2>
 
-          <ul className="mt-4 space-y-3 text-slate-700">
-            <li>• This T-Shirt is exclusively for registered Serenade Singers Members and Volunteers.</li>
-            <li>• Charges are based on actual production cost only.</li>
-            <li>• No profit is included.</li>
-            <li>• Members Official T-Shirt = Black Color.</li>
-            <li>• Volunteers Official T-Shirt = White Color.</li>
-            <li>• Please select your size carefully before submission.</li>
-            <li>• Size changes may not be possible after production begins.</li>
-            <li>• Official T-Shirts should be worn appropriately during rehearsals, performances, workshops, and official Serenade Singers activities.</li>
+          <ul className="mt-4 space-y-3 leading-8 text-slate-700">
+            <li>• ဤ Official T-Shirt သည် Serenade Singers တွင် တရားဝင် မှတ်ပုံတင်ထားသော Members နှင့် Volunteers များအတွက်သာ သီးသန့် ထုတ်လုပ်ထားခြင်း ဖြစ်ပါသည်။</li>
+            <li>• T-Shirt အတွက် ကောက်ခံသည့် ငွေပမာဏသည် ထုတ်လုပ်မှုနှင့် ဆက်စပ်သော အမှန်တကယ် ကုန်ကျစရိတ်များအပေါ် အခြေခံထားပြီး အမြတ်အစွန်း ထည့်သွင်းထားခြင်း မရှိပါ။</li>
+            <li>• Members Official T-Shirt ကို အမဲရောင် (Black) ဖြင့် ထုတ်လုပ်မည် ဖြစ်ပြီး Volunteers Official T-Shirt ကို အဖြူရောင် (White) ဖြင့် ထုတ်လုပ်မည် ဖြစ်ပါသည်။</li>
+            <li>• Registration မတင်သွင်းမီ မိမိ၏ T-Shirt Size ကို သေချာစွာ စစ်ဆေး၍ မှန်ကန်စွာ ရွေးချယ်ပေးရန် လိုအပ်ပါသည်။</li>
+            <li>• ထုတ်လုပ်မှုလုပ်ငန်းစဉ် စတင်ပြီးနောက် Size ပြောင်းလဲခြင်း၊ ပြင်ဆင်ခြင်း သို့မဟုတ် ပယ်ဖျက်ခြင်းများကို ဆောင်ရွက်ပေးနိုင်မည် မဟုတ်ပါ။</li>
+            <li>• Official T-Shirt များကို Choir Rehearsals, Performances, Workshops, Concerts နှင့် Serenade Singers ၏ တရားဝင် လှုပ်ရှားမှုများတွင် သင့်လျော်စွာ ဝတ်ဆင်အသုံးပြုရန် ဖြစ်ပါသည်။</li>
+            <li>• ထုတ်လုပ်မှုအခြေအနေ၊ အရေအတွက် သို့မဟုတ် အခြားလိုအပ်ချက်များအပေါ် မူတည်၍ Serenade Singers မှ ထုတ်လုပ်မှုနှင့် ဖြန့်ဝေမှု အချိန်ဇယားများကို လိုအပ်သလို ပြင်ဆင်ပြောင်းလဲနိုင်ပါသည်။</li>
+            <li>• Registration တင်သွင်းခြင်းဖြင့် အထက်ဖော်ပြပါ စည်းမျဉ်းစည်းကမ်းများအား ဖတ်ရှုနားလည်ပြီး သဘောတူလက်ခံကြောင်း အတည်ပြုခြင်း ဖြစ်ပါသည်။</li>
           </ul>
 
           <label className="mt-6 flex items-start gap-3 font-bold">
