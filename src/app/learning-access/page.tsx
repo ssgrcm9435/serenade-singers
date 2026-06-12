@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type UserInfo = {
   success: boolean;
@@ -31,9 +31,6 @@ function getYouTubeEmbedUrl(url: string) {
   const shortMatch = url.match(/youtu\.be\/([^?&]+)/);
   if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`;
 
-  const embedMatch = url.match(/embed\/([^?&]+)/);
-  if (embedMatch) return url;
-
   return url;
 }
 
@@ -44,17 +41,39 @@ export default function LearningAccessPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const apiUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || "";
+
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("ss_learning_user");
-      if (saved) {
-        const user = JSON.parse(saved);
-        setUser(user);
-      }
-    } catch {}
+    const saved = localStorage.getItem("ss_learning_user");
+    if (saved) {
+      try {
+        const savedUser = JSON.parse(saved);
+        setUser(savedUser);
+        loadVideos(savedUser.type);
+      } catch {}
+    }
   }, []);
 
-  const apiUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || "";
+  async function loadVideos(audience: "Member" | "Volunteer") {
+    if (!apiUrl) return;
+
+    try {
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "getLearningVideos",
+          audience,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setVideos(data.videos || []);
+      }
+    } catch {
+      setMessage("Unable to load learning videos.");
+    }
+  }
 
   async function verifyAccess() {
     setMessage("");
@@ -93,30 +112,9 @@ export default function LearningAccessPage() {
       }
 
       setUser(verifyData);
+      localStorage.setItem("ss_learning_user", JSON.stringify(verifyData));
 
-      try {
-        localStorage.setItem(
-          "ss_learning_user",
-          JSON.stringify(verifyData)
-        );
-      } catch {}
-
-      const videosRes = await fetch(apiUrl, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "getLearningVideos",
-          audience: verifyData.type,
-        }),
-      });
-
-      const videosData = await videosRes.json();
-
-      if (!videosData.success) {
-        setMessage(videosData.message || "Unable to load learning videos.");
-        return;
-      }
-
-      setVideos(videosData.videos || []);
+      await loadVideos(verifyData.type);
       setMessage("Access granted.");
     } catch {
       setMessage("Unable to verify access. Please try again.");
@@ -151,46 +149,48 @@ export default function LearningAccessPage() {
           Please verify your registered Gmail address to continue.
         </p>
 
-        <section style={card}>
-          <h2 style={sectionTitle}>Verify Access</h2>
+        {!user?.verified && (
+          <section style={card}>
+            <h2 style={sectionTitle}>Verify Access</h2>
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
-            <input
-              value={gmail}
-              onChange={(e) => setGmail(e.target.value)}
-              placeholder="Enter registered Gmail address"
-              style={input}
-            />
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
+              <input
+                value={gmail}
+                onChange={(e) => setGmail(e.target.value)}
+                placeholder="Enter registered Gmail address"
+                style={input}
+              />
 
-            <button
-              onClick={verifyAccess}
-              disabled={loading}
-              style={{
-                ...button,
-                opacity: loading ? 0.7 : 1,
-                cursor: loading ? "not-allowed" : "pointer",
-              }}
-            >
-              {loading ? "Verifying..." : "Verify Access"}
-            </button>
-          </div>
-
-          {message && (
-            <p style={{ marginTop: 16, fontWeight: 800, color: user?.verified ? "#047857" : "#b91c1c" }}>
-              {message}
-            </p>
-          )}
-
-          {user?.verified && (
-            <div style={successBox}>
-              <h3 style={{ fontSize: 22, fontWeight: 900 }}>✓ Access Granted</h3>
-              <p><b>ID:</b> {user.memberId}</p>
-              <p><b>Name:</b> {user.fullName}</p>
-              <p><b>Type:</b> {user.type}</p>
-              <p><b>Voice Part:</b> {user.voicePart || "-"}</p>
+              <button
+                onClick={verifyAccess}
+                disabled={loading}
+                style={{
+                  ...button,
+                  opacity: loading ? 0.7 : 1,
+                  cursor: loading ? "not-allowed" : "pointer",
+                }}
+              >
+                {loading ? "Verifying..." : "Verify Access"}
+              </button>
             </div>
-          )}
-        </section>
+          </section>
+        )}
+
+        {message && (
+          <p style={{ marginTop: 16, fontWeight: 800, color: user?.verified ? "#047857" : "#b91c1c" }}>
+            {message}
+          </p>
+        )}
+
+        {user?.verified && (
+          <section style={card}>
+            <h2 style={sectionTitle}>✓ Access Granted</h2>
+            <p><b>ID:</b> {user.memberId}</p>
+            <p><b>Name:</b> {user.fullName}</p>
+            <p><b>Type:</b> {user.type}</p>
+            <p><b>Voice Part:</b> {user.voicePart || "-"}</p>
+          </section>
+        )}
 
         {user?.verified && (
           <section style={card}>
@@ -206,30 +206,24 @@ export default function LearningAccessPage() {
               <div style={{ marginTop: 24 }}>
                 {Object.entries(groupedVideos).map(([category, items]) => (
                   <div key={category} style={{ marginTop: 32 }}>
-                    <h3 style={{ fontSize: 24, fontWeight: 900 }}>
-                      {category}
-                    </h3>
+                    <h3 style={{ fontSize: 24, fontWeight: 900 }}>{category}</h3>
 
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                        gap: 20,
-                        marginTop: 16,
-                      }}
-                    >
+                    <div style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                      gap: 20,
+                      marginTop: 16,
+                    }}>
                       {items.map((video) => (
                         <article key={video.title} style={videoCard}>
-                          <div
-                            style={{
-                              position: "relative",
-                              width: "100%",
-                              paddingTop: "56.25%",
-                              borderRadius: 18,
-                              overflow: "hidden",
-                              background: "#e2e8f0",
-                            }}
-                          >
+                          <div style={{
+                            position: "relative",
+                            width: "100%",
+                            paddingTop: "56.25%",
+                            borderRadius: 18,
+                            overflow: "hidden",
+                            background: "#e2e8f0",
+                          }}>
                             <iframe
                               src={getYouTubeEmbedUrl(video.youtubeUrl)}
                               title={video.title}
@@ -277,37 +271,7 @@ export default function LearningAccessPage() {
           to { transform: rotate(360deg); }
         }
       `}</style>
-    
-{user?.verified && (
-  <div
-    style={{
-      position: "fixed",
-      top: 20,
-      right: 20,
-      zIndex: 9999,
-    }}
-  >
-    <button
-      onClick={() => {
-        localStorage.removeItem("ss_learning_user");
-        location.reload();
-      }}
-      style={{
-        background: "#b91c1c",
-        color: "white",
-        border: 0,
-        padding: "10px 16px",
-        borderRadius: "12px",
-        fontWeight: 700,
-        cursor: "pointer",
-      }}
-    >
-      Logout
-    </button>
-  </div>
-)}
-
-</main>
+    </main>
   );
 }
 
@@ -341,16 +305,6 @@ const button = {
   borderRadius: 16,
   padding: "14px 22px",
   fontWeight: 900,
-};
-
-const successBox = {
-  marginTop: 20,
-  padding: 20,
-  borderRadius: 20,
-  background: "#ecfdf5",
-  border: "1px solid #bbf7d0",
-  color: "#064e3b",
-  lineHeight: 1.8,
 };
 
 const videoCard = {
