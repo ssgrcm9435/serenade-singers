@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type UserInfo = {
   success: boolean;
@@ -44,6 +44,16 @@ export default function LearningAccessPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ss_learning_user");
+      if (saved) {
+        const user = JSON.parse(saved);
+        setUser(user);
+      }
+    } catch {}
+  }, []);
+
   const apiUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || "";
 
   async function verifyAccess() {
@@ -83,6 +93,13 @@ export default function LearningAccessPage() {
       }
 
       setUser(verifyData);
+
+      try {
+        localStorage.setItem(
+          "ss_learning_user",
+          JSON.stringify(verifyData)
+        );
+      } catch {}
 
       const videosRes = await fetch(apiUrl, {
         method: "POST",
@@ -260,7 +277,37 @@ export default function LearningAccessPage() {
           to { transform: rotate(360deg); }
         }
       `}</style>
-    </main>
+    
+{user?.verified && (
+  <div
+    style={{
+      position: "fixed",
+      top: 20,
+      right: 20,
+      zIndex: 9999,
+    }}
+  >
+    <button
+      onClick={() => {
+        localStorage.removeItem("ss_learning_user");
+        location.reload();
+      }}
+      style={{
+        background: "#b91c1c",
+        color: "white",
+        border: 0,
+        padding: "10px 16px",
+        borderRadius: "12px",
+        fontWeight: 700,
+        cursor: "pointer",
+      }}
+    >
+      Logout
+    </button>
+  </div>
+)}
+
+</main>
   );
 }
 
