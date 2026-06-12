@@ -49,6 +49,10 @@ function doPost(e) {
       return json_(submitShirtOrder_(body));
     }
 
+    if (action === "getLearningVideos") {
+      return json_(getLearningVideos_(body.audience));
+    }
+
 
     return json_({
       success: false,
@@ -1036,4 +1040,73 @@ function findTshirtHeaderIndex_(headers, names) {
     if (index !== -1) return index;
   }
   return -1;
+}
+
+
+/*******************************************************
+ * LEARNING CENTER
+ *******************************************************/
+
+function getLearningVideos_(audience) {
+  const targetAudience = String(audience || "").trim();
+
+  if (!targetAudience) {
+    return {
+      success: false,
+      message: "Audience is required.",
+      videos: [],
+    };
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getOrCreateSheet_(ss, "LearningVideos");
+
+  setupHeaders_(sheet, [
+    "Audience",
+    "Category",
+    "Title",
+    "YouTubeURL",
+    "Description",
+    "Status",
+    "SortOrder",
+  ]);
+
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length < 2) {
+    return {
+      success: true,
+      videos: [],
+    };
+  }
+
+  const videos = [];
+
+  for (let i = 1; i < values.length; i++) {
+    const audienceCell = String(values[i][0] || "").trim();
+    const statusCell = String(values[i][5] || "").trim();
+
+    if (
+      audienceCell.toLowerCase() === targetAudience.toLowerCase() &&
+      statusCell.toLowerCase() === "active"
+    ) {
+      videos.push({
+        audience: values[i][0],
+        category: values[i][1],
+        title: values[i][2],
+        youtubeUrl: values[i][3],
+        description: values[i][4],
+        sortOrder: Number(values[i][6]) || 9999,
+      });
+    }
+  }
+
+  videos.sort(function(a, b) {
+    return a.sortOrder - b.sortOrder;
+  });
+
+  return {
+    success: true,
+    videos: videos,
+  };
 }
