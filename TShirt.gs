@@ -90,6 +90,14 @@ function doPost(e) {
       return json_(getAdminDashboardData_());
     }
 
+    if (action === "approvePayment") {
+      return json_(approvePayment_(body));
+    }
+
+    if (action === "rejectPayment") {
+      return json_(rejectPayment_(body));
+    }
+
 
 
 
@@ -1843,4 +1851,131 @@ function generateReceiptNo_(sheet) {
   const nextNumber = Math.max(1, lastRow);
 
   return "SSR-" + year + "-" + Utilities.formatString("%05d", nextNumber);
+}
+
+
+/*******************************************************
+ * ADMIN PAYMENT APPROVAL / REJECTION
+ *******************************************************/
+
+function approvePayment_(body) {
+  return updatePaymentStatus_(body, "Approved");
+}
+
+function rejectPayment_(body) {
+  return updatePaymentStatus_(body, "Rejected");
+}
+
+function updatePaymentStatus_(body, newStatus) {
+  const receiptNo = String(body.receiptNo || "").trim();
+  const verifiedBy = String(body.verifiedBy || CONFIG.ADMIN_EMAIL).trim();
+  const reason = String(body.reason || "").trim();
+
+  if (!receiptNo) {
+    return {
+      success: false,
+      message: "Receipt No is required.",
+    };
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getOrCreateSheet_(ss, "Payments");
+
+  setupHeaders_(sheet, [
+    "Created At",
+    "Member ID",
+    "Full Name",
+    "Gmail",
+    "Project",
+    "Amount Paid",
+    "Payment Method",
+    "Screenshot URL",
+    "Receipt No",
+    "Payment Status",
+    "Verified By",
+    "Remarks",
+  ]);
+
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length < 2) {
+    return {
+      success: false,
+      message: "No payment records found.",
+    };
+  }
+
+  const headers = values[0].map(function(h) {
+    return String(h || "").trim().toLowerCase();
+  });
+
+  const receiptIndex = headers.indexOf("receipt no");
+  const statusIndex = headers.indexOf("payment status");
+  const verifiedByIndex = headers.indexOf("verified by");
+  const remarksIndex = headers.indexOf("remarks");
+  const gmailIndex = headers.indexOf("gmail");
+  const fullNameIndex = headers.indexOf("full name");
+  const projectIndex = headers.indexOf("project");
+  const amountIndex = headers.indexOf("amount paid");
+
+  if (receiptIndex === -1 || statusIndex === -1) {
+    return {
+      success: false,
+      message: "Payments sheet headers are invalid.",
+    };
+  }
+
+  for (let i = 1; i < values.length; i++) {
+    const rowReceiptNo = String(values[i][receiptIndex] || "").trim();
+
+    if (rowReceiptNo === receiptNo) {
+      const rowNumber = i + 1;
+
+      sheet.getRange(rowNumber, statusIndex + 1).setValue(newStatus);
+
+      if (verifiedByIndex !== -1) {
+        sheet.getRange(rowNumber, verifiedByIndex + 1).setValue(verifiedBy);
+      }
+
+      if (remarksIndex !== -1 && reason) {
+        sheet.getRange(rowNumber, remarksIndex + 1).setValue(reason);
+      }
+
+      const gmail = gmailIndex !== -1 ? values[i][gmailIndex] : "";
+      const fullName = fullNameIndex !== -1 ? values[i][fullNameIndex] : "";
+      const project = projectIndex !== -1 ? values[i][projectIndex] : "";
+      const amount = amountIndex !== -1 ? values[i][amountIndex] : "";
+
+      try {
+        if (newStatus === "Approved") {
+          sendPaymentApprovedEmail_(gmail, {
+            fullName: fullName,
+            project: project,
+            amount: amount,
+          });
+        }
+
+        if (newStatus === "Rejected") {
+          sendPaymentRejectedEmail_(gmail, {
+            fullName: fullName,
+            project: project,
+            amount: amount,
+            reason: reason || "Payment information requires further checking.",
+          });
+        }
+      } catch (err) {}
+
+      return {
+        success: true,
+        message: "Payment " + newStatus + " successfully.",
+        receiptNo: receiptNo,
+        paymentStatus: newStatus,
+      };
+    }
+  }
+
+  return {
+    success: false,
+    message: "Payment receipt not found.",
+  };
 }
