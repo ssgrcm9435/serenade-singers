@@ -310,6 +310,33 @@ export default function AdminDashboardPage() {
             grid-template-columns: 1fr !important;
           }
         }
+
+        @media (max-width: 1024px) {
+          .admin-shell {
+            grid-template-columns: 1fr !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          h1 {
+            font-size: 32px !important;
+          }
+
+          h2 {
+            font-size: 24px !important;
+          }
+
+          table {
+            min-width: 800px !important;
+          }
+
+          input,
+          select,
+          button {
+            width: 100% !important;
+          }
+        }
+
       `}</style>
     </main>
   );
