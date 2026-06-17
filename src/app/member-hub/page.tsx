@@ -34,12 +34,13 @@ function getYouTubeEmbedUrl(url: string) {
   return url;
 }
 
-export default function LearningAccessPage() {
+export default function MemberHubPage() {
   const [gmail, setGmail] = useState("");
   const [user, setUser] = useState<UserInfo | null>(null);
   const [videos, setVideos] = useState<LearningVideo[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [activeSection, setActiveSection] = useState("Learning Center");
 
   const apiUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || "";
 
@@ -145,8 +146,7 @@ export default function LearningAccessPage() {
         </h1>
 
         <p style={{ marginTop: 16, fontSize: 17, color: "#475569", maxWidth: 760 }}>
-          This Learning Center is available only to registered Serenade Singers Members and Volunteers.
-          Please verify your registered Gmail address to continue.
+          A private community hub for registered Serenade Singers Members and Volunteers. Verify your Gmail address to access announcements, events, learning resources, financial transparency, documents, and member information.
         </p>
 
         {!user?.verified && (
@@ -194,63 +194,134 @@ export default function LearningAccessPage() {
 
         {user?.verified && (
           <section style={card}>
-            <h2 style={sectionTitle}>
-              {user.type === "Volunteer" ? "Volunteer Learning Center" : "Members Learning Center"}
-            </h2>
+            <h2 style={sectionTitle}>Members Hub Menu</h2>
 
-            {videos.length === 0 ? (
-              <p style={{ marginTop: 16, color: "#64748b" }}>
-                No learning videos are available yet.
-              </p>
-            ) : (
-              <div style={{ marginTop: 24 }}>
-                {Object.entries(groupedVideos).map(([category, items]) => (
-                  <div key={category} style={{ marginTop: 32 }}>
-                    <h3 style={{ fontSize: 24, fontWeight: 900 }}>{category}</h3>
+            <select
+              value={activeSection}
+              onChange={(e) => setActiveSection(e.target.value)}
+              style={{
+                ...input,
+                width: "100%",
+                marginTop: 18,
+                fontWeight: 800,
+              }}
+            >
+              <option>Announcements</option>
+              <option>Events</option>
+              <option>Learning Center</option>
+              <option>Members Directory</option>
+              <option>Financial Transparency</option>
+              <option>Documents</option>
+              <option>Official T-Shirt</option>
+            </select>
 
-                    <div style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                      gap: 20,
-                      marginTop: 16,
-                    }}>
-                      {items.map((video) => (
-                        <article key={video.title} style={videoCard}>
-                          <div style={{
-                            position: "relative",
-                            width: "100%",
-                            paddingTop: "56.25%",
-                            borderRadius: 18,
-                            overflow: "hidden",
-                            background: "#e2e8f0",
-                          }}>
-                            <iframe
-                              src={getYouTubeEmbedUrl(video.youtubeUrl)}
-                              title={video.title}
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                              style={{
-                                position: "absolute",
-                                inset: 0,
+            {activeSection === "Announcements" && (
+              <div style={hubSection}>
+                <h3 style={hubTitle}>Announcements</h3>
+                <p style={mutedText}>Latest notices and official announcements will be shown here.</p>
+              </div>
+            )}
+
+            {activeSection === "Events" && (
+              <div style={hubSection}>
+                <h3 style={hubTitle}>Events</h3>
+                <p style={mutedText}>Upcoming rehearsals, workshops, performances, and official activities will be shown here.</p>
+              </div>
+            )}
+
+            {activeSection === "Members Directory" && (
+              <div style={hubSection}>
+                <h3 style={hubTitle}>Members Directory</h3>
+                <p style={mutedText}>Member list will be available here for verified Serenade Singers members and volunteers.</p>
+              </div>
+            )}
+
+            {activeSection === "Financial Transparency" && (
+              <div style={hubSection}>
+                <h3 style={hubTitle}>Financial Transparency</h3>
+                <p style={mutedText}>Project financial summaries, income, expenses, balances, and purposes of use will be shown here.</p>
+              </div>
+            )}
+
+            {activeSection === "Documents" && (
+              <div style={hubSection}>
+                <h3 style={hubTitle}>Documents</h3>
+                <p style={mutedText}>Constitution, reports, forms, and official documents will be listed here.</p>
+                <a href="/constitution" style={{ ...button, display: "inline-block", marginTop: 16, textDecoration: "none" }}>
+                  View Constitution
+                </a>
+              </div>
+            )}
+
+            {activeSection === "Official T-Shirt" && (
+              <div style={hubSection}>
+                <h3 style={hubTitle}>Official T-Shirt</h3>
+                <p style={mutedText}>Access Official T-Shirt registration and payment information here.</p>
+                <a href="/tshirt-registration" style={{ ...button, display: "inline-block", marginTop: 16, textDecoration: "none" }}>
+                  Open T-Shirt Registration
+                </a>
+              </div>
+            )}
+
+            {activeSection === "Learning Center" && (
+              <div style={hubSection}>
+                <h3 style={hubTitle}>Learning Center</h3>
+
+                {videos.length === 0 ? (
+                  <p style={{ marginTop: 16, color: "#64748b" }}>
+                    No learning videos are available yet.
+                  </p>
+                ) : (
+                  <div style={{ marginTop: 24 }}>
+                    {Object.entries(groupedVideos).map(([category, items]) => (
+                      <div key={category} style={{ marginTop: 32 }}>
+                        <h4 style={{ fontSize: 24, fontWeight: 900 }}>{category}</h4>
+
+                        <div style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                          gap: 20,
+                          marginTop: 16,
+                        }}>
+                          {items.map((video) => (
+                            <article key={video.title} style={videoCard}>
+                              <div style={{
+                                position: "relative",
                                 width: "100%",
-                                height: "100%",
-                                border: 0,
-                              }}
-                            />
-                          </div>
+                                paddingTop: "56.25%",
+                                borderRadius: 18,
+                                overflow: "hidden",
+                                background: "#e2e8f0",
+                              }}>
+                                <iframe
+                                  src={getYouTubeEmbedUrl(video.youtubeUrl)}
+                                  title={video.title}
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  style={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    width: "100%",
+                                    height: "100%",
+                                    border: 0,
+                                  }}
+                                />
+                              </div>
 
-                          <h4 style={{ marginTop: 16, fontSize: 19, fontWeight: 900 }}>
-                            {video.title}
-                          </h4>
+                              <h5 style={{ marginTop: 16, fontSize: 19, fontWeight: 900 }}>
+                                {video.title}
+                              </h5>
 
-                          <p style={{ marginTop: 8, color: "#64748b", lineHeight: 1.7 }}>
-                            {video.description}
-                          </p>
-                        </article>
-                      ))}
-                    </div>
+                              <p style={{ marginTop: 8, color: "#64748b", lineHeight: 1.7 }}>
+                                {video.description}
+                              </p>
+                            </article>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             )}
           </section>
@@ -312,6 +383,25 @@ const videoCard = {
   borderRadius: 22,
   border: "1px solid #e2e8f0",
   background: "#f8fafc",
+};
+
+const hubSection = {
+  marginTop: 26,
+  padding: 24,
+  borderRadius: 22,
+  background: "#f8fafc",
+  border: "1px solid #e2e8f0",
+};
+
+const hubTitle = {
+  fontSize: 26,
+  fontWeight: 900,
+};
+
+const mutedText = {
+  marginTop: 12,
+  color: "#64748b",
+  lineHeight: 1.8,
 };
 
 const overlay = {
