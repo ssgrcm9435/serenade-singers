@@ -26,6 +26,7 @@ export default function AdminDashboardPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [adminActionMessage, setAdminActionMessage] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [data, setData] = useState<Record<string, Row[]>>({
     members: [],
@@ -141,9 +142,31 @@ export default function AdminDashboardPage() {
   return (
     <main style={main}>
       <div className="admin-shell" style={shell}>
-        <aside style={sidebar}>
+        <aside
+          className="desktop-sidebar"
+          style={{
+            ...sidebar,
+            ...(typeof window !== "undefined" && window.innerWidth <= 768
+              ? {
+                  position: "fixed",
+                  left: mobileMenuOpen ? 0 : "-340px",
+                  top: 0,
+                  height: "100vh",
+                  zIndex: 9999,
+                  transition: "all .3s ease",
+                }
+              : {})
+          }}
+        >
           <p style={sidebarEyebrow}>SERENADE SINGERS</p>
           <h2 style={sidebarTitle}>Admin Panel</h2>
+
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            style={closeMenuButton}
+          >
+            ✕ Close Menu
+          </button>
 
           <div style={adminCard}>
             <div style={adminAvatar}>A</div>
@@ -175,6 +198,13 @@ export default function AdminDashboardPage() {
 
         <section style={content}>
           <div style={topBar}>
+            <button
+              className="mobile-menu-button"
+              onClick={() => setMobileMenuOpen(true)}
+              style={mobileMenuButton}
+            >
+              ☰
+            </button>
             <div>
               <p style={eyebrow}>ADMIN AREA</p>
               <h1 style={pageTitle}>{activeSection}</h1>
@@ -303,6 +333,30 @@ export default function AdminDashboardPage() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+
+        
+        .mobile-menu-button {
+          display: none;
+        }
+
+        @media (max-width: 768px) {
+
+          .mobile-menu-button {
+            display: flex !important;
+          }
+
+          .admin-shell {
+            display: block !important;
+          }
+
+          .desktop-sidebar {
+            width: 320px !important;
+          }
+
+          table {
+            min-width: 900px !important;
+          }
         }
 
         @media (max-width: 900px) {
@@ -610,3 +664,26 @@ const smallApproveButton = { background: "#047857", color: "white", border: 0, b
 const smallRejectButton = { background: "#b91c1c", color: "white", border: 0, borderRadius: 10, padding: "8px 12px", fontWeight: 900, cursor: "pointer" };
 const overlay = { position: "fixed" as const, inset: 0, background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" as const, zIndex: 99999, gap: 16 };
 const spinner = { width: 64, height: 64, border: "6px solid #e5e7eb", borderTop: "6px solid #061A2F", borderRadius: "50%", animation: "spin 1s linear infinite" };
+
+const mobileMenuButton = {
+  display: "none",
+  background: "#061A2F",
+  color: "white",
+  border: 0,
+  borderRadius: 12,
+  padding: "10px 14px",
+  fontSize: 22,
+  fontWeight: 900,
+  cursor: "pointer",
+};
+
+const closeMenuButton = {
+  marginTop: 12,
+  width: "100%",
+  background: "rgba(255,255,255,0.08)",
+  color: "white",
+  border: "1px solid rgba(255,255,255,0.15)",
+  borderRadius: 12,
+  padding: "10px",
+  cursor: "pointer",
+};
