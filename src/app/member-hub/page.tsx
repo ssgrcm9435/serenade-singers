@@ -355,6 +355,24 @@ export default function MemberHubPage() {
     }
   }
 
+
+  function logoutMemberHub() {
+    localStorage.removeItem("ss_learning_user");
+    localStorage.removeItem("ss_member_verified");
+    localStorage.removeItem("ss_member_gmail");
+    setUser(null);
+    setGmail("");
+    setOtp("");
+    setOtpSent(false);
+    setVideos([]);
+    setAnnouncements([]);
+    setEvents([]);
+    setFinancialReports([]);
+    setDocuments([]);
+    setShirtHistory([]);
+    setMessage("Logged out successfully.");
+  }
+
   const groupedVideos = videos.reduce<Record<string, LearningVideo[]>>((acc, v) => {
     const category = v.category || "General";
     if (!acc[category]) acc[category] = [];
@@ -448,6 +466,18 @@ export default function MemberHubPage() {
                 {item}
               </button>
             ))}
+            <button
+              onClick={logoutMemberHub}
+              style={{
+                ...navButton,
+                marginTop: 14,
+                background: "#FEF2F2",
+                color: "#B91C1C",
+                border: "1px solid #FECACA",
+              }}
+            >
+              Logout
+            </button>
           </nav>
         </aside>
 

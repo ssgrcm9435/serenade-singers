@@ -159,6 +159,28 @@ export default function AdminDashboardPage() {
     }
   }
 
+
+  function logoutAdmin() {
+    setLoggedIn(false);
+    setUsername("");
+    setPassword("");
+    setActiveSection("Dashboard Summary");
+    setMessage("Logged out successfully.");
+    setAdminActionMessage("");
+    setData({
+      members: [],
+      volunteers: [],
+      shirtOrders: [],
+      payments: [],
+      financialReports: [],
+      announcements: [],
+      events: [],
+      documents: [],
+      learningVideos: [],
+      learningArticles: [],
+    });
+  }
+
   const totalIncome = sum(data.financialReports, "Income");
   const totalExpense = sum(data.financialReports, "Expense");
   const balance = totalIncome - totalExpense;
@@ -232,6 +254,19 @@ export default function AdminDashboardPage() {
 
           <button onClick={loadDashboardData} style={refreshButton}>
             Refresh Data
+          </button>
+
+          <button
+            onClick={logoutAdmin}
+            style={{
+              ...refreshButton,
+              marginTop: 12,
+              background: "#FEF2F2",
+              color: "#B91C1C",
+              border: "1px solid #FECACA",
+            }}
+          >
+            Admin Logout
           </button>
         </aside>
 
