@@ -215,7 +215,7 @@ function verifyOtp_(gmail, otp, mode) {
 }
 
 function sendOtpEmail_(gmail, otp) {
-  const subject = "Serenade Singers Gmail Verification Code";
+  const subject = "Serenade Singers Members Hub Verification Code";
 
   const htmlBody = `
   <div style="margin:0;padding:0;background:#f8f6f2;font-family:Arial,sans-serif;color:#061A2F;">
@@ -223,11 +223,11 @@ function sendOtpEmail_(gmail, otp) {
       <div style="background:#ffffff;border-radius:26px;border:1px solid #ece7dd;padding:38px;box-shadow:0 18px 50px rgba(6,26,47,0.08);">
 
         <h2 style="margin:0 0 20px;text-align:center;color:#061A2F;">
-          Gmail Verification Code
+          Members Hub Verification Code
         </h2>
 
         <p>
-          Serenade Singers registration ပြုလုပ်ရန်အတွက်
+          Serenade Singers Members & Volunteers Hub ဝင်ရောက်အသုံးပြုရန်အတွက်
           အောက်ပါ verification code ကို အသုံးပြုပါ။
         </p>
 
@@ -242,7 +242,7 @@ function sendOtpEmail_(gmail, otp) {
         </p>
 
         <p style="color:#7A7468;font-size:13px;line-height:1.7;">
-          If you did not request this code, please ignore this email.
+          If you did not request access to the Members Hub, please ignore this email.
         </p>
 
         <p style="margin-top:26px;">
