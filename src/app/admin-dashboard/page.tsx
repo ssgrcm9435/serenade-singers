@@ -207,7 +207,60 @@ export default function AdminDashboardPage() {
 
           {activeSection === "Members" && <DataTable title="Members" rows={data.members} />}
           {activeSection === "Volunteers" && <DataTable title="Volunteers" rows={data.volunteers} />}
-          {activeSection === "T-Shirt Orders" && <DataTable title="T-Shirt Orders" rows={data.shirtOrders} />}
+          {activeSection === "T-Shirt Orders" && (
+            <section style={card}>
+              <h2 style={sectionTitle}>T-Shirt Orders</h2>
+
+              <div style={{ overflowX: "auto", marginTop: 18 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1200 }}>
+                  <thead>
+                    <tr>
+                      <th style={th}>Order ID</th>
+                      <th style={th}>Name</th>
+                      <th style={th}>Gmail</th>
+                      <th style={th}>Size</th>
+                      <th style={th}>Qty</th>
+                      <th style={th}>Status</th>
+                      <th style={th}>Payment</th>
+                      <th style={th}>Receipt</th>
+                      <th style={th}>Screenshot</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {data.shirtOrders.map((row, i) => (
+                      <tr key={i}>
+                        <td style={td}>{row["Order ID"] || ""}</td>
+                        <td style={td}>{row["Full Name"] || ""}</td>
+                        <td style={td}>{row["Gmail"] || ""}</td>
+                        <td style={td}>{row["Size"] || row["Shirt Size"] || ""}</td>
+                        <td style={td}>{row["Quantity"] || ""}</td>
+                        <td style={td}>{row["Status"] || ""}</td>
+                        <td style={td}>
+                          <b>{row["Payment Status"] || "Pending Payment"}</b>
+                        </td>
+                        <td style={td}>{row["Receipt No"] || "-"}</td>
+                        <td style={td}>
+                          {row["Screenshot URL"] ? (
+                            <a
+                              href={row["Screenshot URL"]}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={linkButton}
+                            >
+                              View
+                            </a>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
           {activeSection === "Payments" && (
             <PaymentTable
               rows={data.payments}
