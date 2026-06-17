@@ -73,6 +73,11 @@ function doPost(e) {
       return json_(setupMemberHubSheets_());
     }
 
+    if (action === "getAdminDashboardData") {
+      return json_(getAdminDashboardData_());
+    }
+
+
 
 
     return json_({
@@ -1509,4 +1514,50 @@ function buildSerenadeEmail_(title, contentHtml) {
       </div>
     </div>
   </div>`;
+}
+
+
+/*******************************************************
+ * ADMIN DASHBOARD API
+ *******************************************************/
+
+function getAdminDashboardData_() {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+
+  return {
+    success: true,
+    members: sheetToObjects_(ss, "Members_Main"),
+    volunteers: sheetToObjects_(ss, "Volunteer_Applications"),
+    shirtOrders: sheetToObjects_(ss, "ShirtOrders"),
+    payments: sheetToObjects_(ss, "Payments"),
+    financialReports: sheetToObjects_(ss, "FinancialReports"),
+    announcements: sheetToObjects_(ss, "Announcements"),
+    events: sheetToObjects_(ss, "Events"),
+    documents: sheetToObjects_(ss, "Documents"),
+    learningVideos: sheetToObjects_(ss, "LearningVideos"),
+    learningArticles: sheetToObjects_(ss, "LearningArticles"),
+  };
+}
+
+function sheetToObjects_(ss, sheetName) {
+  const sheet = getOrCreateSheet_(ss, sheetName);
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length < 2) return [];
+
+  const headers = values[0].map(function(h) {
+    return String(h || "").trim();
+  });
+
+  const rows = [];
+
+  for (let i = 1; i < values.length; i++) {
+    const obj = {};
+    headers.forEach(function(header, index) {
+      obj[header] = values[i][index];
+    });
+    rows.push(obj);
+  }
+
+  return rows;
 }
