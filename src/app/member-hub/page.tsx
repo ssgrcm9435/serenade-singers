@@ -50,6 +50,7 @@ export default function MemberHubPage() {
   const [events, setEvents] = useState<HubItem[]>([]);
   const [financialReports, setFinancialReports] = useState<HubItem[]>([]);
   const [documents, setDocuments] = useState<HubItem[]>([]);
+  const [shirtHistory, setShirtHistory] = useState<HubItem[]>([]);
   const [membersDirectory, setMembersDirectory] = useState<HubItem[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -63,6 +64,7 @@ export default function MemberHubPage() {
         const savedUser = JSON.parse(saved);
         setUser(savedUser);
         loadHubData(savedUser.type);
+        loadShirtHistory(savedUser.gmail);
       } catch {}
     }
   }, []);
@@ -96,6 +98,18 @@ export default function MemberHubPage() {
     if (membersData.success) setMembersDirectory(membersData.members || []);
   }
 
+
+  async function loadShirtHistory(gmailAddress: string) {
+    if (!apiUrl || !gmailAddress) return;
+
+    try {
+      const data = await post("getMemberShirtHistory", { gmail: gmailAddress });
+      if (data.success) {
+        setShirtHistory(data.orders || []);
+      }
+    } catch {}
+  }
+
   async function verifyAccess() {
     setMessage("");
     setUser(null);
@@ -115,6 +129,7 @@ export default function MemberHubPage() {
       setUser(verifyData);
       localStorage.setItem("ss_learning_user", JSON.stringify(verifyData));
       await loadHubData(verifyData.type);
+      await loadShirtHistory(verifyData.gmail);
       setMessage("Access granted.");
     } catch {
       setMessage("Unable to verify access. Please try again.");
@@ -326,13 +341,68 @@ export default function MemberHubPage() {
 
           {activeSection === "Official T-Shirt" && (
             <Section title="Official T-Shirt">
-              <p style={muted}>Access Official T-Shirt registration and payment information here.</p>
-              <a
-                href="/tshirt-registration"
-                style={{ ...button, display: "inline-block", marginTop: 16, textDecoration: "none" }}
-              >
-                Open T-Shirt Registration
-              </a>
+              <div style={infoCard}>
+                <h4 style={infoTitle}>T-Shirt Order History</h4>
+                <p style={muted}>
+                  You can review your previous Official T-Shirt registrations, size, quantity, amount due,
+                  and payment status here.
+                </p>
+              </div>
+
+              {shirtHistory.length === 0 ? (
+                <div style={infoCard}>
+                  <h4 style={infoTitle}>No Previous T-Shirt Order</h4>
+                  <p style={muted}>
+                    No T-Shirt registration history was found for your registered Gmail address.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ marginTop: 16 }}>
+                  {shirtHistory.map((order, i) => (
+                    <article key={i} style={infoCard}>
+                      <h4 style={infoTitle}>{order.orderId || "T-Shirt Order"}</h4>
+
+                      <p style={metaText}>
+                        Size: {order.size || "-"} · Quantity: {order.quantity || "-"} · Amount Due: {Number(order.amountDue || 0).toLocaleString()} MMK
+                      </p>
+
+                      <p style={muted}>
+                        Order Status: <b>{order.orderStatus || "-"}</b>
+                      </p>
+
+                      <p style={muted}>
+                        Payment Status: <b>{order.paymentStatus || "Unpaid / Not Submitted"}</b>
+                      </p>
+
+                      {order.receiptNo && (
+                        <p style={muted}>
+                          Receipt No: <b>{order.receiptNo}</b>
+                        </p>
+                      )}
+
+                      {order.amountPaid && (
+                        <p style={muted}>
+                          Amount Paid: <b>{Number(order.amountPaid || 0).toLocaleString()} MMK</b>
+                        </p>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              )}
+
+              <div style={infoCard}>
+                <h4 style={infoTitle}>Register New T-Shirt</h4>
+                <p style={muted}>
+                  If you need to submit a new Official T-Shirt registration, please use the registration page below.
+                </p>
+
+                <a
+                  href="/tshirt-registration"
+                  style={{ ...button, display: "inline-block", marginTop: 16, textDecoration: "none" }}
+                >
+                  Open T-Shirt Registration
+                </a>
+              </div>
             </Section>
           )}
         </section>

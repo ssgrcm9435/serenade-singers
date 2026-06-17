@@ -73,6 +73,10 @@ function doPost(e) {
       return json_(getMembersDirectory_());
     }
 
+    if (action === "getMemberShirtHistory") {
+      return json_(getMemberShirtHistory_(body.gmail));
+    }
+
     if (action === "setupMemberHubSheets") {
       return json_(setupMemberHubSheets_());
     }
@@ -1611,5 +1615,80 @@ function getMembersDirectory_() {
   return {
     success: true,
     members,
+  };
+}
+
+
+/*******************************************************
+ * MEMBER T-SHIRT HISTORY
+ *******************************************************/
+
+function getMemberShirtHistory_(gmail) {
+  const normalizedGmail = normalizeEmail_(gmail);
+
+  if (!normalizedGmail || !normalizedGmail.includes("@")) {
+    return {
+      success: false,
+      message: "Valid Gmail address is required.",
+      orders: [],
+    };
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+
+  const orderSheet = getOrCreateSheet_(ss, "ShirtOrders");
+  const paymentSheet = getOrCreateSheet_(ss, "Payments");
+
+  const orders = sheetToObjects_(ss, "ShirtOrders");
+  const payments = sheetToObjects_(ss, "Payments");
+
+  const memberOrders = orders
+    .filter(function(order) {
+      return normalizeEmail_(order["Gmail"]) === normalizedGmail;
+    })
+    .map(function(order) {
+      const orderId = String(order["Order ID"] || "").trim();
+      const orderGmail = normalizeEmail_(order["Gmail"]);
+
+      const relatedPayment = payments.find(function(payment) {
+        const paymentOrderId = String(payment["Reference No"] || payment["Receipt No"] || "").trim();
+        const paymentGmail = normalizeEmail_(payment["Gmail"]);
+
+        return (
+          paymentGmail === orderGmail &&
+          (
+            paymentOrderId === orderId ||
+            String(payment["Project"] || "").toLowerCase().includes("t-shirt")
+          )
+        );
+      });
+
+      const paymentStatus = relatedPayment
+        ? String(relatedPayment["Payment Status"] || "Submitted")
+        : "Unpaid / Not Submitted";
+
+      return {
+        orderId: order["Order ID"] || "",
+        createdAt: order["Timestamp"] || order["Created At"] || "",
+        type: order["Type"] || "",
+        memberId: order["Member ID"] || "",
+        fullName: order["Full Name"] || "",
+        gmail: order["Gmail"] || "",
+        voicePart: order["Voice Part"] || "",
+        size: order["Shirt Size"] || order["Size"] || "",
+        quantity: order["Quantity"] || "",
+        remark: order["Remark"] || "",
+        orderStatus: order["Status"] || "",
+        amountDue: Number(order["Quantity"] || 1) * 18000,
+        paymentStatus: paymentStatus,
+        receiptNo: relatedPayment ? relatedPayment["Receipt No"] || "" : "",
+        paymentMethod: relatedPayment ? relatedPayment["Payment Method"] || "" : "",
+        amountPaid: relatedPayment ? relatedPayment["Amount Paid"] || "" : "",
+      };
+    });
+
+  return {
+    success: true,
+    orders: memberOrders.reverse(),
   };
 }
