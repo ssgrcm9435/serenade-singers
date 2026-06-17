@@ -304,7 +304,7 @@ export default function MemberHubPage() {
   return (
     <main style={main}>
       <div className="member-hub-shell" style={shell}>
-        <aside style={sidebar}>
+        <aside className="portal-sidebar" style={sidebar}>
           <p style={sidebarEyebrow}>SERENADE SINGERS</p>
           <h2 style={sidebarTitle}>Members Hub</h2>
 
@@ -624,6 +624,48 @@ export default function MemberHubPage() {
           select,
           button {
             width: 100% !important;
+          }
+        }
+
+
+        @media (max-width: 1024px) {
+          .admin-shell,
+          .member-hub-shell {
+            display: block !important;
+            padding: 16px !important;
+          }
+
+          .portal-sidebar {
+            position: static !important;
+            min-height: auto !important;
+            width: 100% !important;
+            margin-bottom: 20px !important;
+            border-radius: 22px !important;
+          }
+
+          table {
+            min-width: 900px !important;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .admin-shell,
+          .member-hub-shell {
+            padding: 10px !important;
+          }
+
+          h1 {
+            font-size: 30px !important;
+          }
+
+          h2 {
+            font-size: 24px !important;
+          }
+
+          input,
+          select,
+          button {
+            max-width: 100% !important;
           }
         }
 
