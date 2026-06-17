@@ -49,6 +49,54 @@ function getYouTubeEmbedUrl(url: string) {
 
 
 
+
+function getMessageStyle(message: string = "") {
+  const value = message.toLowerCase();
+
+  if (
+    value.includes("access granted") ||
+    value.includes("success") ||
+    value.includes("verified")
+  ) {
+    return {
+      background: "#ECFDF5",
+      border: "1px solid #BBF7D0",
+      color: "#166534",
+      fontWeight: 900,
+      padding: "12px 16px",
+      borderRadius: 16,
+      marginTop: 16,
+    };
+  }
+
+  if (
+    value.includes("sent") ||
+    value.includes("sending") ||
+    value.includes("pending") ||
+    value.includes("wait")
+  ) {
+    return {
+      background: "#FFF7ED",
+      border: "1px solid #FED7AA",
+      color: "#C2410C",
+      fontWeight: 900,
+      padding: "12px 16px",
+      borderRadius: 16,
+      marginTop: 16,
+    };
+  }
+
+  return {
+    background: "#FEF2F2",
+    border: "1px solid #FECACA",
+    color: "#B91C1C",
+    fontWeight: 900,
+    padding: "12px 16px",
+    borderRadius: 16,
+    marginTop: 16,
+  };
+}
+
 function getStatusStyle(status: string = "") {
   const value = status.toLowerCase();
 
@@ -362,7 +410,7 @@ export default function MemberHubPage() {
               )}
             </div>
 
-            {message && <p style={notice}>{message}</p>}
+            {message && <p style={getMessageStyle(message)}>{message}</p>}
           </section>
         </div>
       </main>
