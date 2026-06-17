@@ -69,6 +69,10 @@ function doPost(e) {
       return json_(getDocuments_());
     }
 
+    if (action === "getMembersDirectory") {
+      return json_(getMembersDirectory_());
+    }
+
     if (action === "setupMemberHubSheets") {
       return json_(setupMemberHubSheets_());
     }
@@ -1560,4 +1564,52 @@ function sheetToObjects_(ss, sheetName) {
   }
 
   return rows;
+}
+
+
+function getMembersDirectory_() {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getOrCreateSheet_(ss, "Members_Main");
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length < 2) {
+    return { success: true, members: [] };
+  }
+
+  const headers = values[0].map(h => String(h || "").trim().toLowerCase());
+
+  const idIndex = headers.indexOf("member id");
+  const nameIndex = headers.indexOf("full name");
+  const initialVoiceIndex = headers.indexOf("initial voice type");
+  const finalVoiceIndex = headers.indexOf("final voice type");
+  const photoIndex = headers.indexOf("profile photo url");
+  const statusIndex = headers.indexOf("member status");
+  const joinIndex = headers.indexOf("join date");
+
+  const members = [];
+
+  for (let i = 1; i < values.length; i++) {
+    const status = statusIndex !== -1 ? String(values[i][statusIndex] || "") : "";
+
+    if (status && status.toLowerCase() !== "active") continue;
+
+    members.push({
+      memberId: idIndex !== -1 ? values[i][idIndex] : "",
+      fullName: nameIndex !== -1 ? values[i][nameIndex] : "",
+      voicePart:
+        finalVoiceIndex !== -1 && values[i][finalVoiceIndex]
+          ? values[i][finalVoiceIndex]
+          : initialVoiceIndex !== -1
+            ? values[i][initialVoiceIndex]
+            : "",
+      profilePhotoUrl: photoIndex !== -1 ? values[i][photoIndex] : "",
+      joinDate: joinIndex !== -1 ? values[i][joinIndex] : "",
+      role: "Member",
+    });
+  }
+
+  return {
+    success: true,
+    members,
+  };
 }

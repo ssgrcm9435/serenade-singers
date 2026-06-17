@@ -50,6 +50,7 @@ export default function MemberHubPage() {
   const [events, setEvents] = useState<HubItem[]>([]);
   const [financialReports, setFinancialReports] = useState<HubItem[]>([]);
   const [documents, setDocuments] = useState<HubItem[]>([]);
+  const [membersDirectory, setMembersDirectory] = useState<HubItem[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -77,13 +78,14 @@ export default function MemberHubPage() {
   async function loadHubData(type: "Member" | "Volunteer") {
     if (!apiUrl) return;
 
-    const [videoData, announcementData, eventData, financeData, documentData] =
+    const [videoData, announcementData, eventData, financeData, documentData, membersData] =
       await Promise.all([
         post("getLearningVideos", { audience: type }),
         post("getAnnouncements"),
         post("getEvents"),
         post("getFinancialReports"),
         post("getDocuments"),
+        post("getMembersDirectory"),
       ]);
 
     if (videoData.success) setVideos(videoData.videos || []);
@@ -91,6 +93,7 @@ export default function MemberHubPage() {
     if (eventData.success) setEvents(eventData.items || []);
     if (financeData.success) setFinancialReports(financeData.items || []);
     if (documentData.success) setDocuments(documentData.items || []);
+    if (membersData.success) setMembersDirectory(membersData.members || []);
   }
 
   async function verifyAccess() {
@@ -308,7 +311,20 @@ export default function MemberHubPage() {
 
           {activeSection === "Members Directory" && (
             <Section title="Members Directory">
-              <p style={muted}>Members Directory will be connected in the next update.</p>
+              {membersDirectory.length === 0 ? (
+                <Empty />
+              ) : (
+                <div style={grid}>
+                  {membersDirectory.map((m, i) => (
+                    <article key={i} style={infoCard}>
+                      <h4 style={infoTitle}>{m.fullName}</h4>
+                      <p style={metaText}>{m.memberId}</p>
+                      <p style={muted}>Voice Part: {m.voicePart || "-"}</p>
+                      <p style={muted}>Role: {m.role || "Member"}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
             </Section>
           )}
 
