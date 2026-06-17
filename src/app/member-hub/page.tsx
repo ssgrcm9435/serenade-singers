@@ -1,5 +1,11 @@
 "use client";
 
+const KBZPAY_INFO = {
+  name: "Aung Bhone Myat",
+  phone: "09425096424",
+  qr: "https://drive.google.com/uc?export=view&id=1P1IDKg-IqNaW9Ym0-iIGbXJMFPDLYj8z",
+};
+
 import { useEffect, useState } from "react";
 
 type UserInfo = {
