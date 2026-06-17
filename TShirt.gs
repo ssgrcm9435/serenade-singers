@@ -1545,12 +1545,60 @@ function buildSerenadeEmail_(title, contentHtml) {
 function getAdminDashboardData_() {
   const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
 
+  const members = sheetToObjects_(ss, "Members_Main");
+  const volunteers = sheetToObjects_(ss, "Volunteer_Applications");
+  const shirtOrders = sheetToObjects_(ss, "ShirtOrders");
+  const payments = sheetToObjects_(ss, "Payments");
+
+  const enhancedShirtOrders = shirtOrders.map(function(order) {
+    const orderGmail = normalizeEmail_(order["Gmail"] || "");
+    const orderId = String(order["Order ID"] || "").trim();
+
+    const payment = payments.find(function(p) {
+      const paymentGmail = normalizeEmail_(p["Gmail"] || "");
+      const project = String(p["Project"] || "").toLowerCase();
+
+      return (
+        paymentGmail === orderGmail &&
+        (
+          project.indexOf("t-shirt") !== -1 ||
+          project.indexOf(orderId.toLowerCase()) !== -1
+        )
+      );
+    });
+
+    let paymentStatus = "Pending Payment";
+    let receiptNo = "";
+    let screenshotUrl = "";
+
+    if (payment) {
+      receiptNo = payment["Receipt No"] || "";
+      screenshotUrl = payment["Screenshot URL"] || "";
+
+      const status = String(payment["Payment Status"] || "");
+
+      if (status === "Approved") {
+        paymentStatus = "Payment Completed";
+      } else if (status === "Rejected") {
+        paymentStatus = "Payment Rejected";
+      } else {
+        paymentStatus = "Pending Verification";
+      }
+    }
+
+    order["Payment Status"] = paymentStatus;
+    order["Receipt No"] = receiptNo;
+    order["Screenshot URL"] = screenshotUrl;
+
+    return order;
+  });
+
   return {
     success: true,
-    members: sheetToObjects_(ss, "Members_Main"),
-    volunteers: sheetToObjects_(ss, "Volunteer_Applications"),
-    shirtOrders: sheetToObjects_(ss, "ShirtOrders"),
-    payments: sheetToObjects_(ss, "Payments"),
+    members: members,
+    volunteers: volunteers,
+    shirtOrders: enhancedShirtOrders,
+    payments: payments,
     financialReports: sheetToObjects_(ss, "FinancialReports"),
     announcements: sheetToObjects_(ss, "Announcements"),
     events: sheetToObjects_(ss, "Events"),
