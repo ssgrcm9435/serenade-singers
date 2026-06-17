@@ -21,6 +21,17 @@ type LearningVideo = {
 
 type HubItem = Record<string, any>;
 
+const menuItems = [
+  "Overview",
+  "Announcements",
+  "Events",
+  "Learning Center",
+  "Members Directory",
+  "Financial Transparency",
+  "Documents",
+  "Official T-Shirt",
+];
+
 function getYouTubeEmbedUrl(url: string) {
   if (!url) return "";
   const watchMatch = url.match(/[?&]v=([^&]+)/);
@@ -33,7 +44,7 @@ function getYouTubeEmbedUrl(url: string) {
 export default function MemberHubPage() {
   const [gmail, setGmail] = useState("");
   const [user, setUser] = useState<UserInfo | null>(null);
-  const [activeSection, setActiveSection] = useState("Announcements");
+  const [activeSection, setActiveSection] = useState("Overview");
   const [videos, setVideos] = useState<LearningVideo[]>([]);
   const [announcements, setAnnouncements] = useState<HubItem[]>([]);
   const [events, setEvents] = useState<HubItem[]>([]);
@@ -116,18 +127,26 @@ export default function MemberHubPage() {
     return acc;
   }, {});
 
-  return (
-    <main style={main}>
-      <div style={container}>
-        <p style={eyebrow}>SERENADE SINGERS</p>
-        <h1 style={title}>Members Hub</h1>
-        <p style={subtitle}>
-          A private community hub for registered Serenade Singers Members and Volunteers.
-        </p>
+  const totalIncome = financialReports.reduce((sum, f) => sum + Number(f.income || 0), 0);
+  const totalExpense = financialReports.reduce((sum, f) => sum + Number(f.expense || 0), 0);
+  const balance = totalIncome - totalExpense;
 
-        {!user?.verified && (
+  if (!user?.verified) {
+    return (
+      <main style={main}>
+        <div style={loginWrap}>
+          <p style={eyebrow}>SERENADE SINGERS</p>
+          <h1 style={title}>Members Hub</h1>
+          <p style={subtitle}>
+            Private community portal for registered Serenade Singers Members and Volunteers.
+          </p>
+
           <section style={card}>
             <h2 style={sectionTitle}>Verify Access</h2>
+            <p style={muted}>
+              Please enter your registered Gmail address to access the Members Hub.
+            </p>
+
             <div style={row}>
               <input
                 value={gmail}
@@ -139,153 +158,284 @@ export default function MemberHubPage() {
                 {loading ? "Verifying..." : "Verify Access"}
               </button>
             </div>
+
+            {message && <p style={notice}>{message}</p>}
           </section>
-        )}
+        </div>
+      </main>
+    );
+  }
 
-        {message && <p style={notice}>{message}</p>}
+  return (
+    <main style={main}>
+      <div className="member-hub-shell" style={shell}>
+        <aside style={sidebar}>
+          <p style={sidebarEyebrow}>SERENADE SINGERS</p>
+          <h2 style={sidebarTitle}>Members Hub</h2>
 
-        {user?.verified && (
-          <>
-            <section style={card}>
-              <h2 style={sectionTitle}>✓ Access Granted</h2>
-              <p><b>ID:</b> {user.memberId}</p>
-              <p><b>Name:</b> {user.fullName}</p>
-              <p><b>Type:</b> {user.type}</p>
-              <p><b>Voice Part:</b> {user.voicePart || "-"}</p>
-            </section>
+          <div style={profileCard}>
+            <div style={avatar}>
+              {user.fullName?.charAt(0) || "S"}
+            </div>
+            <div>
+              <p style={profileName}>{user.fullName}</p>
+              <p style={profileMeta}>{user.memberId}</p>
+              <p style={profileMeta}>{user.type} · {user.voicePart || "-"}</p>
+            </div>
+          </div>
 
-            <section style={card}>
-              <h2 style={sectionTitle}>Members Hub Menu</h2>
-              <select value={activeSection} onChange={(e) => setActiveSection(e.target.value)} style={{ ...input, width: "100%", marginTop: 18 }}>
-                <option>Announcements</option>
-                <option>Events</option>
-                <option>Learning Center</option>
-                <option>Members Directory</option>
-                <option>Financial Transparency</option>
-                <option>Documents</option>
-                <option>Official T-Shirt</option>
-              </select>
+          <nav style={nav}>
+            {menuItems.map((item) => (
+              <button
+                key={item}
+                onClick={() => setActiveSection(item)}
+                style={{
+                  ...navButton,
+                  ...(activeSection === item ? navButtonActive : {}),
+                }}
+              >
+                {item}
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-              {activeSection === "Announcements" && (
-                <HubSection title="Announcements">
-                  {announcements.length === 0 ? <Empty /> : announcements.map((a, i) => (
-                    <InfoCard key={i} title={a.title} text={a.content} meta={a.category} />
-                  ))}
-                </HubSection>
-              )}
+        <section style={content}>
+          <div style={topBar}>
+            <div>
+              <p style={eyebrow}>MEMBER AREA</p>
+              <h1 style={pageTitle}>{activeSection}</h1>
+            </div>
+            <div style={statusBadge}>Access Granted</div>
+          </div>
 
-              {activeSection === "Events" && (
-                <HubSection title="Events">
-                  {events.length === 0 ? <Empty /> : events.map((e, i) => (
-                    <InfoCard key={i} title={e.eventName} text={e.description} meta={`${e.eventDate || ""} ${e.eventTime || ""} · ${e.location || ""}`} />
-                  ))}
-                </HubSection>
-              )}
+          {activeSection === "Overview" && (
+            <>
+              <section style={summaryGrid}>
+                <Stat title="Announcements" value={announcements.length} />
+                <Stat title="Events" value={events.length} />
+                <Stat title="Learning Videos" value={videos.length} />
+                <Stat title="Documents" value={documents.length} />
+                <Stat title="Income" value={`${totalIncome.toLocaleString()} Ks`} />
+                <Stat title="Expense" value={`${totalExpense.toLocaleString()} Ks`} />
+                <Stat title="Balance" value={`${balance.toLocaleString()} Ks`} />
+              </section>
 
-              {activeSection === "Financial Transparency" && (
-                <HubSection title="Financial Transparency">
-                  {financialReports.length === 0 ? <Empty /> : financialReports.map((f, i) => (
-                    <InfoCard key={i} title={f.description} text={f.purpose} meta={`Income: ${f.income || 0} Ks · Expense: ${f.expense || 0} Ks · Balance: ${f.balance || 0} Ks`} />
-                  ))}
-                </HubSection>
-              )}
+              <section style={card}>
+                <h2 style={sectionTitle}>Welcome, {user.fullName}</h2>
+                <p style={muted}>
+                  This is your private Serenade Singers Members Hub. Use the sidebar to access announcements,
+                  events, learning resources, financial transparency, documents, and official T-shirt services.
+                </p>
+              </section>
+            </>
+          )}
 
-              {activeSection === "Documents" && (
-                <HubSection title="Documents">
-                  {documents.length === 0 ? <Empty /> : documents.map((d, i) => (
-                    <article key={i} style={infoCard}>
-                      <h4 style={infoTitle}>{d.title}</h4>
-                      <p style={muted}>{d.description}</p>
-                      <a href={d.fileUrl} target="_blank" rel="noopener noreferrer" style={{ ...button, display: "inline-block", marginTop: 14, textDecoration: "none" }}>
-                        Open Document
-                      </a>
-                    </article>
-                  ))}
-                </HubSection>
-              )}
+          {activeSection === "Announcements" && (
+            <Section title="Announcements">
+              {announcements.length === 0 ? <Empty /> : announcements.map((a, i) => (
+                <InfoCard key={i} title={a.title} text={a.content} meta={a.category} />
+              ))}
+            </Section>
+          )}
 
-              {activeSection === "Members Directory" && (
-                <HubSection title="Members Directory">
-                  <p style={muted}>Members Directory will be connected in the next update.</p>
-                </HubSection>
-              )}
+          {activeSection === "Events" && (
+            <Section title="Events">
+              {events.length === 0 ? <Empty /> : events.map((e, i) => (
+                <InfoCard
+                  key={i}
+                  title={e.eventName}
+                  text={e.description}
+                  meta={`${e.eventDate || ""} ${e.eventTime || ""} · ${e.location || ""}`}
+                />
+              ))}
+            </Section>
+          )}
 
-              {activeSection === "Official T-Shirt" && (
-                <HubSection title="Official T-Shirt">
-                  <p style={muted}>Access Official T-Shirt registration and payment information here.</p>
-                  <a href="/tshirt-registration" style={{ ...button, display: "inline-block", marginTop: 16, textDecoration: "none" }}>
-                    Open T-Shirt Registration
+          {activeSection === "Financial Transparency" && (
+            <Section title="Financial Transparency">
+              {financialReports.length === 0 ? <Empty /> : financialReports.map((f, i) => (
+                <InfoCard
+                  key={i}
+                  title={f.description}
+                  text={f.purpose}
+                  meta={`Income: ${f.income || 0} Ks · Expense: ${f.expense || 0} Ks · Balance: ${f.balance || 0} Ks`}
+                />
+              ))}
+            </Section>
+          )}
+
+          {activeSection === "Documents" && (
+            <Section title="Documents">
+              {documents.length === 0 ? <Empty /> : documents.map((d, i) => (
+                <article key={i} style={infoCard}>
+                  <h4 style={infoTitle}>{d.title}</h4>
+                  <p style={metaText}>{d.category}</p>
+                  <p style={muted}>{d.description}</p>
+                  <a
+                    href={d.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ ...button, display: "inline-block", marginTop: 14, textDecoration: "none" }}
+                  >
+                    Open Document
                   </a>
-                </HubSection>
-              )}
+                </article>
+              ))}
+            </Section>
+          )}
 
-              {activeSection === "Learning Center" && (
-                <HubSection title="Learning Center">
-                  {videos.length === 0 ? <Empty /> : Object.entries(groupedVideos).map(([category, items]) => (
-                    <div key={category} style={{ marginTop: 28 }}>
-                      <h4 style={{ fontSize: 24, fontWeight: 900 }}>{category}</h4>
-                      <div style={grid}>
-                        {items.map((video) => (
-                          <article key={video.title} style={infoCard}>
-                            <div style={videoBox}>
-                              <iframe src={getYouTubeEmbedUrl(video.youtubeUrl)} title={video.title} allowFullScreen style={iframe} />
-                            </div>
-                            <h5 style={infoTitle}>{video.title}</h5>
-                            <p style={muted}>{video.description}</p>
-                          </article>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </HubSection>
-              )}
-            </section>
-          </>
-        )}
+          {activeSection === "Learning Center" && (
+            <Section title="Learning Center">
+              {videos.length === 0 ? <Empty /> : Object.entries(groupedVideos).map(([category, items]) => (
+                <div key={category} style={{ marginTop: 28 }}>
+                  <h4 style={categoryTitle}>{category}</h4>
+                  <div style={grid}>
+                    {items.map((video) => (
+                      <article key={video.title} style={infoCard}>
+                        <div style={videoBox}>
+                          <iframe src={getYouTubeEmbedUrl(video.youtubeUrl)} title={video.title} allowFullScreen style={iframe} />
+                        </div>
+                        <h5 style={infoTitle}>{video.title}</h5>
+                        <p style={muted}>{video.description}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </Section>
+          )}
 
-        {loading && <div style={overlay}><div style={spinner} /><h2>Verifying Access...</h2></div>}
+          {activeSection === "Members Directory" && (
+            <Section title="Members Directory">
+              <p style={muted}>Members Directory will be connected in the next update.</p>
+            </Section>
+          )}
+
+          {activeSection === "Official T-Shirt" && (
+            <Section title="Official T-Shirt">
+              <p style={muted}>Access Official T-Shirt registration and payment information here.</p>
+              <a
+                href="/tshirt-registration"
+                style={{ ...button, display: "inline-block", marginTop: 16, textDecoration: "none" }}
+              >
+                Open T-Shirt Registration
+              </a>
+            </Section>
+          )}
+        </section>
       </div>
+
+      {loading && <div style={overlay}><div style={spinner} /><h2>Verifying Access...</h2></div>}
 
       <style jsx global>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+
+        @media (max-width: 860px) {
+          .member-hub-shell {
+            grid-template-columns: 1fr !important;
+          }
+        }
       `}</style>
     </main>
   );
 }
 
-function HubSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return <div style={hubSection}><h3 style={hubTitle}>{title}</h3><div style={{ marginTop: 18 }}>{children}</div></div>;
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={card}>
+      <h2 style={sectionTitle}>{title}</h2>
+      <div style={{ marginTop: 18 }}>{children}</div>
+    </section>
+  );
 }
 
 function InfoCard({ title, text, meta }: { title?: string; text?: string; meta?: string }) {
-  return <article style={infoCard}><h4 style={infoTitle}>{title || "-"}</h4>{meta && <p style={metaText}>{meta}</p>}<p style={muted}>{text || ""}</p></article>;
+  return (
+    <article style={infoCard}>
+      <h4 style={infoTitle}>{title || "-"}</h4>
+      {meta && <p style={metaText}>{meta}</p>}
+      <p style={muted}>{text || ""}</p>
+    </article>
+  );
+}
+
+function Stat({ title, value }: { title: string; value: string | number }) {
+  return (
+    <article style={statCard}>
+      <p style={statLabel}>{title}</p>
+      <h3 style={statValue}>{value}</h3>
+    </article>
+  );
 }
 
 function Empty() {
   return <p style={muted}>No data available yet.</p>;
 }
 
-const main = { minHeight: "100vh", background: "#faf8f3", color: "#061A2F" };
-const container = { maxWidth: 1120, margin: "0 auto", padding: "56px 24px" };
-const eyebrow = { fontWeight: 800, letterSpacing: "0.18em", color: "#C9A24A" };
-const title = { marginTop: 16, fontSize: 44, lineHeight: 1.1, fontWeight: 900 };
+const main = { minHeight: "100vh", background: "#f8f6f2", color: "#061A2F" };
+const loginWrap = { maxWidth: 900, margin: "0 auto", padding: "72px 24px" };
+const shell = {
+  display: "grid",
+  gridTemplateColumns: "300px 1fr",
+  gap: 28,
+  maxWidth: 1380,
+  margin: "0 auto",
+  padding: "32px 24px",
+} as React.CSSProperties;
+const sidebar = {
+  position: "sticky" as const,
+  top: 24,
+  alignSelf: "start",
+  background: "#061A2F",
+  color: "white",
+  borderRadius: 30,
+  padding: 24,
+  minHeight: "calc(100vh - 64px)",
+  boxShadow: "0 22px 60px rgba(6,26,47,0.18)",
+};
+const content = { minWidth: 0 };
+const eyebrow = { fontWeight: 900, letterSpacing: "0.18em", color: "#C9A24A", fontSize: 13 };
+const title = { marginTop: 16, fontSize: 46, lineHeight: 1.1, fontWeight: 950 };
+const pageTitle = { marginTop: 8, fontSize: 42, lineHeight: 1.1, fontWeight: 950 };
 const subtitle = { marginTop: 16, fontSize: 17, color: "#475569", maxWidth: 760 };
-const card = { background: "white", border: "1px solid #e2e8f0", borderRadius: 28, padding: 28, marginTop: 32, boxShadow: "0 18px 45px rgba(15,23,42,0.06)" };
-const sectionTitle = { fontSize: 30, fontWeight: 900 };
+const card = {
+  background: "white",
+  border: "1px solid #e2e8f0",
+  borderRadius: 28,
+  padding: 28,
+  marginTop: 28,
+  boxShadow: "0 18px 45px rgba(15,23,42,0.06)",
+};
+const sectionTitle = { fontSize: 30, fontWeight: 950 };
 const row = { display: "flex", gap: 12, flexWrap: "wrap" as const, marginTop: 18 };
 const input = { border: "1px solid #cbd5e1", borderRadius: 16, padding: "14px 16px", fontSize: 15, flex: 1, minWidth: 260 };
 const button = { background: "#061A2F", color: "white", border: 0, borderRadius: 16, padding: "14px 22px", fontWeight: 900, cursor: "pointer" };
-const notice = { marginTop: 16, fontWeight: 800 };
-const hubSection = { marginTop: 26, padding: 24, borderRadius: 22, background: "#f8fafc", border: "1px solid #e2e8f0" };
-const hubTitle = { fontSize: 26, fontWeight: 900 };
+const muted = { marginTop: 8, color: "#64748b", lineHeight: 1.8 };
+const notice = { marginTop: 16, fontWeight: 800, color: "#b91c1c" };
+const sidebarEyebrow = { color: "#C9A24A", fontWeight: 900, letterSpacing: "0.15em", fontSize: 12 };
+const sidebarTitle = { marginTop: 8, fontSize: 28, fontWeight: 950 };
+const profileCard = { display: "flex", gap: 14, alignItems: "center", marginTop: 24, padding: 16, borderRadius: 22, background: "rgba(255,255,255,0.08)" };
+const avatar = { width: 48, height: 48, borderRadius: "50%", background: "#C9A24A", color: "#061A2F", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 950, fontSize: 22 };
+const profileName = { margin: 0, fontWeight: 900 };
+const profileMeta = { margin: "4px 0 0", color: "#cbd5e1", fontSize: 13 };
+const nav = { display: "grid", gap: 8, marginTop: 24 };
+const navButton = { textAlign: "left" as const, border: 0, borderRadius: 16, padding: "13px 14px", background: "transparent", color: "#e2e8f0", fontWeight: 800, cursor: "pointer" };
+const navButtonActive = { background: "#C9A24A", color: "#061A2F" };
+const topBar = { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, background: "white", border: "1px solid #e2e8f0", borderRadius: 28, padding: 28, boxShadow: "0 18px 45px rgba(15,23,42,0.06)" };
+const statusBadge = { background: "#ecfdf5", color: "#047857", border: "1px solid #bbf7d0", borderRadius: 999, padding: "10px 16px", fontWeight: 900 };
+const summaryGrid = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16, marginTop: 28 };
+const statCard = { background: "white", border: "1px solid #e2e8f0", borderRadius: 24, padding: 22, boxShadow: "0 12px 30px rgba(15,23,42,0.04)" };
+const statLabel = { margin: 0, color: "#64748b", fontWeight: 800 };
+const statValue = { margin: "10px 0 0", fontSize: 24, fontWeight: 950 };
+const infoCard = { padding: 20, borderRadius: 22, border: "1px solid #e2e8f0", background: "#f8fafc", marginTop: 14 };
+const infoTitle = { margin: 0, fontSize: 20, fontWeight: 950 };
+const metaText = { marginTop: 8, color: "#C9A24A", fontWeight: 900 };
+const categoryTitle = { fontSize: 24, fontWeight: 950 };
 const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginTop: 16 };
-const infoCard = { padding: 18, borderRadius: 22, border: "1px solid #e2e8f0", background: "white", marginTop: 14 };
-const infoTitle = { marginTop: 0, fontSize: 19, fontWeight: 900 };
-const muted = { marginTop: 8, color: "#64748b", lineHeight: 1.7 };
-const metaText = { marginTop: 8, color: "#C9A24A", fontWeight: 800 };
 const videoBox = { position: "relative" as const, width: "100%", paddingTop: "56.25%", borderRadius: 18, overflow: "hidden", background: "#e2e8f0" };
 const iframe = { position: "absolute" as const, inset: 0, width: "100%", height: "100%", border: 0 };
 const overlay = { position: "fixed" as const, inset: 0, background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" as const, zIndex: 99999, gap: 16 };
