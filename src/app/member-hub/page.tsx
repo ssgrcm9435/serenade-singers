@@ -350,7 +350,8 @@ export default function MemberHubPage() {
                 <Stat title="Announcements" value={announcements.length} />
                 <Stat title="Events" value={events.length} />
                 <Stat title="Learning Videos" value={videos.length} />
-                <Stat title="Documents" value={documents.length} />              </section>
+                <Stat title="Documents" value={documents.length} />
+              </section>
 
               <section style={card}>
                 <h2 style={sectionTitle}>Welcome, {user.fullName}</h2>
