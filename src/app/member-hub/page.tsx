@@ -519,31 +519,7 @@ export default function MemberHubPage() {
                   ))}
                 </div>
               )}
-
-              <div style={infoCard}>
-                <h4 style={infoTitle}>KBZPay Payment Information</h4>
-                <p style={muted}><b>Account Name:</b> {KBZPAY_INFO.name}</p>
-                <p style={muted}><b>Phone Number:</b> {KBZPAY_INFO.phone}</p>
-
-                <img
-                  src={KBZPAY_INFO.qr}
-                  alt="KBZPay QR Code"
-                  style={{
-                    width: 260,
-                    maxWidth: "100%",
-                    borderRadius: 16,
-                    border: "1px solid #e2e8f0",
-                    marginTop: 14,
-                    background: "white",
-                  }}
-                />
-
-                <p style={muted}>
-                  Please transfer the correct amount and upload your payment screenshot below for verification.
-                </p>
-              </div>
-
-              <div style={infoCard}>
+<div style={infoCard}>
                 <h4 style={infoTitle}>Submit T-Shirt Payment</h4>
                 <p style={muted}>
                   If your payment has not been submitted yet, please upload your payment screenshot here.
@@ -580,6 +556,32 @@ export default function MemberHubPage() {
                   <option>Cash</option>
                   <option>Bank Transfer</option>
                 </select>
+
+
+                {paymentMethod === "KBZPay" && (
+                  <div style={{ ...infoCard, background: "#f8fafc" }}>
+                    <h4 style={infoTitle}>KBZPay Payment Information</h4>
+                    <p style={muted}><b>Account Name:</b> {KBZPAY_INFO.name}</p>
+                    <p style={muted}><b>Phone Number:</b> {KBZPAY_INFO.phone}</p>
+
+                    <img
+                      src={KBZPAY_INFO.qr}
+                      alt="KBZPay QR Code"
+                      style={{
+                        width: 260,
+                        maxWidth: "100%",
+                        borderRadius: 16,
+                        border: "1px solid #e2e8f0",
+                        marginTop: 14,
+                        background: "white",
+                      }}
+                    />
+
+                    <p style={muted}>
+                      Please transfer to this KBZPay account and upload your payment screenshot.
+                    </p>
+                  </div>
+                )}
 
                 <input
                   type="file"
