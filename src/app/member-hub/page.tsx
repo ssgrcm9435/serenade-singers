@@ -43,6 +43,8 @@ function getYouTubeEmbedUrl(url: string) {
 
 export default function MemberHubPage() {
   const [gmail, setGmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [activeSection, setActiveSection] = useState("Overview");
   const [videos, setVideos] = useState<LearningVideo[]>([]);
@@ -115,15 +117,55 @@ export default function MemberHubPage() {
     } catch {}
   }
 
-  async function verifyAccess() {
+  async function sendAccessCode() {
     setMessage("");
-    setUser(null);
 
     if (!gmail.trim()) return setMessage("Please enter your registered Gmail address.");
     if (!apiUrl) return setMessage("Apps Script URL is missing.");
 
     setLoading(true);
+
     try {
+      const accessData = await post("checkMemberOrVolunteer", { gmail });
+
+      if (!accessData.verified) {
+        setMessage(accessData.message || "Access denied.");
+        return;
+      }
+
+      const otpData = await post("sendOtp", { gmail });
+
+      if (!otpData.success) {
+        setMessage(otpData.message || "Unable to send verification code.");
+        return;
+      }
+
+      setOtpSent(true);
+      setMessage("Verification code sent to your Gmail.");
+    } catch {
+      setMessage("Unable to send verification code.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verifyAccess() {
+    setMessage("");
+    setUser(null);
+
+    if (!gmail.trim()) return setMessage("Please enter your registered Gmail address.");
+    if (!otp.trim()) return setMessage("Please enter your verification code.");
+    if (!apiUrl) return setMessage("Apps Script URL is missing.");
+
+    setLoading(true);
+    try {
+      const otpData = await post("verifyOtp", { gmail, otp });
+
+      if (!otpData.success) {
+        setMessage(otpData.message || "Invalid verification code.");
+        return;
+      }
+
       const verifyData = await post("checkMemberOrVolunteer", { gmail });
 
       if (!verifyData.verified) {
@@ -231,9 +273,25 @@ export default function MemberHubPage() {
                 placeholder="Enter registered Gmail address"
                 style={input}
               />
-              <button onClick={verifyAccess} disabled={loading} style={button}>
-                {loading ? "Verifying..." : "Verify Access"}
-              </button>
+
+              {!otpSent ? (
+                <button onClick={sendAccessCode} disabled={loading} style={button}>
+                  {loading ? "Sending..." : "Send Verification Code"}
+                </button>
+              ) : (
+                <>
+                  <input
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter verification code"
+                    style={input}
+                  />
+
+                  <button onClick={verifyAccess} disabled={loading} style={button}>
+                    {loading ? "Verifying..." : "Verify Access"}
+                  </button>
+                </>
+              )}
             </div>
 
             {message && <p style={notice}>{message}</p>}
