@@ -538,6 +538,18 @@ export default function MemberHubPage() {
                   ))}
                 </select>
 
+                {!selectedOrderId && (
+                  <p style={{ ...muted, color: "#ca8a04", fontWeight: 900 }}>
+                    Please select an order first before submitting payment.
+                  </p>
+                )}
+
+                {selectedOrderId && (
+                  <p style={{ ...muted, color: "#047857", fontWeight: 900 }}>
+                    Order selected. You may now choose payment method and upload screenshot.
+                  </p>
+                )}
+
                 <input
                   value={amountPaid}
                   onChange={(e) => setAmountPaid(e.target.value)}
@@ -548,7 +560,13 @@ export default function MemberHubPage() {
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
-                  style={{ ...input, width: "100%", marginTop: 14 }}
+                  disabled={!selectedOrderId}
+                  style={{
+                    ...input,
+                    width: "100%",
+                    marginTop: 14,
+                    opacity: selectedOrderId ? 1 : 0.55,
+                  }}
                 >
                   <option>KBZPay</option>
                   <option>Wave Pay</option>
@@ -558,7 +576,7 @@ export default function MemberHubPage() {
                 </select>
 
 
-                {paymentMethod === "KBZPay" && (
+                {selectedOrderId && paymentMethod === "KBZPay" && (
                   <div style={{ ...infoCard, background: "#f8fafc" }}>
                     <h4 style={infoTitle}>KBZPay Payment Information</h4>
                     <p style={muted}><b>Account Name:</b> {KBZPAY_INFO.name}</p>
@@ -587,12 +605,20 @@ export default function MemberHubPage() {
                   type="file"
                   accept="image/png,image/jpeg,application/pdf"
                   onChange={(e) => handlePaymentFile(e.target.files?.[0] || null)}
-                  style={{ marginTop: 14 }}
+                  disabled={!selectedOrderId}
+                  style={{ marginTop: 14, opacity: selectedOrderId ? 1 : 0.55 }}
                 />
 
                 <button
                   onClick={submitPayment}
-                  style={{ ...button, display: "inline-block", marginTop: 16 }}
+                  disabled={!selectedOrderId}
+                  style={{
+                    ...button,
+                    display: "inline-block",
+                    marginTop: 16,
+                    opacity: selectedOrderId ? 1 : 0.55,
+                    cursor: selectedOrderId ? "pointer" : "not-allowed",
+                  }}
                 >
                   Submit Payment
                 </button>
