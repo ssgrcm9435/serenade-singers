@@ -54,6 +54,11 @@ export default function MemberHubPage() {
   const [membersDirectory, setMembersDirectory] = useState<HubItem[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState("");
+  const [amountPaid, setAmountPaid] = useState("18000");
+  const [paymentMethod, setPaymentMethod] = useState("KBZPay");
+  const [paymentScreenshot, setPaymentScreenshot] = useState("");
+  const [paymentMessage, setPaymentMessage] = useState("");
 
   const apiUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || "";
 
@@ -133,6 +138,60 @@ export default function MemberHubPage() {
       setMessage("Access granted.");
     } catch {
       setMessage("Unable to verify access. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
+  function handlePaymentFile(file: File | null) {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPaymentScreenshot(String(reader.result || ""));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function submitPayment() {
+    setPaymentMessage("");
+
+    if (!user?.gmail) {
+      setPaymentMessage("User not verified.");
+      return;
+    }
+
+    if (!selectedOrderId) {
+      setPaymentMessage("Please select an order.");
+      return;
+    }
+
+    if (!paymentScreenshot) {
+      setPaymentMessage("Please upload payment screenshot.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const data = await post("submitTshirtPayment", {
+        gmail: user.gmail,
+        orderId: selectedOrderId,
+        amountPaid,
+        paymentMethod,
+        paymentScreenshot,
+      });
+
+      if (!data.success) {
+        setPaymentMessage(data.message || "Payment submission failed.");
+        return;
+      }
+
+      setPaymentMessage("Payment submitted successfully. Pending verification.");
+      await loadShirtHistory(user.gmail);
+    } catch {
+      setPaymentMessage("Unable to submit payment.");
     } finally {
       setLoading(false);
     }
@@ -385,10 +444,71 @@ export default function MemberHubPage() {
                           Amount Paid: <b>{Number(order.amountPaid || 0).toLocaleString()} MMK</b>
                         </p>
                       )}
+
+                      {order.paymentMethod && (
+                        <p style={muted}>
+                          Payment Method: <b>{order.paymentMethod}</b>
+                        </p>
+                      )}
                     </article>
                   ))}
                 </div>
               )}
+
+              <div style={infoCard}>
+                <h4 style={infoTitle}>Submit T-Shirt Payment</h4>
+                <p style={muted}>
+                  If your payment has not been submitted yet, please upload your payment screenshot here.
+                </p>
+
+                <select
+                  value={selectedOrderId}
+                  onChange={(e) => setSelectedOrderId(e.target.value)}
+                  style={{ ...input, width: "100%", marginTop: 14 }}
+                >
+                  <option value="">Select T-Shirt Order</option>
+                  {shirtHistory.map((order, i) => (
+                    <option key={i} value={order.orderId}>
+                      {order.orderId} · Size {order.size} · Qty {order.quantity}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  value={amountPaid}
+                  onChange={(e) => setAmountPaid(e.target.value)}
+                  placeholder="Amount Paid"
+                  style={{ ...input, width: "100%", marginTop: 14 }}
+                />
+
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  style={{ ...input, width: "100%", marginTop: 14 }}
+                >
+                  <option>KBZPay</option>
+                  <option>Wave Pay</option>
+                  <option>AYA Pay</option>
+                  <option>Cash</option>
+                  <option>Bank Transfer</option>
+                </select>
+
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,application/pdf"
+                  onChange={(e) => handlePaymentFile(e.target.files?.[0] || null)}
+                  style={{ marginTop: 14 }}
+                />
+
+                <button
+                  onClick={submitPayment}
+                  style={{ ...button, display: "inline-block", marginTop: 16 }}
+                >
+                  Submit Payment
+                </button>
+
+                {paymentMessage && <p style={notice}>{paymentMessage}</p>}
+              </div>
 
               <div style={infoCard}>
                 <h4 style={infoTitle}>Register New T-Shirt</h4>

@@ -6,6 +6,7 @@
 const CONFIG = {
   SHEET_ID: "1wRA9SoXG7pB1miEekY37usH0lsBqAeFDgzj2ntH-hWc",
   PHOTO_FOLDER_ID: "1Yvqm9edgnDvqizjqhckcsB1Jyyue--RZ",
+  PAYMENT_FOLDER_ID: "1Yvqm9edgnDvqizjqhckcsB1Jyyue--RZ",
   HERO_LOGO_FILE_ID: "153xz5va0DTaPDPFECsqYSh8DT5HLU27q",
 
   ADMIN_EMAIL: "ssg.rcm9435@gmail.com",
@@ -47,6 +48,10 @@ function doPost(e) {
 
     if (action === "submitShirtOrder") {
       return json_(submitShirtOrder_(body));
+    }
+
+    if (action === "submitTshirtPayment") {
+      return json_(submitTshirtPayment_(body));
     }
 
     if (action === "getLearningVideos") {
@@ -1691,4 +1696,151 @@ function getMemberShirtHistory_(gmail) {
     success: true,
     orders: memberOrders.reverse(),
   };
+}
+
+
+/*******************************************************
+ * T-SHIRT PAYMENT SUBMISSION
+ *******************************************************/
+
+function submitTshirtPayment_(body) {
+  const required = [
+    "gmail",
+    "orderId",
+    "amountPaid",
+    "paymentMethod",
+    "paymentScreenshot",
+  ];
+
+  const missing = required.filter(function(key) {
+    return !body[key];
+  });
+
+  if (missing.length) {
+    return {
+      success: false,
+      message: "Missing required fields: " + missing.join(", "),
+    };
+  }
+
+  const verified = checkMemberOrVolunteer_(body.gmail);
+
+  if (!verified.verified) {
+    return {
+      success: false,
+      message: "Gmail verification failed.",
+    };
+  }
+
+  const amountPaid = Number(body.amountPaid);
+
+  if (!amountPaid || amountPaid <= 0) {
+    return {
+      success: false,
+      message: "Invalid payment amount.",
+    };
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const paymentSheet = getOrCreateSheet_(ss, "Payments");
+
+  setupHeaders_(paymentSheet, [
+    "Created At",
+    "Member ID",
+    "Full Name",
+    "Gmail",
+    "Project",
+    "Amount Paid",
+    "Payment Method",
+    "Screenshot URL",
+    "Receipt No",
+    "Payment Status",
+    "Verified By",
+    "Remarks",
+  ]);
+
+  const screenshotUrl = savePaymentScreenshot_(body, verified.memberId, body.orderId);
+  const receiptNo = generateReceiptNo_(paymentSheet);
+
+  paymentSheet.appendRow([
+    new Date(),
+    verified.memberId,
+    verified.fullName,
+    verified.gmail,
+    "Official T-Shirt Project - " + body.orderId,
+    amountPaid,
+    body.paymentMethod,
+    screenshotUrl,
+    receiptNo,
+    "Pending Verification",
+    "",
+    body.remarks || "",
+  ]);
+
+  try {
+    sendPaymentReceiptEmail_(verified.gmail, {
+      fullName: verified.fullName,
+      receiptNo: receiptNo,
+      project: "Official T-Shirt Project",
+      amount: amountPaid,
+      status: "Pending Verification",
+    });
+  } catch (err) {}
+
+  return {
+    success: true,
+    message: "Payment submitted successfully. Pending verification.",
+    receiptNo: receiptNo,
+    screenshotUrl: screenshotUrl,
+    paymentStatus: "Pending Verification",
+  };
+}
+
+function savePaymentScreenshot_(body, memberId, orderId) {
+  const base64DataUrl = body.paymentScreenshot;
+
+  const match = String(base64DataUrl || "").match(
+    /^data:(image\/png|image\/jpeg|image\/jpg|application\/pdf);base64,(.+)$/
+  );
+
+  if (!match) {
+    throw new Error("Invalid payment screenshot format. Please upload JPG, PNG, or PDF.");
+  }
+
+  const mimeType = match[1] === "image/jpg" ? "image/jpeg" : match[1];
+  const base64 = match[2];
+
+  let ext = "jpg";
+  if (mimeType === "image/png") ext = "png";
+  if (mimeType === "application/pdf") ext = "pdf";
+
+  const fileName =
+    "TShirtPayment_" +
+    sanitizeName_(memberId) +
+    "_" +
+    sanitizeName_(orderId) +
+    "_" +
+    Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyyMMdd_HHmmss") +
+    "." +
+    ext;
+
+  const blob = Utilities.newBlob(
+    Utilities.base64Decode(base64),
+    mimeType,
+    fileName
+  );
+
+  const folder = DriveApp.getFolderById(CONFIG.PAYMENT_FOLDER_ID || CONFIG.PHOTO_FOLDER_ID);
+  const file = folder.createFile(blob);
+  file.setName(fileName);
+
+  return file.getUrl();
+}
+
+function generateReceiptNo_(sheet) {
+  const year = new Date().getFullYear();
+  const lastRow = sheet.getLastRow();
+  const nextNumber = Math.max(1, lastRow);
+
+  return "SSR-" + year + "-" + Utilities.formatString("%05d", nextNumber);
 }
