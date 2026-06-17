@@ -1312,3 +1312,201 @@ function getActiveRows_(sheetName, keys) {
     items,
   };
 }
+
+
+/*******************************************************
+ * ADDITIONAL EMAIL OUTPUTS
+ *******************************************************/
+
+function sendPaymentReceiptEmail_(gmail, data) {
+  const subject = "Serenade Singers Payment Receipt";
+
+  const htmlBody = buildSerenadeEmail_(
+    "Payment Receipt",
+    `
+      <p>Dear ${escapeHtml_(data.fullName || "Member")},</p>
+
+      <p>Your payment has been received and recorded by Serenade Singers.</p>
+
+      <div style="margin:24px 0;padding:22px;border-radius:18px;background:#f8f6f2;border:1px solid #ece7dd;">
+        <p><b>Receipt No:</b> ${escapeHtml_(data.receiptNo || "-")}</p>
+        <p><b>Project:</b> ${escapeHtml_(data.project || "-")}</p>
+        <p><b>Amount:</b> ${escapeHtml_(data.amount || "-")} MMK</p>
+        <p><b>Status:</b> ${escapeHtml_(data.status || "Received")}</p>
+      </div>
+
+      <p>Thank you for your support and contribution.</p>
+    `
+  );
+
+  GmailApp.sendEmail(gmail, subject, "", {
+    htmlBody,
+    name: CONFIG.ORGANIZATION,
+  });
+}
+
+function sendPaymentApprovedEmail_(gmail, data) {
+  const subject = "Serenade Singers Payment Approved";
+
+  const htmlBody = buildSerenadeEmail_(
+    "Payment Approved",
+    `
+      <p>Dear ${escapeHtml_(data.fullName || "Member")},</p>
+
+      <p>Your payment has been successfully verified.</p>
+
+      <div style="margin:24px 0;padding:22px;border-radius:18px;background:#ecfdf5;border:1px solid #bbf7d0;">
+        <p><b>Project:</b> ${escapeHtml_(data.project || "-")}</p>
+        <p><b>Amount:</b> ${escapeHtml_(data.amount || "-")} MMK</p>
+        <p><b>Status:</b> Approved</p>
+      </div>
+
+      <p>An official receipt may be issued separately if required.</p>
+    `
+  );
+
+  GmailApp.sendEmail(gmail, subject, "", {
+    htmlBody,
+    name: CONFIG.ORGANIZATION,
+  });
+}
+
+function sendPaymentRejectedEmail_(gmail, data) {
+  const subject = "Serenade Singers Payment Requires Review";
+
+  const htmlBody = buildSerenadeEmail_(
+    "Payment Requires Review",
+    `
+      <p>Dear ${escapeHtml_(data.fullName || "Member")},</p>
+
+      <p>Your submitted payment could not be verified at this time.</p>
+
+      <div style="margin:24px 0;padding:22px;border-radius:18px;background:#fff7ed;border:1px solid #fed7aa;">
+        <p><b>Project:</b> ${escapeHtml_(data.project || "-")}</p>
+        <p><b>Reason:</b> ${escapeHtml_(data.reason || "Payment information requires further checking.")}</p>
+        <p><b>Status:</b> Requires Review</p>
+      </div>
+
+      <p>Please contact Serenade Singers administration if you believe this is incorrect.</p>
+    `
+  );
+
+  GmailApp.sendEmail(gmail, subject, "", {
+    htmlBody,
+    name: CONFIG.ORGANIZATION,
+  });
+}
+
+function sendMemberIdCardIssuedEmail_(gmail, data) {
+  const subject = "Serenade Singers Member ID Card Issued";
+
+  const htmlBody = buildSerenadeEmail_(
+    "Member ID Card Issued",
+    `
+      <p>Dear ${escapeHtml_(data.fullName || "Member")},</p>
+
+      <p>Your Serenade Singers ID Card has been issued.</p>
+
+      <div style="margin:24px 0;padding:22px;border-radius:18px;background:#f8f6f2;border:1px solid #ece7dd;">
+        <p><b>ID Number:</b> ${escapeHtml_(data.memberId || "-")}</p>
+        <p><b>Type:</b> ${escapeHtml_(data.type || "-")}</p>
+        <p><b>Role / Voice Part:</b> ${escapeHtml_(data.role || data.voicePart || "-")}</p>
+      </div>
+
+      <p>Please keep your ID information safe and use it for official Serenade Singers activities when required.</p>
+    `
+  );
+
+  GmailApp.sendEmail(gmail, subject, "", {
+    htmlBody,
+    name: CONFIG.ORGANIZATION,
+  });
+}
+
+function sendAnnouncementPublishedEmail_(gmail, data) {
+  const subject = "Serenade Singers Announcement: " + (data.title || "New Announcement");
+
+  const htmlBody = buildSerenadeEmail_(
+    "New Announcement",
+    `
+      <p>Dear Members and Volunteers,</p>
+
+      <h3 style="margin-top:18px;color:#061A2F;">${escapeHtml_(data.title || "Announcement")}</h3>
+
+      <p style="line-height:1.8;">${escapeHtml_(data.content || "")}</p>
+
+      <p>Please check Members Hub for more details.</p>
+    `
+  );
+
+  GmailApp.sendEmail(gmail, subject, "", {
+    htmlBody,
+    name: CONFIG.ORGANIZATION,
+  });
+}
+
+function sendEventReminderEmail_(gmail, data) {
+  const subject = "Serenade Singers Event Reminder: " + (data.eventName || "Upcoming Event");
+
+  const htmlBody = buildSerenadeEmail_(
+    "Event Reminder",
+    `
+      <p>Dear Members and Volunteers,</p>
+
+      <p>This is a reminder for an upcoming Serenade Singers activity.</p>
+
+      <div style="margin:24px 0;padding:22px;border-radius:18px;background:#eef4fb;border:1px solid #dce7f3;">
+        <p><b>Event:</b> ${escapeHtml_(data.eventName || "-")}</p>
+        <p><b>Date:</b> ${escapeHtml_(data.eventDate || "-")}</p>
+        <p><b>Time:</b> ${escapeHtml_(data.eventTime || "-")}</p>
+        <p><b>Location:</b> ${escapeHtml_(data.location || "-")}</p>
+      </div>
+
+      <p>${escapeHtml_(data.description || "")}</p>
+    `
+  );
+
+  GmailApp.sendEmail(gmail, subject, "", {
+    htmlBody,
+    name: CONFIG.ORGANIZATION,
+  });
+}
+
+function buildSerenadeEmail_(title, contentHtml) {
+  const heroLogoUrl = `https://drive.google.com/thumbnail?id=${CONFIG.HERO_LOGO_FILE_ID}&sz=w1000`;
+
+  return `
+  <div style="margin:0;padding:0;background:#f8f6f2;font-family:Arial,sans-serif;color:#061A2F;">
+    <div style="max-width:720px;margin:0 auto;padding:36px 20px;">
+      <div style="background:#ffffff;border-radius:28px;border:1px solid #ece7dd;padding:42px;box-shadow:0 20px 60px rgba(6,26,47,0.08);">
+
+        <div style="text-align:center;margin-bottom:26px;">
+          <img src="${heroLogoUrl}" alt="Serenade Singers" style="display:block;margin:0 auto;width:170px;max-width:70%;height:auto;" />
+        </div>
+
+        <h2 style="margin:0 0 24px;text-align:center;font-size:30px;color:#061A2F;">
+          ${escapeHtml_(title)}
+        </h2>
+
+        <div style="font-size:15px;line-height:1.8;color:#061A2F;">
+          ${contentHtml}
+        </div>
+
+        <p style="margin-top:34px;line-height:1.8;">
+          Thank you.<br>
+          Serenade Singers
+        </p>
+
+        <div style="margin-top:36px;padding-top:22px;border-top:1px solid #eeeeee;">
+          <p style="margin:0;color:#A0A7B4;font-size:12px;line-height:1.9;">
+            Serenade Singers is a non profit organization.<br>
+            Founded by Piano For ALL International Music Education<br>
+            Innovaverse Group Foundation<br>
+            Powered by InnovateX
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>`;
+}
