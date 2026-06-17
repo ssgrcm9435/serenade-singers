@@ -53,6 +53,27 @@ function doPost(e) {
       return json_(getLearningVideos_(body.audience));
     }
 
+    if (action === "getAnnouncements") {
+      return json_(getAnnouncements_());
+    }
+
+    if (action === "getEvents") {
+      return json_(getEvents_());
+    }
+
+    if (action === "getFinancialReports") {
+      return json_(getFinancialReports_());
+    }
+
+    if (action === "getDocuments") {
+      return json_(getDocuments_());
+    }
+
+    if (action === "setupMemberHubSheets") {
+      return json_(setupMemberHubSheets_());
+    }
+
+
 
     return json_({
       success: false,
@@ -1108,5 +1129,186 @@ function getLearningVideos_(audience) {
   return {
     success: true,
     videos: videos,
+  };
+}
+
+
+/*******************************************************
+ * MEMBER HUB SHEETS + APIs
+ *******************************************************/
+
+function setupMemberHubSheets_() {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+
+  setupHeaders_(getOrCreateSheet_(ss, "Announcements"), [
+    "Created At",
+    "Title",
+    "Content",
+    "Category",
+    "Published By",
+    "Status",
+    "SortOrder",
+  ]);
+
+  setupHeaders_(getOrCreateSheet_(ss, "Events"), [
+    "Created At",
+    "Event Name",
+    "Event Date",
+    "Event Time",
+    "Location",
+    "Description",
+    "Category",
+    "Status",
+    "SortOrder",
+  ]);
+
+  setupHeaders_(getOrCreateSheet_(ss, "FinancialReports"), [
+    "Date",
+    "Category",
+    "Description",
+    "Purpose",
+    "Income",
+    "Expense",
+    "Balance",
+    "Reference No",
+    "Status",
+  ]);
+
+  setupHeaders_(getOrCreateSheet_(ss, "Documents"), [
+    "Created At",
+    "Title",
+    "Category",
+    "File URL",
+    "Description",
+    "Status",
+    "SortOrder",
+  ]);
+
+  setupHeaders_(getOrCreateSheet_(ss, "LearningArticles"), [
+    "Created At",
+    "Category",
+    "Title",
+    "Slug",
+    "Google Doc ID",
+    "Description",
+    "Status",
+    "SortOrder",
+  ]);
+
+  setupHeaders_(getOrCreateSheet_(ss, "LearningCategories"), [
+    "Created At",
+    "Category Name",
+    "Description",
+    "Status",
+    "SortOrder",
+  ]);
+
+  setupHeaders_(getOrCreateSheet_(ss, "Payments"), [
+    "Created At",
+    "Member ID",
+    "Full Name",
+    "Gmail",
+    "Project",
+    "Amount Paid",
+    "Payment Method",
+    "Screenshot URL",
+    "Receipt No",
+    "Payment Status",
+    "Verified By",
+    "Remarks",
+  ]);
+
+  return {
+    success: true,
+    message: "Member Hub sheets created successfully.",
+  };
+}
+
+function getAnnouncements_() {
+  return getActiveRows_("Announcements", [
+    "createdAt",
+    "title",
+    "content",
+    "category",
+    "publishedBy",
+    "status",
+    "sortOrder",
+  ]);
+}
+
+function getEvents_() {
+  return getActiveRows_("Events", [
+    "createdAt",
+    "eventName",
+    "eventDate",
+    "eventTime",
+    "location",
+    "description",
+    "category",
+    "status",
+    "sortOrder",
+  ]);
+}
+
+function getFinancialReports_() {
+  return getActiveRows_("FinancialReports", [
+    "date",
+    "category",
+    "description",
+    "purpose",
+    "income",
+    "expense",
+    "balance",
+    "referenceNo",
+    "status",
+  ]);
+}
+
+function getDocuments_() {
+  return getActiveRows_("Documents", [
+    "createdAt",
+    "title",
+    "category",
+    "fileUrl",
+    "description",
+    "status",
+    "sortOrder",
+  ]);
+}
+
+function getActiveRows_(sheetName, keys) {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getOrCreateSheet_(ss, sheetName);
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length < 2) {
+    return {
+      success: true,
+      items: [],
+    };
+  }
+
+  const items = [];
+
+  for (let i = 1; i < values.length; i++) {
+    const row = values[i];
+    const status = String(row[keys.indexOf("status")] || "").trim().toLowerCase();
+
+    if (status === "active" || status === "published") {
+      const item = {};
+      keys.forEach((key, index) => {
+        item[key] = row[index];
+      });
+      items.push(item);
+    }
+  }
+
+  items.sort(function(a, b) {
+    return (Number(a.sortOrder) || 9999) - (Number(b.sortOrder) || 9999);
+  });
+
+  return {
+    success: true,
+    items,
   };
 }
