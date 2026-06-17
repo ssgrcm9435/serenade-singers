@@ -25,6 +25,7 @@ export default function AdminDashboardPage() {
   const [activeSection, setActiveSection] = useState("Dashboard Summary");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [adminActionMessage, setAdminActionMessage] = useState("");
 
   const [data, setData] = useState<Record<string, Row[]>>({
     members: [],
@@ -73,19 +74,27 @@ export default function AdminDashboardPage() {
       return;
     }
 
-    const res = await fetch(apiUrl, {
-      method: "POST",
-      body: JSON.stringify({ action: "getAdminDashboardData" }),
-    });
+    setLoading(true);
 
-    const result = await res.json();
+    try {
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        body: JSON.stringify({ action: "getAdminDashboardData" }),
+      });
 
-    if (!result.success) {
-      setMessage(result.message || "Unable to load dashboard data.");
-      return;
+      const result = await res.json();
+
+      if (!result.success) {
+        setMessage(result.message || "Unable to load dashboard data.");
+        return;
+      }
+
+      setData(result);
+    } catch {
+      setMessage("Unable to load dashboard data.");
+    } finally {
+      setLoading(false);
     }
-
-    setData(result);
   }
 
   const totalIncome = sum(data.financialReports, "Income");
@@ -173,6 +182,12 @@ export default function AdminDashboardPage() {
             <div style={statusBadge}>Live Sheet Data</div>
           </div>
 
+          {adminActionMessage && (
+            <section style={card}>
+              <p style={{ ...muted, fontWeight: 900 }}>{adminActionMessage}</p>
+            </section>
+          )}
+
           {activeSection === "Dashboard Summary" && (
             <section style={summaryGrid}>
               <Stat title="Members" value={data.members.length} />
@@ -193,7 +208,15 @@ export default function AdminDashboardPage() {
           {activeSection === "Members" && <DataTable title="Members" rows={data.members} />}
           {activeSection === "Volunteers" && <DataTable title="Volunteers" rows={data.volunteers} />}
           {activeSection === "T-Shirt Orders" && <DataTable title="T-Shirt Orders" rows={data.shirtOrders} />}
-          {activeSection === "Payments" && <DataTable title="Payments" rows={data.payments} />}
+          {activeSection === "Payments" && (
+            <PaymentTable
+              rows={data.payments}
+              apiUrl={apiUrl}
+              setLoading={setLoading}
+              setAdminActionMessage={setAdminActionMessage}
+              loadDashboardData={loadDashboardData}
+            />
+          )}
           {activeSection === "Finance" && <DataTable title="Finance" rows={data.financialReports} />}
           {activeSection === "Announcements" && <DataTable title="Announcements" rows={data.announcements} />}
           {activeSection === "Events" && <DataTable title="Events" rows={data.events} />}
@@ -215,7 +238,20 @@ export default function AdminDashboardPage() {
         </section>
       </div>
 
+      {loading && (
+        <div style={overlay}>
+          <div style={spinner} />
+          <h2 style={{ fontWeight: 950 }}>Loading...</h2>
+          <p style={{ color: "#64748b" }}>Please wait.</p>
+        </div>
+      )}
+
       <style jsx global>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 900px) {
           .admin-shell {
             grid-template-columns: 1fr !important;
@@ -226,12 +262,166 @@ export default function AdminDashboardPage() {
   );
 }
 
+
+async function updatePaymentStatus(
+  apiUrl: string,
+  receiptNo: string,
+  status: "Approved" | "Rejected",
+  setLoading: (value: boolean) => void,
+  setAdminActionMessage: (value: string) => void,
+  loadDashboardData: () => Promise<void>
+) {
+  if (!receiptNo) {
+    setAdminActionMessage("Receipt No is missing.");
+    return;
+  }
+
+  const reason =
+    status === "Rejected"
+      ? window.prompt("Reason for rejection:", "Payment information requires further checking.") || ""
+      : "";
+
+  setLoading(true);
+  setAdminActionMessage("");
+
+  try {
+    const res = await fetch(apiUrl, {
+      method: "POST",
+      body: JSON.stringify({
+        action: status === "Approved" ? "approvePayment" : "rejectPayment",
+        receiptNo,
+        verifiedBy: "Admin",
+        reason,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      setAdminActionMessage(data.message || "Action failed.");
+      return;
+    }
+
+    setAdminActionMessage(`Payment ${status} successfully.`);
+    await loadDashboardData();
+  } catch {
+    setAdminActionMessage("Unable to update payment.");
+  } finally {
+    setLoading(false);
+  }
+}
+
 function Stat({ title, value }: { title: string; value: string | number }) {
   return (
     <article style={statCard}>
       <p style={statLabel}>{title}</p>
       <h3 style={statValue}>{value}</h3>
     </article>
+  );
+}
+
+
+function PaymentTable({
+  rows,
+  apiUrl,
+  setLoading,
+  setAdminActionMessage,
+  loadDashboardData,
+}: {
+  rows: Row[];
+  apiUrl: string;
+  setLoading: (value: boolean) => void;
+  setAdminActionMessage: (value: string) => void;
+  loadDashboardData: () => Promise<void>;
+}) {
+  return (
+    <section style={card}>
+      <h2 style={sectionTitle}>Payments</h2>
+
+      {rows.length === 0 ? (
+        <p style={muted}>No data available.</p>
+      ) : (
+        <div style={{ overflowX: "auto", marginTop: 18 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
+            <thead>
+              <tr>
+                <th style={th}>Receipt No</th>
+                <th style={th}>Full Name</th>
+                <th style={th}>Gmail</th>
+                <th style={th}>Project</th>
+                <th style={th}>Amount</th>
+                <th style={th}>Method</th>
+                <th style={th}>Status</th>
+                <th style={th}>Screenshot</th>
+                <th style={th}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => {
+                const receiptNo = String(row["Receipt No"] || "");
+                const status = String(row["Payment Status"] || "");
+
+                return (
+                  <tr key={i}>
+                    <td style={td}>{receiptNo}</td>
+                    <td style={td}>{String(row["Full Name"] || "")}</td>
+                    <td style={td}>{String(row["Gmail"] || "")}</td>
+                    <td style={td}>{String(row["Project"] || "")}</td>
+                    <td style={td}>{String(row["Amount Paid"] || "")}</td>
+                    <td style={td}>{String(row["Payment Method"] || "")}</td>
+                    <td style={td}>{status}</td>
+                    <td style={td}>
+                      {row["Screenshot URL"] ? (
+                        <a href={String(row["Screenshot URL"])} target="_blank" rel="noopener noreferrer" style={linkButton}>
+                          View
+                        </a>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    <td style={td}>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          onClick={() =>
+                            updatePaymentStatus(
+                              apiUrl,
+                              receiptNo,
+                              "Approved",
+                              setLoading,
+                              setAdminActionMessage,
+                              loadDashboardData
+                            )
+                          }
+                          style={smallApproveButton}
+                        >
+                          Approve
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            updatePaymentStatus(
+                              apiUrl,
+                              receiptNo,
+                              "Rejected",
+                              setLoading,
+                              setAdminActionMessage,
+                              loadDashboardData
+                            )
+                          }
+                          style={smallRejectButton}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -334,3 +524,9 @@ const statLabel = { margin: 0, color: "#64748b", fontWeight: 800 };
 const statValue = { margin: "10px 0 0", fontSize: 24, fontWeight: 950 };
 const th = { background: "#061A2F", color: "white", padding: 12, textAlign: "left" as const, whiteSpace: "nowrap" as const };
 const td = { padding: 12, borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" as const };
+
+const linkButton = { background: "#061A2F", color: "white", borderRadius: 10, padding: "8px 12px", fontWeight: 800, textDecoration: "none", display: "inline-block" };
+const smallApproveButton = { background: "#047857", color: "white", border: 0, borderRadius: 10, padding: "8px 12px", fontWeight: 900, cursor: "pointer" };
+const smallRejectButton = { background: "#b91c1c", color: "white", border: 0, borderRadius: 10, padding: "8px 12px", fontWeight: 900, cursor: "pointer" };
+const overlay = { position: "fixed" as const, inset: 0, background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" as const, zIndex: 99999, gap: 16 };
+const spinner = { width: 64, height: 64, border: "6px solid #e5e7eb", borderTop: "6px solid #061A2F", borderRadius: "50%", animation: "spin 1s linear infinite" };
