@@ -141,7 +141,7 @@ export default function LearningAccessPage() {
         </p>
 
         <h1 style={{ marginTop: 16, fontSize: 44, lineHeight: 1.1, fontWeight: 900 }}>
-          Learning Access
+          Members Hub
         </h1>
 
         <p style={{ marginTop: 16, fontSize: 17, color: "#475569", maxWidth: 760 }}>
