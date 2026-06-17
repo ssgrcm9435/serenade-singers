@@ -230,7 +230,7 @@ export default function MemberHubPage() {
         return;
       }
 
-      setPaymentMessage("Payment submitted successfully. Pending verification.");
+      setPaymentMessage("✅ Payment submitted successfully. Awaiting administrator verification.");
       await loadShirtHistory(user.gmail);
     } catch {
       setPaymentMessage("Unable to submit payment.");
@@ -770,3 +770,23 @@ const videoBox = { position: "relative" as const, width: "100%", paddingTop: "56
 const iframe = { position: "absolute" as const, inset: 0, width: "100%", height: "100%", border: 0 };
 const overlay = { position: "fixed" as const, inset: 0, background: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" as const, zIndex: 99999, gap: 16 };
 const spinner = { width: 64, height: 64, border: "6px solid #e5e7eb", borderTop: "6px solid #061A2F", borderRadius: "50%", animation: "spin 1s linear infinite" };
+
+
+function getPaymentStatusColor(status: string) {
+  const value = String(status || "").toLowerCase();
+
+  if (value.includes("completed") || value.includes("approved")) {
+    return "#047857";
+  }
+
+  if (value.includes("pending")) {
+    return "#ca8a04";
+  }
+
+  if (value.includes("reject")) {
+    return "#dc2626";
+  }
+
+  return "#475569";
+}
+
