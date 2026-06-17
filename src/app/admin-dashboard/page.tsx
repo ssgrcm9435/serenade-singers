@@ -18,6 +18,68 @@ const sections = [
   "Email Center",
 ];
 
+
+
+function getStatusStyle(status: string = "") {
+  const value = status.toLowerCase();
+
+  if (
+    value.includes("approved") ||
+    value.includes("completed") ||
+    value.includes("success") ||
+    value.includes("active") ||
+    value.includes("granted")
+  ) {
+    return {
+      background: "#ECFDF5",
+      border: "1px solid #BBF7D0",
+      color: "#166534",
+      fontWeight: 700,
+      padding: "6px 12px",
+      borderRadius: "999px",
+      display: "inline-block",
+    };
+  }
+
+  if (
+    value.includes("pending") ||
+    value.includes("review") ||
+    value.includes("awaiting") ||
+    value.includes("processing") ||
+    value.includes("verification")
+  ) {
+    return {
+      background: "#FFF7ED",
+      border: "1px solid #FED7AA",
+      color: "#C2410C",
+      fontWeight: 700,
+      padding: "6px 12px",
+      borderRadius: "999px",
+      display: "inline-block",
+    };
+  }
+
+  if (
+    value.includes("rejected") ||
+    value.includes("failed") ||
+    value.includes("expired") ||
+    value.includes("denied") ||
+    value.includes("inactive")
+  ) {
+    return {
+      background: "#FEF2F2",
+      border: "1px solid #FECACA",
+      color: "#B91C1C",
+      fontWeight: 700,
+      padding: "6px 12px",
+      borderRadius: "999px",
+      display: "inline-block",
+    };
+  }
+
+  return {};
+}
+
 export default function AdminDashboardPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
