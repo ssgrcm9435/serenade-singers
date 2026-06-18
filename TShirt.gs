@@ -1206,11 +1206,14 @@ function setupMemberHubSheets_() {
     "Category",
     "Description",
     "Purpose",
+    "Quantity",
+    "Unit Price",
     "Income",
     "Expense",
     "Balance",
     "Reference No",
     "Status",
+    "Remarks",
   ]);
 
   setupHeaders_(getOrCreateSheet_(ss, "Documents"), [
@@ -1295,11 +1298,14 @@ function getFinancialReports_() {
     "category",
     "description",
     "purpose",
+    "quantity",
+    "unitPrice",
     "income",
     "expense",
     "balance",
     "referenceNo",
     "status",
+    "remarks",
   ]);
 }
 
