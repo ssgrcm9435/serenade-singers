@@ -2144,6 +2144,16 @@ function updateMemberProfilePhoto_(body) {
       }, memberId);
 
       const rowNumber = i + 1;
+      const originalPhotoIndex = headers.indexOf("original photo url");
+
+      if (originalPhotoIndex !== -1) {
+        const existingOriginal = sheet.getRange(rowNumber, originalPhotoIndex + 1).getValue();
+
+        if (!existingOriginal) {
+          sheet.getRange(rowNumber, originalPhotoIndex + 1).setValue(photoUrl);
+        }
+      }
+
       sheet.getRange(rowNumber, photoIndex + 1).setValue(photoUrl);
 
       if (updatedIndex !== -1) {
