@@ -190,6 +190,7 @@ export default function MemberHubPage() {
   const [paymentMessage, setPaymentMessage] = useState("");
   const [profilePhoto, setProfilePhoto] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
+  const [showPhotoMenu, setShowPhotoMenu] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || "";
 
@@ -567,7 +568,8 @@ export default function MemberHubPage() {
                   }}
                 />
               ) : (
-                <div style={avatar}>
+                <div onClick={() => setShowPhotoMenu(!showPhotoMenu)}
+                style={{...avatar,cursor:"pointer"}}>
                   {user.fullName?.charAt(0) || "S"}
                 </div>
               )}
@@ -579,26 +581,7 @@ export default function MemberHubPage() {
               <p style={profileMeta}>{user.type} · {user.voicePart || "-"}</p>
 
               <div style={{ marginTop: 10 }}>
-                <label
-                  style={{
-                    fontSize: 12,
-                    color: "#D4AF37",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "inline-block",
-                    marginTop: 8,
-                  }}
-                >
-                  📷 Change Photo
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) =>
-                      handleProfilePhotoFile(e.target.files?.[0] || null)
-                    }
-                    style={{ display: "none" }}
-                  />
-                </label>
+                
 
                 {profilePhoto && (
                   <button
@@ -620,7 +603,53 @@ export default function MemberHubPage() {
                   </button>
                 )}
 
-                {profileMessage && (
+                
+                {showPhotoMenu && (
+                  <div
+                    style={{
+                      marginTop:8,
+                      background:"#fff",
+                      border:"1px solid #E5E7EB",
+                      borderRadius:12,
+                      padding:8,
+                      boxShadow:"0 4px 16px rgba(0,0,0,.12)"
+                    }}
+                  >
+                    <label
+                      style={{
+                        display:"block",
+                        padding:"8px",
+                        cursor:"pointer",
+                        fontSize:12
+                      }}
+                    >
+                      Upload New Photo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e)=>handleProfilePhotoFile(e.target.files?.[0]||null)}
+                        style={{display:"none"}}
+                      />
+                    </label>
+
+                    <button
+                      onClick={removeProfilePhoto}
+                      style={{
+                        width:"100%",
+                        border:0,
+                        background:"transparent",
+                        textAlign:"left",
+                        padding:"8px",
+                        cursor:"pointer",
+                        color:"#B91C1C"
+                      }}
+                    >
+                      Remove Photo
+                    </button>
+                  </div>
+                )}
+
+{profileMessage && (
                   <p style={{ marginTop: 8, fontSize: 11, color: "#D4AF37", fontWeight: 800 }}>
                     {profileMessage}
                   </p>
