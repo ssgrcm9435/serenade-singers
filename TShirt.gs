@@ -67,6 +67,8 @@ function doPost(e) {
     }
 
     if (action === "getFinancialReports") {
+      return json_(getFinancialReports_());
+    }
 
     if (action === "getDonations") {
       return json_(getDonations_());
@@ -80,7 +82,12 @@ function doPost(e) {
       return json_(getProjects_());
     }
 
-      return json_(getFinancialReports_());
+    if (action === "updateMemberProfilePhoto") {
+      return json_(updateMemberProfilePhoto_(body));
+    }
+
+    if (action === "removeMemberProfilePhoto") {
+      return json_(removeMemberProfilePhoto_(body));
     }
 
     if (action === "getDocuments") {
@@ -911,6 +918,7 @@ function findTshirtPersonByEmail_(ss, sheetName, gmail, type) {
     "voice part",
     "voice",
   ]);
+  const photoIndex = findTshirtHeaderIndex_(headers, ["profile photo url", "photo url"]);
 
   if (gmailIndex === -1) return null;
 
@@ -924,6 +932,7 @@ function findTshirtPersonByEmail_(ss, sheetName, gmail, type) {
         fullName: nameIndex !== -1 ? values[i][nameIndex] : "",
         gmail: values[i][gmailIndex],
         voicePart: voiceIndex !== -1 ? values[i][voiceIndex] : "",
+        profilePhotoUrl: photoIndex !== -1 ? values[i][photoIndex] : "",
       };
     }
   }
@@ -2086,4 +2095,112 @@ function getProjects_() {
     "status",
     "remarks",
   ]);
+}
+
+
+/*******************************************************
+ * MEMBER PROFILE PHOTO UPDATE / REMOVE
+ *******************************************************/
+
+function updateMemberProfilePhoto_(body) {
+  const gmail = normalizeEmail_(body.gmail);
+  const profilePhoto = body.profilePhoto;
+
+  if (!gmail || !gmail.includes("@")) {
+    return { success: false, message: "Valid Gmail address is required." };
+  }
+
+  if (!profilePhoto) {
+    return { success: false, message: "Profile photo is required." };
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getOrCreateSheet_(ss, "Members_Main");
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length < 2) {
+    return { success: false, message: "No members found." };
+  }
+
+  const headers = values[0].map(h => String(h || "").trim().toLowerCase());
+  const gmailIndex = headers.indexOf("gmail");
+  const idIndex = headers.indexOf("member id");
+  const nameIndex = headers.indexOf("full name");
+  const photoIndex = headers.indexOf("profile photo url");
+  const updatedIndex = headers.indexOf("last updated");
+
+  if (gmailIndex === -1 || photoIndex === -1) {
+    return { success: false, message: "Members_Main headers are invalid." };
+  }
+
+  for (let i = 1; i < values.length; i++) {
+    if (normalizeEmail_(values[i][gmailIndex]) === gmail) {
+      const memberId = idIndex !== -1 ? values[i][idIndex] : "MEMBER";
+      const fullName = nameIndex !== -1 ? values[i][nameIndex] : "Member";
+
+      const photoUrl = saveProfilePhoto_({
+        profilePhoto: profilePhoto,
+        fullName: fullName,
+      }, memberId);
+
+      const rowNumber = i + 1;
+      sheet.getRange(rowNumber, photoIndex + 1).setValue(photoUrl);
+
+      if (updatedIndex !== -1) {
+        sheet.getRange(rowNumber, updatedIndex + 1).setValue(new Date());
+      }
+
+      return {
+        success: true,
+        message: "Profile photo updated successfully.",
+        profilePhotoUrl: photoUrl,
+      };
+    }
+  }
+
+  return { success: false, message: "Member not found." };
+}
+
+function removeMemberProfilePhoto_(body) {
+  const gmail = normalizeEmail_(body.gmail);
+
+  if (!gmail || !gmail.includes("@")) {
+    return { success: false, message: "Valid Gmail address is required." };
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getOrCreateSheet_(ss, "Members_Main");
+  const values = sheet.getDataRange().getValues();
+
+  if (values.length < 2) {
+    return { success: false, message: "No members found." };
+  }
+
+  const headers = values[0].map(h => String(h || "").trim().toLowerCase());
+  const gmailIndex = headers.indexOf("gmail");
+  const photoIndex = headers.indexOf("profile photo url");
+  const updatedIndex = headers.indexOf("last updated");
+
+  if (gmailIndex === -1 || photoIndex === -1) {
+    return { success: false, message: "Members_Main headers are invalid." };
+  }
+
+  for (let i = 1; i < values.length; i++) {
+    if (normalizeEmail_(values[i][gmailIndex]) === gmail) {
+      const rowNumber = i + 1;
+      sheet.getRange(rowNumber, photoIndex + 1).setValue("");
+
+      if (updatedIndex !== -1) {
+        sheet.getRange(rowNumber, updatedIndex + 1).setValue(new Date());
+      }
+
+      return {
+        success: true,
+        message: "Profile photo removed successfully.",
+        profilePhotoUrl: "",
+      };
+    }
+  }
+
+  return { success: false, message: "Member not found." };
 }
