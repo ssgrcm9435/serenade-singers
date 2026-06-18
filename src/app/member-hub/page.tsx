@@ -238,11 +238,25 @@ export default function MemberHubPage() {
       try {
         const savedUser = JSON.parse(saved);
         setUser(savedUser);
+        refreshMemberProfile(savedUser.gmail);
         loadHubData(savedUser.type);
         loadShirtHistory(savedUser.gmail);
       } catch {}
     }
   }, []);
+
+  async function refreshMemberProfile(gmailAddress: string) {
+    if (!apiUrl || !gmailAddress) return;
+
+    try {
+      const freshUser = await post("checkMemberOrVolunteer", { gmail: gmailAddress });
+
+      if (freshUser?.verified) {
+        setUser(freshUser);
+        localStorage.setItem("ss_learning_user", JSON.stringify(freshUser));
+      }
+    } catch {}
+  }
 
   async function post(action: string, payload: Record<string, any> = {}) {
     const res = await fetch(apiUrl, {
