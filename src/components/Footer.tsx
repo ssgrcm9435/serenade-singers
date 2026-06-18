@@ -31,6 +31,10 @@ export default function Footer() {
 
         <p className="footer-powered">
           © 2026 Serenade Singers. All Rights Reserved.
+              <br />
+              <span style={{ fontSize: "12px", opacity: 0.8 }}>
+                Digital Platform Designed and Managed by the Founder.
+              </span>
         </p>
       </div>
     </footer>
