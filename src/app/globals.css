@@ -4587,3 +4587,30 @@ select:focus {
   }
 }
 
+
+/* Strong mobile Member Hub profile image fix */
+@media (max-width: 768px) {
+  .portal-sidebar button img {
+    width: 126px !important;
+    height: 126px !important;
+    min-width: 126px !important;
+    min-height: 126px !important;
+    max-width: 126px !important;
+    max-height: 126px !important;
+    aspect-ratio: 1 / 1 !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    border-radius: 50% !important;
+    display: block !important;
+    transform: none !important;
+  }
+
+  .portal-sidebar button {
+    width: 126px !important;
+    height: 126px !important;
+    display: block !important;
+    overflow: hidden !important;
+    border-radius: 50% !important;
+  }
+}
+
