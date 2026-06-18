@@ -67,6 +67,19 @@ function doPost(e) {
     }
 
     if (action === "getFinancialReports") {
+
+    if (action === "getDonations") {
+      return json_(getDonations_());
+    }
+
+    if (action === "getAssetsRegister") {
+      return json_(getAssetsRegister_());
+    }
+
+    if (action === "getProjects") {
+      return json_(getProjects_());
+    }
+
       return json_(getFinancialReports_());
     }
 
@@ -2026,4 +2039,45 @@ function updatePaymentStatus_(body, newStatus) {
     success: false,
     message: "Payment receipt not found.",
   };
+}
+
+function getDonations_() {
+  return getActiveRows_("Donations", [
+    "date",
+    "donorName",
+    "donationType",
+    "purpose",
+    "amount",
+    "receiptNo",
+    "status",
+    "remarks",
+  ]);
+}
+
+function getAssetsRegister_() {
+  return getActiveRows_("AssetsRegister", [
+    "assetId",
+    "assetName",
+    "category",
+    "quantity",
+    "acquisitionDate",
+    "location",
+    "condition",
+    "custodian",
+    "remarks",
+  ]);
+}
+
+function getProjects_() {
+  return getActiveRows_("Projects", [
+    "projectId",
+    "projectName",
+    "startDate",
+    "budget",
+    "income",
+    "expense",
+    "balance",
+    "status",
+    "remarks",
+  ]);
 }
