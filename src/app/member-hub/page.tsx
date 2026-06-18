@@ -541,13 +541,24 @@ export default function MemberHubPage() {
 
           {activeSection === "Financial Transparency" && (
             <Section title="Financial Transparency">
+              <h3>Financial Reports</h3>
               {financialReports.length === 0 ? <Empty /> : financialReports.map((f, i) => (
-                <InfoCard
-                  key={i}
-                  title={f.description}
-                  text={f.purpose}
-                  meta={`Income: ${f.income || 0} Ks · Expense: ${f.expense || 0} Ks · Balance: ${f.balance || 0} Ks`}
-                />
+                <InfoCard key={"fin-"+i} title={f.description} text={f.purpose} meta={`Income: ${f.income || 0} Ks · Expense: ${f.expense || 0} Ks · Balance: ${f.balance || 0} Ks`} />
+              ))}
+
+              <h3 style={{ marginTop: 32 }}>Donations</h3>
+              {donations.length === 0 ? <Empty /> : donations.map((d, i) => (
+                <InfoCard key={"don-"+i} title={d.donorName} text={d.purpose} meta={`${d.amount || 0} Ks · ${d.status || ""}`} />
+              ))}
+
+              <h3 style={{ marginTop: 32 }}>Assets Register</h3>
+              {assetsRegister.length === 0 ? <Empty /> : assetsRegister.map((a, i) => (
+                <InfoCard key={"asset-"+i} title={a.assetName} text={a.category} meta={`Qty: ${a.quantity || 0} · ${a.condition || ""}`} />
+              ))}
+
+              <h3 style={{ marginTop: 32 }}>Projects</h3>
+              {projects.length === 0 ? <Empty /> : projects.map((p, i) => (
+                <InfoCard key={"proj-"+i} title={p.projectName} text={p.remarks} meta={`Budget: ${p.budget || 0} Ks · Balance: ${p.balance || 0} Ks`} />
               ))}
             </Section>
           )}
