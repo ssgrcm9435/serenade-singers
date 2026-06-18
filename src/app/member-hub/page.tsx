@@ -552,50 +552,68 @@ export default function MemberHubPage() {
           <p style={sidebarEyebrow}>SERENADE SINGERS</p>
           <h2 style={sidebarTitle}>Members Hub</h2>
 
-          <div style={profileCard}>
-            <div style={{ position: "relative", width: 88 }}>
+          <div
+            style={{
+              ...profileCard,
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              overflow: "visible",
+              padding: 22,
+            }}
+          >
+            <div style={{ position: "relative", width: 132, height: 132 }}>
               <button
                 type="button"
                 onClick={() => setShowPhotoMenu(!showPhotoMenu)}
                 style={{ border: 0, background: "transparent", padding: 0, cursor: "pointer" }}
               >
-              {user.profilePhotoUrl ? (
-                <img
-                  src={getDriveImageUrl(user.profilePhotoUrl)}
-                  alt={user.fullName}
-                  style={{
-                    width: 58,
-                    height: 58,
-                    borderRadius: "50%",
-                    objectFit: "cover",
-                    border: "2px solid #D4AF37",
-                    background: "#ffffff",
-                  }}
-                />
-              ) : (
-                <div onClick={() => setShowPhotoMenu(!showPhotoMenu)}
-                style={{...avatar,cursor:"pointer"}}>
-                  {user.fullName?.charAt(0) || "S"}
-                </div>
-              )}
+                {user.profilePhotoUrl ? (
+                  <img
+                    src={getDriveImageUrl(user.profilePhotoUrl)}
+                    alt={user.fullName}
+                    style={{
+                      width: 126,
+                      height: 126,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "4px solid #D4AF37",
+                      background: "#ffffff",
+                      boxShadow: "0 10px 26px rgba(0,0,0,0.18)",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      ...avatar,
+                      width: 126,
+                      height: 126,
+                      fontSize: 40,
+                      border: "4px solid #D4AF37",
+                    }}
+                  >
+                    {user.fullName?.charAt(0) || "S"}
+                  </div>
+                )}
               </button>
 
               {showPhotoMenu && (
                 <div
                   style={{
                     position: "absolute",
-                    top: 88,
-                    left: 0,
-                    zIndex: 50,
-                    minWidth: 150,
+                    top: 136,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    zIndex: 999,
+                    width: 170,
                     background: "#ffffff",
                     border: "1px solid #E5E7EB",
-                    borderRadius: 14,
+                    borderRadius: 16,
                     padding: 8,
-                    boxShadow: "0 12px 30px rgba(0,0,0,0.18)"
+                    boxShadow: "0 18px 40px rgba(0,0,0,0.22)",
                   }}
                 >
-                  <label style={{ display: "block", padding: 8, cursor: "pointer", fontSize: 12, fontWeight: 800, color: "#061A2F" }}>
+                  <label style={{ display: "block", padding: "10px 12px", cursor: "pointer", fontSize: 12, fontWeight: 900, color: "#061A2F" }}>
                     Upload Photo
                     <input
                       type="file"
@@ -618,12 +636,12 @@ export default function MemberHubPage() {
                       width: "100%",
                       border: 0,
                       background: "transparent",
-                      textAlign: "left",
-                      padding: 8,
+                      textAlign: "center",
+                      padding: "10px 12px",
                       cursor: "pointer",
                       fontSize: 12,
-                      fontWeight: 800,
-                      color: "#B91C1C"
+                      fontWeight: 900,
+                      color: "#B91C1C",
                     }}
                   >
                     Remove Photo
@@ -632,86 +650,36 @@ export default function MemberHubPage() {
               )}
             </div>
 
-            <div style={{ flex: 1 }}>
+            <div style={{ marginTop: 18 }}>
               <p style={profileName}>{user.fullName}</p>
               <p style={profileMeta}>{user.memberId}</p>
               <p style={profileMeta}>{user.type} · {user.voicePart || "-"}</p>
 
-              <div style={{ marginTop: 10 }}>
-                
+              {profilePhoto && (
+                <button
+                  onClick={updateProfilePhoto}
+                  disabled={loading}
+                  style={{
+                    marginTop: 12,
+                    border: 0,
+                    borderRadius: 999,
+                    padding: "8px 16px",
+                    fontSize: 12,
+                    fontWeight: 900,
+                    cursor: "pointer",
+                    background: "#D4AF37",
+                    color: "#061A2F",
+                  }}
+                >
+                  Save Photo
+                </button>
+              )}
 
-                {profilePhoto && (
-                  <button
-                    onClick={updateProfilePhoto}
-                    disabled={loading}
-                    style={{
-                      marginTop: 8,
-                      border: 0,
-                      borderRadius: 999,
-                      padding: "7px 12px",
-                      fontSize: 11,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      background: "#D4AF37",
-                      color: "#061A2F",
-                    }}
-                  >
-                    Save Photo
-                  </button>
-                )}
-
-                
-                {showPhotoMenu && (
-                  <div
-                    style={{
-                      marginTop:8,
-                      background:"#fff",
-                      border:"1px solid #E5E7EB",
-                      borderRadius:12,
-                      padding:8,
-                      boxShadow:"0 4px 16px rgba(0,0,0,.12)"
-                    }}
-                  >
-                    <label
-                      style={{
-                        display:"block",
-                        padding:"8px",
-                        cursor:"pointer",
-                        fontSize:12
-                      }}
-                    >
-                      Upload New Photo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e)=>handleProfilePhotoFile(e.target.files?.[0]||null)}
-                        style={{display:"none"}}
-                      />
-                    </label>
-
-                    <button
-                      onClick={removeProfilePhoto}
-                      style={{
-                        width:"100%",
-                        border:0,
-                        background:"transparent",
-                        textAlign:"left",
-                        padding:"8px",
-                        cursor:"pointer",
-                        color:"#B91C1C"
-                      }}
-                    >
-                      Remove Photo
-                    </button>
-                  </div>
-                )}
-
-{profileMessage && (
-                  <p style={{ marginTop: 8, fontSize: 11, color: "#D4AF37", fontWeight: 800 }}>
-                    {profileMessage}
-                  </p>
-                )}
-              </div>
+              {profileMessage && (
+                <p style={{ marginTop: 8, fontSize: 11, color: "#D4AF37", fontWeight: 800 }}>
+                  {profileMessage}
+                </p>
+              )}
             </div>
           </div>
 
