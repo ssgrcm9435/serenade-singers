@@ -52,7 +52,7 @@ function getYouTubeEmbedUrl(url: string) {
 function getDriveImageUrl(url: string = "") {
   if (!url) return "";
   const idMatch = url.match(/\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
-  if (idMatch) return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w400`;
+  if (idMatch) return `https://lh3.googleusercontent.com/d/${idMatch[1]}=w400`;
   return url;
 }
 
