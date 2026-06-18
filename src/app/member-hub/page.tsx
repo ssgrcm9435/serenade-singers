@@ -457,7 +457,7 @@ export default function MemberHubPage() {
       setUser(updatedUser);
       localStorage.setItem("ss_learning_user", JSON.stringify(updatedUser));
       setProfilePhoto("");
-      setProfileMessage("Profile photo removed.");
+      
     } catch {
       setProfileMessage("Unable to remove profile photo.");
     } finally {
@@ -579,26 +579,36 @@ export default function MemberHubPage() {
               <p style={profileMeta}>{user.type} · {user.voicePart || "-"}</p>
 
               <div style={{ marginTop: 10 }}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleProfilePhotoFile(e.target.files?.[0] || null)}
+                <label
                   style={{
-                    width: "100%",
-                    fontSize: 11,
-                    color: "#E5EEF8",
-                    marginBottom: 8,
+                    fontSize: 12,
+                    color: "#D4AF37",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-block",
+                    marginTop: 8,
                   }}
-                />
+                >
+                  📷 Change Photo
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      handleProfilePhotoFile(e.target.files?.[0] || null)
+                    }
+                    style={{ display: "none" }}
+                  />
+                </label>
 
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {profilePhoto && (
                   <button
                     onClick={updateProfilePhoto}
                     disabled={loading}
                     style={{
+                      marginTop: 8,
                       border: 0,
                       borderRadius: 999,
-                      padding: "7px 10px",
+                      padding: "7px 12px",
                       fontSize: 11,
                       fontWeight: 800,
                       cursor: "pointer",
@@ -606,26 +616,9 @@ export default function MemberHubPage() {
                       color: "#061A2F",
                     }}
                   >
-                    Update
+                    Save Photo
                   </button>
-
-                  <button
-                    onClick={removeProfilePhoto}
-                    disabled={loading}
-                    style={{
-                      border: "1px solid #FCA5A5",
-                      borderRadius: 999,
-                      padding: "7px 10px",
-                      fontSize: 11,
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      background: "#FEF2F2",
-                      color: "#B91C1C",
-                    }}
-                  >
-                    Remove
-                  </button>
-                </div>
+                )}
 
                 {profileMessage && (
                   <p style={{ marginTop: 8, fontSize: 11, color: "#D4AF37", fontWeight: 800 }}>
