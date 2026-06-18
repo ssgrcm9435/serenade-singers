@@ -553,7 +553,12 @@ export default function MemberHubPage() {
           <h2 style={sidebarTitle}>Members Hub</h2>
 
           <div style={profileCard}>
-            <div>
+            <div style={{ position: "relative", width: 88 }}>
+              <button
+                type="button"
+                onClick={() => setShowPhotoMenu(!showPhotoMenu)}
+                style={{ border: 0, background: "transparent", padding: 0, cursor: "pointer" }}
+              >
               {user.profilePhotoUrl ? (
                 <img
                   src={getDriveImageUrl(user.profilePhotoUrl)}
@@ -571,6 +576,58 @@ export default function MemberHubPage() {
                 <div onClick={() => setShowPhotoMenu(!showPhotoMenu)}
                 style={{...avatar,cursor:"pointer"}}>
                   {user.fullName?.charAt(0) || "S"}
+                </div>
+              )}
+              </button>
+
+              {showPhotoMenu && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 88,
+                    left: 0,
+                    zIndex: 50,
+                    minWidth: 150,
+                    background: "#ffffff",
+                    border: "1px solid #E5E7EB",
+                    borderRadius: 14,
+                    padding: 8,
+                    boxShadow: "0 12px 30px rgba(0,0,0,0.18)"
+                  }}
+                >
+                  <label style={{ display: "block", padding: 8, cursor: "pointer", fontSize: 12, fontWeight: 800, color: "#061A2F" }}>
+                    Upload Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        handleProfilePhotoFile(e.target.files?.[0] || null);
+                        setShowPhotoMenu(false);
+                      }}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      removeProfilePhoto();
+                      setShowPhotoMenu(false);
+                    }}
+                    style={{
+                      width: "100%",
+                      border: 0,
+                      background: "transparent",
+                      textAlign: "left",
+                      padding: 8,
+                      cursor: "pointer",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      color: "#B91C1C"
+                    }}
+                  >
+                    Remove Photo
+                  </button>
                 </div>
               )}
             </div>
