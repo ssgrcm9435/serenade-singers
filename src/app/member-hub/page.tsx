@@ -7,6 +7,7 @@ const KBZPAY_INFO = {
 };
 
 import { useEffect, useState } from "react";
+import Cropper from "react-easy-crop";
 
 type UserInfo = {
   verified: boolean;
@@ -166,7 +167,7 @@ function getStatusStyle(status: string = "") {
 }
 
 
-async function getCroppedImage(imageSrc: string, crop: { x: number; y: number }, zoom: number): Promise<string> {
+async function getCroppedImage(imageSrc: string, pixelCrop: any): Promise<string> {
   const image = new Image();
   image.src = imageSrc;
 
@@ -175,27 +176,25 @@ async function getCroppedImage(imageSrc: string, crop: { x: number; y: number },
     image.onerror = reject;
   });
 
-  const size = 500;
-  const previewSize = 320;
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
   if (!ctx) throw new Error("Canvas not supported.");
 
-  canvas.width = size;
-  canvas.height = size;
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
 
-  const coverScale = Math.max(size / image.width, size / image.height) * zoom;
-  const drawWidth = image.width * coverScale;
-  const drawHeight = image.height * coverScale;
-
-  const ratio = size / previewSize;
-  const dx = (size - drawWidth) / 2 + crop.x * ratio;
-  const dy = (size - drawHeight) / 2 + crop.y * ratio;
-
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, size, size);
-  ctx.drawImage(image, dx, dy, drawWidth, drawHeight);
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
 
   return canvas.toDataURL("image/jpeg", 0.92);
 }
@@ -229,6 +228,7 @@ export default function MemberHubPage() {
   const [showCropModal, setShowCropModal] = useState(false);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
   const apiUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || "";
 
@@ -511,13 +511,13 @@ export default function MemberHubPage() {
   }
 
   async function saveCroppedProfilePhoto() {
-    if (!profilePhoto) {
-      setProfileMessage("Please choose a photo first.");
+    if (!profilePhoto || !croppedAreaPixels) {
+      setProfileMessage("Please adjust the photo first.");
       return;
     }
 
     try {
-      const croppedImage = await getCroppedImage(profilePhoto, crop, zoom);
+      const croppedImage = await getCroppedImage(profilePhoto, croppedAreaPixels);
       await updateProfilePhoto(croppedImage);
     } catch {
       setProfileMessage("Unable to crop photo.");
@@ -764,54 +764,37 @@ export default function MemberHubPage() {
                   boxShadow: "0 30px 80px rgba(0,0,0,0.35)",
                 }}
               >
-                <h3 style={{ margin: "0 0 12px", color: "#061A2F" }}>
+                <h3 style={{ margin: "0 0 6px", color: "#061A2F" }}>
                   Edit Profile Photo
                 </h3>
+                <p style={{ margin: "0 0 14px", fontSize: 12, color: "#6B7280", fontWeight: 700 }}>
+                  Drag photo with mouse. Use mouse wheel or slider to zoom.
+                </p>
 
                 <div
                   style={{
-                    width: 320,
-                    height: 320,
-                    maxWidth: "100%",
-                    margin: "0 auto",
-                    borderRadius: "50%",
-                    overflow: "hidden",
-                    background: "#111827",
                     position: "relative",
-                    border: "4px solid #D4AF37",
+                    width: "100%",
+                    height: 330,
+                    background: "#111827",
+                    borderRadius: 18,
+                    overflow: "hidden",
                   }}
                 >
-                  <img
-                    src={profilePhoto}
-                    alt="Preview"
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      transform: `translate(${crop.x}px, ${crop.y}px) scale(${zoom})`,
-                      transformOrigin: "center",
-                      userSelect: "none",
-                      pointerEvents: "none",
-                    }}
+                  <Cropper
+                    image={profilePhoto}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={1}
+                    cropShape="round"
+                    showGrid={false}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginTop: 16 }}>
-                  <div></div>
-                  <button onClick={() => setCrop({ ...crop, y: crop.y - 10 })} style={smallCropButton}>↑</button>
-                  <div></div>
-                  <button onClick={() => setCrop({ ...crop, x: crop.x - 10 })} style={smallCropButton}>←</button>
-                  <button onClick={() => setCrop({ x: 0, y: 0 })} style={smallCropButton}>Center</button>
-                  <button onClick={() => setCrop({ ...crop, x: crop.x + 10 })} style={smallCropButton}>→</button>
-                  <div></div>
-                  <button onClick={() => setCrop({ ...crop, y: crop.y + 10 })} style={smallCropButton}>↓</button>
-                  <div></div>
-                </div>
-
                 <div style={{ marginTop: 16 }}>
-                  <p style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 800, color: "#061A2F" }}>
-                    Zoom
-                  </p>
                   <input
                     type="range"
                     min={1}
