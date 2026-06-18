@@ -542,14 +542,44 @@ export default function MemberHubPage() {
           {activeSection === "Financial Transparency" && (
             <Section title="Financial Transparency">
               <h3>Financial Reports</h3>
-              {financialReports.length === 0 ? <Empty /> : financialReports.map((f, i) => (
-                <InfoCard
-                  key={"fin-"+i}
-                  title={`${i + 1}. ${f.description}`}
-                  text={`${f.date || ""} · ${f.purpose || ""}`}
-                  meta={`Income: ${f.income || 0} Ks · Expense: ${f.expense || 0} Ks · Balance: ${f.balance || 0} Ks · Ref: ${f.referenceNo || "-"} · Status: ${f.status || "-"}`}
-                />
-              ))}
+
+              {financialReports.length === 0 ? <Empty /> : (
+                <div style={{overflowX:"auto"}}>
+                  <table style={{width:"100%",borderCollapse:"collapse",background:"#fff"}}>
+                    <thead>
+                      <tr>
+                        <th style={{padding:"12px",borderBottom:"1px solid #ddd"}}>No</th>
+                        <th style={{padding:"12px",borderBottom:"1px solid #ddd"}}>Date</th>
+                        <th style={{padding:"12px",borderBottom:"1px solid #ddd"}}>Description</th>
+                        <th style={{padding:"12px",borderBottom:"1px solid #ddd"}}>Income</th>
+                        <th style={{padding:"12px",borderBottom:"1px solid #ddd"}}>Expense</th>
+                        <th style={{padding:"12px",borderBottom:"1px solid #ddd"}}>Balance</th>
+                        <th style={{padding:"12px",borderBottom:"1px solid #ddd"}}>Reference</th>
+                        <th style={{padding:"12px",borderBottom:"1px solid #ddd"}}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {financialReports.map((f, i) => (
+                        <tr key={i}>
+                          <td style={{padding:"12px",borderBottom:"1px solid #eee"}}>{i+1}</td>
+                          <td style={{padding:"12px",borderBottom:"1px solid #eee"}}>
+                            {f.date ? new Date(f.date).toLocaleDateString("en-GB") : "-"}
+                          </td>
+                          <td style={{padding:"12px",borderBottom:"1px solid #eee"}}>
+                            <strong>{f.description}</strong>
+                            <div style={{fontSize:"12px",color:"#666"}}>{f.purpose}</div>
+                          </td>
+                          <td style={{padding:"12px",borderBottom:"1px solid #eee"}}>{f.income || 0}</td>
+                          <td style={{padding:"12px",borderBottom:"1px solid #eee"}}>{f.expense || 0}</td>
+                          <td style={{padding:"12px",borderBottom:"1px solid #eee"}}>{f.balance || 0}</td>
+                          <td style={{padding:"12px",borderBottom:"1px solid #eee"}}>{f.referenceNo || "-"}</td>
+                          <td style={{padding:"12px",borderBottom:"1px solid #eee"}}>{f.status || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               <h3 style={{ marginTop: 32 }}>Donations</h3>
               {donations.length === 0 ? <Empty /> : donations.map((d, i) => (
