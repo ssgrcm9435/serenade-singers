@@ -4635,3 +4635,33 @@ select:focus {
   }
 }
 
+
+/* Final fix: Member Hub profile photo only */
+@media (max-width: 768px) {
+  .portal-sidebar nav button {
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 999px !important;
+    overflow: visible !important;
+  }
+
+  .portal-sidebar > div button {
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+  }
+
+  .portal-sidebar > div button img {
+    width: 126px !important;
+    height: 126px !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    border-radius: 50% !important;
+    display: block !important;
+  }
+}
