@@ -543,7 +543,12 @@ export default function MemberHubPage() {
             <Section title="Financial Transparency">
               <h3>Financial Reports</h3>
               {financialReports.length === 0 ? <Empty /> : financialReports.map((f, i) => (
-                <InfoCard key={"fin-"+i} title={f.description} text={f.purpose} meta={`Income: ${f.income || 0} Ks · Expense: ${f.expense || 0} Ks · Balance: ${f.balance || 0} Ks`} />
+                <InfoCard
+                  key={"fin-"+i}
+                  title={`${i + 1}. ${f.description}`}
+                  text={`${f.date || ""} · ${f.purpose || ""}`}
+                  meta={`Income: ${f.income || 0} Ks · Expense: ${f.expense || 0} Ks · Balance: ${f.balance || 0} Ks · Ref: ${f.referenceNo || "-"} · Status: ${f.status || "-"}`}
+                />
               ))}
 
               <h3 style={{ marginTop: 32 }}>Donations</h3>
