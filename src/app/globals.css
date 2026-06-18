@@ -4614,3 +4614,24 @@ select:focus {
   }
 }
 
+
+/* Fix sidebar nav buttons after profile photo mobile rule */
+@media (max-width: 768px) {
+  .portal-sidebar nav button {
+    width: 100% !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    aspect-ratio: auto !important;
+    border-radius: 999px !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .portal-sidebar nav {
+    width: 100% !important;
+  }
+}
+
