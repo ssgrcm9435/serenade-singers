@@ -7,6 +7,7 @@ const KBZPAY_INFO = {
 };
 
 import { useEffect, useState } from "react";
+import Cropper from "react-easy-crop";
 
 type UserInfo = {
   verified: boolean;
@@ -165,6 +166,39 @@ function getStatusStyle(status: string = "") {
   return {};
 }
 
+
+async function getCroppedImage(imageSrc: string, pixelCrop: any): Promise<string> {
+  const image = new Image();
+  image.src = imageSrc;
+
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = reject;
+  });
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) throw new Error("Canvas not supported.");
+
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  return canvas.toDataURL("image/jpeg", 0.9);
+}
+
 export default function MemberHubPage() {
   const [gmail, setGmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -191,6 +225,10 @@ export default function MemberHubPage() {
   const [profilePhoto, setProfilePhoto] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
 
   const apiUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || "";
 
@@ -384,11 +422,14 @@ export default function MemberHubPage() {
     const reader = new FileReader();
     reader.onload = () => {
       setProfilePhoto(String(reader.result || ""));
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setShowCropModal(true);
     };
     reader.readAsDataURL(file);
   }
 
-  async function updateProfilePhoto() {
+  async function updateProfilePhoto(imageData?: string) {
     setProfileMessage("");
 
     if (!user?.gmail) {
@@ -396,7 +437,9 @@ export default function MemberHubPage() {
       return;
     }
 
-    if (!profilePhoto) {
+    const finalPhoto = imageData || profilePhoto;
+
+    if (!finalPhoto) {
       setProfileMessage("Please choose a profile photo first.");
       return;
     }
@@ -406,7 +449,7 @@ export default function MemberHubPage() {
     try {
       const data = await post("updateMemberProfilePhoto", {
         gmail: user.gmail,
-        profilePhoto,
+        profilePhoto: finalPhoto,
       });
 
       if (!data.success) {
@@ -422,6 +465,7 @@ export default function MemberHubPage() {
       setUser(updatedUser);
       localStorage.setItem("ss_learning_user", JSON.stringify(updatedUser));
       setProfilePhoto("");
+      setShowCropModal(false);
       setProfileMessage("Profile photo updated.");
     } catch {
       setProfileMessage("Unable to update profile photo.");
@@ -463,6 +507,20 @@ export default function MemberHubPage() {
       setProfileMessage("Unable to remove profile photo.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function saveCroppedProfilePhoto() {
+    if (!profilePhoto || !croppedAreaPixels) {
+      setProfileMessage("Please adjust the photo first.");
+      return;
+    }
+
+    try {
+      const croppedImage = await getCroppedImage(profilePhoto, croppedAreaPixels);
+      await updateProfilePhoto(croppedImage);
+    } catch {
+      setProfileMessage("Unable to crop photo.");
     }
   }
 
@@ -657,7 +715,7 @@ export default function MemberHubPage() {
 
               {profilePhoto && (
                 <button
-                  onClick={updateProfilePhoto}
+                  onClick={() => setShowCropModal(true)}
                   disabled={loading}
                   style={{
                     marginTop: 12,
@@ -682,6 +740,109 @@ export default function MemberHubPage() {
               )}
             </div>
           </div>
+
+
+          {showCropModal && profilePhoto && (
+            <div
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 9999,
+                background: "rgba(0,0,0,0.72)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 20,
+              }}
+            >
+              <div
+                style={{
+                  width: "min(460px, 95vw)",
+                  background: "#ffffff",
+                  borderRadius: 24,
+                  padding: 20,
+                  boxShadow: "0 30px 80px rgba(0,0,0,0.35)",
+                }}
+              >
+                <h3 style={{ margin: "0 0 12px", color: "#061A2F" }}>
+                  Edit Profile Photo
+                </h3>
+
+                <div
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: 320,
+                    background: "#111827",
+                    borderRadius: 18,
+                    overflow: "hidden",
+                  }}
+                >
+                  <Cropper
+                    image={profilePhoto}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={1}
+                    cropShape="round"
+                    showGrid={false}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
+                  />
+                </div>
+
+                <div style={{ marginTop: 16 }}>
+                  <p style={{ margin: "0 0 8px", fontSize: 12, fontWeight: 800, color: "#061A2F" }}>
+                    Zoom
+                  </p>
+                  <input
+                    type="range"
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    value={zoom}
+                    onChange={(e) => setZoom(Number(e.target.value))}
+                    style={{ width: "100%" }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 18 }}>
+                  <button
+                    onClick={() => {
+                      setShowCropModal(false);
+                      setProfilePhoto("");
+                    }}
+                    style={{
+                      border: "1px solid #E5E7EB",
+                      background: "#ffffff",
+                      borderRadius: 999,
+                      padding: "9px 14px",
+                      fontWeight: 900,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={saveCroppedProfilePhoto}
+                    disabled={loading}
+                    style={{
+                      border: 0,
+                      background: "#D4AF37",
+                      color: "#061A2F",
+                      borderRadius: 999,
+                      padding: "9px 16px",
+                      fontWeight: 900,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Save Photo
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <nav style={nav}>
             {menuItems.map((item) => (
