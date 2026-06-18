@@ -167,6 +167,9 @@ export default function MemberHubPage() {
   const [announcements, setAnnouncements] = useState<HubItem[]>([]);
   const [events, setEvents] = useState<HubItem[]>([]);
   const [financialReports, setFinancialReports] = useState<HubItem[]>([]);
+  const [donations, setDonations] = useState<HubItem[]>([]);
+  const [assetsRegister, setAssetsRegister] = useState<HubItem[]>([]);
+  const [projects, setProjects] = useState<HubItem[]>([]);
   const [documents, setDocuments] = useState<HubItem[]>([]);
   const [shirtHistory, setShirtHistory] = useState<HubItem[]>([]);
   const [membersDirectory, setMembersDirectory] = useState<HubItem[]>([]);
@@ -203,12 +206,15 @@ export default function MemberHubPage() {
   async function loadHubData(type: "Member" | "Volunteer") {
     if (!apiUrl) return;
 
-    const [videoData, announcementData, eventData, financeData, documentData, membersData] =
+    const [videoData, announcementData, eventData, financeData, donationData, assetData, projectData, documentData, membersData] =
       await Promise.all([
         post("getLearningVideos", { audience: type }),
         post("getAnnouncements"),
         post("getEvents"),
         post("getFinancialReports"),
+        post("getDonations"),
+        post("getAssetsRegister"),
+        post("getProjects"),
         post("getDocuments"),
         post("getMembersDirectory"),
       ]);
@@ -217,6 +223,9 @@ export default function MemberHubPage() {
     if (announcementData.success) setAnnouncements(announcementData.items || []);
     if (eventData.success) setEvents(eventData.items || []);
     if (financeData.success) setFinancialReports(financeData.items || []);
+    if (donationData.success) setDonations(donationData.items || []);
+    if (assetData.success) setAssetsRegister(assetData.items || []);
+    if (projectData.success) setProjects(projectData.items || []);
     if (documentData.success) setDocuments(documentData.items || []);
     if (membersData.success) setMembersDirectory(membersData.members || []);
   }
