@@ -15,6 +15,7 @@ type UserInfo = {
   fullName: string;
   gmail: string;
   voicePart?: string;
+  profilePhotoUrl?: string;
 };
 
 type LearningVideo = {
@@ -44,6 +45,13 @@ function getYouTubeEmbedUrl(url: string) {
   if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`;
   const shortMatch = url.match(/youtu\.be\/([^?&]+)/);
   if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`;
+  return url;
+}
+
+function getDriveImageUrl(url: string = "") {
+  if (!url) return "";
+  const idMatch = url.match(/\/d\/([^/]+)/) || url.match(/[?&]id=([^&]+)/);
+  if (idMatch) return `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w400`;
   return url;
 }
 
@@ -180,6 +188,8 @@ export default function MemberHubPage() {
   const [paymentMethod, setPaymentMethod] = useState("KBZPay");
   const [paymentScreenshot, setPaymentScreenshot] = useState("");
   const [paymentMessage, setPaymentMessage] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState("");
+  const [profileMessage, setProfileMessage] = useState("");
 
   const apiUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL || "";
 
@@ -365,6 +375,96 @@ export default function MemberHubPage() {
   }
 
 
+  function handleProfilePhotoFile(file: File | null) {
+    setProfileMessage("");
+
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setProfilePhoto(String(reader.result || ""));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function updateProfilePhoto() {
+    setProfileMessage("");
+
+    if (!user?.gmail) {
+      setProfileMessage("User not verified.");
+      return;
+    }
+
+    if (!profilePhoto) {
+      setProfileMessage("Please choose a profile photo first.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const data = await post("updateMemberProfilePhoto", {
+        gmail: user.gmail,
+        profilePhoto,
+      });
+
+      if (!data.success) {
+        setProfileMessage(data.message || "Unable to update profile photo.");
+        return;
+      }
+
+      const updatedUser = {
+        ...user,
+        profilePhotoUrl: data.profilePhotoUrl || "",
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("ss_learning_user", JSON.stringify(updatedUser));
+      setProfilePhoto("");
+      setProfileMessage("Profile photo updated.");
+    } catch {
+      setProfileMessage("Unable to update profile photo.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function removeProfilePhoto() {
+    setProfileMessage("");
+
+    if (!user?.gmail) {
+      setProfileMessage("User not verified.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const data = await post("removeMemberProfilePhoto", {
+        gmail: user.gmail,
+      });
+
+      if (!data.success) {
+        setProfileMessage(data.message || "Unable to remove profile photo.");
+        return;
+      }
+
+      const updatedUser = {
+        ...user,
+        profilePhotoUrl: "",
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem("ss_learning_user", JSON.stringify(updatedUser));
+      setProfilePhoto("");
+      setProfileMessage("Profile photo removed.");
+    } catch {
+      setProfileMessage("Unable to remove profile photo.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function logoutMemberHub() {
     localStorage.removeItem("ss_learning_user");
     localStorage.removeItem("ss_member_verified");
@@ -452,13 +552,87 @@ export default function MemberHubPage() {
           <h2 style={sidebarTitle}>Members Hub</h2>
 
           <div style={profileCard}>
-            <div style={avatar}>
-              {user.fullName?.charAt(0) || "S"}
-            </div>
             <div>
+              {user.profilePhotoUrl ? (
+                <img
+                  src={getDriveImageUrl(user.profilePhotoUrl)}
+                  alt={user.fullName}
+                  style={{
+                    width: 58,
+                    height: 58,
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    border: "2px solid #D4AF37",
+                    background: "#ffffff",
+                  }}
+                />
+              ) : (
+                <div style={avatar}>
+                  {user.fullName?.charAt(0) || "S"}
+                </div>
+              )}
+            </div>
+
+            <div style={{ flex: 1 }}>
               <p style={profileName}>{user.fullName}</p>
               <p style={profileMeta}>{user.memberId}</p>
               <p style={profileMeta}>{user.type} · {user.voicePart || "-"}</p>
+
+              <div style={{ marginTop: 10 }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleProfilePhotoFile(e.target.files?.[0] || null)}
+                  style={{
+                    width: "100%",
+                    fontSize: 11,
+                    color: "#E5EEF8",
+                    marginBottom: 8,
+                  }}
+                />
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    onClick={updateProfilePhoto}
+                    disabled={loading}
+                    style={{
+                      border: 0,
+                      borderRadius: 999,
+                      padding: "7px 10px",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      background: "#D4AF37",
+                      color: "#061A2F",
+                    }}
+                  >
+                    Update
+                  </button>
+
+                  <button
+                    onClick={removeProfilePhoto}
+                    disabled={loading}
+                    style={{
+                      border: "1px solid #FCA5A5",
+                      borderRadius: 999,
+                      padding: "7px 10px",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      background: "#FEF2F2",
+                      color: "#B91C1C",
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                {profileMessage && (
+                  <p style={{ marginTop: 8, fontSize: 11, color: "#D4AF37", fontWeight: 800 }}>
+                    {profileMessage}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
