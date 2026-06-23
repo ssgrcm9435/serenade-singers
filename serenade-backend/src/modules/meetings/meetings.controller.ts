@@ -51,6 +51,21 @@ export class MeetingsController {
     return this.meetingsService.findAll();
   }
 
+  @Post(':meetingId/join-log')
+  recordJoin(@Param('meetingId') meetingId: string, @Body() body: { userId?: string }) {
+    return this.meetingsService.recordJoin(meetingId, body.userId);
+  }
+
+  @Post(':meetingId/leave-log')
+  recordLeave(@Param('meetingId') meetingId: string, @Body() body: { userId?: string }) {
+    return this.meetingsService.recordLeave(meetingId, body.userId);
+  }
+
+  @Get(':meetingId/history')
+  meetingHistory(@Param('meetingId') meetingId: string) {
+    return this.meetingsService.meetingHistory(meetingId);
+  }
+
   @Get(':meetingId')
   findOne(@Param('meetingId') meetingId: string) {
     return this.meetingsService.findOne(meetingId);

@@ -88,6 +88,51 @@ export class MeetingsService {
     };
   }
 
+  async recordJoin(meetingId: string, userId?: string) {
+    const meeting = await this.prisma.meeting.findUnique({
+      where: { meetingId },
+    });
+
+    if (!meeting) throw new NotFoundException('Meeting not found');
+
+    return this.prisma.callLog.create({
+      data: {
+        meetingId: meeting.id,
+        userId: userId || null,
+        action: 'PARTICIPANT_JOINED',
+      },
+    });
+  }
+
+  async recordLeave(meetingId: string, userId?: string) {
+    const meeting = await this.prisma.meeting.findUnique({
+      where: { meetingId },
+    });
+
+    if (!meeting) throw new NotFoundException('Meeting not found');
+
+    return this.prisma.callLog.create({
+      data: {
+        meetingId: meeting.id,
+        userId: userId || null,
+        action: 'PARTICIPANT_LEFT',
+      },
+    });
+  }
+
+  async meetingHistory(meetingId: string) {
+    const meeting = await this.prisma.meeting.findUnique({
+      where: { meetingId },
+    });
+
+    if (!meeting) throw new NotFoundException('Meeting not found');
+
+    return this.prisma.callLog.findMany({
+      where: { meetingId: meeting.id },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
   async findOne(meetingId: string) {
     const meeting = await this.prisma.meeting.findUnique({
       where: { meetingId },
