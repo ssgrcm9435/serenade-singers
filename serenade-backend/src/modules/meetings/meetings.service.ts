@@ -1,3 +1,4 @@
+import { generateMeetingId, generatePasscode } from './utils/meeting-code';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
@@ -9,12 +10,13 @@ export class MeetingsService {
   create(dto: CreateMeetingDto) {
     return this.prisma.meeting.create({
       data: {
-        meetingId: dto.meetingId,
+        meetingId: dto.meetingId || generateMeetingId(),
         title: dto.title,
         description: dto.description,
         hostId: dto.hostId,
         startTime: new Date(dto.startTime),
         roomName: dto.roomName,
+      passcode: generatePasscode(),
       },
     });
   }
