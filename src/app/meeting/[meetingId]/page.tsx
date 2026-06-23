@@ -16,15 +16,73 @@ export default function MeetingRoomPage({
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const peerConnectionsRef = useRef<Record<string, RTCPeerConnection>>({});
 
   const [joined, setJoined] = useState(false);
   const [status, setStatus] = useState("Ready to join meeting");
   const [audioOn, setAudioOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
   const [participants, setParticipants] = useState<string[]>([]);
+  const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [notice, setNotice] = useState("");
+
+
+  function createPeerConnection(targetSocketId: string) {
+    const socket = socketRef.current;
+    const localStream = streamRef.current;
+
+    if (!socket || !localStream) return null;
+
+    const existing = peerConnectionsRef.current[targetSocketId];
+    if (existing) return existing;
+
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    });
+
+    localStream.getTracks().forEach((track) => {
+      pc.addTrack(track, localStream);
+    });
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("ice-candidate", {
+          meetingId,
+          targetSocketId,
+          candidate: event.candidate,
+        });
+      }
+    };
+
+    pc.ontrack = (event) => {
+      const [remoteStream] = event.streams;
+      setRemoteStreams((prev) => ({
+        ...prev,
+        [targetSocketId]: remoteStream,
+      }));
+    };
+
+    peerConnectionsRef.current[targetSocketId] = pc;
+    return pc;
+  }
+
+  async function callParticipant(targetSocketId: string) {
+    const socket = socketRef.current;
+    const pc = createPeerConnection(targetSocketId);
+
+    if (!socket || !pc) return;
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    socket.emit("webrtc-offer", {
+      meetingId,
+      targetSocketId,
+      offer,
+    });
+  }
 
   async function startLocalMedia() {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -63,6 +121,15 @@ export default function MeetingRoomPage({
         setStatus(`Joined meeting: ${data.meetingId}`);
       });
 
+      socket.on("existing-participants", async (data) => {
+        const existing = data.participants || [];
+        setParticipants(existing.map((p: any) => p.socketId));
+
+        for (const participant of existing) {
+          await callParticipant(participant.socketId);
+        }
+      });
+
       socket.on("participant-joined", (data) => {
         setParticipants((prev) =>
           prev.includes(data.socketId) ? prev : [...prev, data.socketId]
@@ -70,7 +137,44 @@ export default function MeetingRoomPage({
       });
 
       socket.on("participant-left", (data) => {
+        peerConnectionsRef.current[data.socketId]?.close();
+        delete peerConnectionsRef.current[data.socketId];
+
         setParticipants((prev) => prev.filter((id) => id !== data.socketId));
+        setRemoteStreams((prev) => {
+          const copy = { ...prev };
+          delete copy[data.socketId];
+          return copy;
+        });
+      });
+
+      socket.on("webrtc-offer", async (data) => {
+        const pc = createPeerConnection(data.fromSocketId);
+        if (!pc) return;
+
+        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        socket.emit("webrtc-answer", {
+          meetingId,
+          targetSocketId: data.fromSocketId,
+          answer,
+        });
+      });
+
+      socket.on("webrtc-answer", async (data) => {
+        const pc = peerConnectionsRef.current[data.fromSocketId];
+        if (!pc) return;
+
+        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+      });
+
+      socket.on("ice-candidate", async (data) => {
+        const pc = peerConnectionsRef.current[data.fromSocketId];
+        if (!pc || !data.candidate) return;
+
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
       });
 
       socket.emit("join-meeting-chat", {
@@ -117,6 +221,10 @@ export default function MeetingRoomPage({
   function leaveMeeting() {
     socketRef.current?.emit("leave-meeting", { meetingId });
     socketRef.current?.disconnect();
+
+    Object.values(peerConnectionsRef.current).forEach((pc) => pc.close());
+    peerConnectionsRef.current = {};
+    setRemoteStreams({});
 
     streamRef.current?.getTracks().forEach((track) => track.stop());
 
@@ -210,6 +318,8 @@ export default function MeetingRoomPage({
   useEffect(() => {
     return () => {
       socketRef.current?.disconnect();
+      Object.values(peerConnectionsRef.current).forEach((pc) => pc.close());
+      peerConnectionsRef.current = {};
       streamRef.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
@@ -251,19 +361,25 @@ export default function MeetingRoomPage({
               border: "1px solid rgba(255,255,255,0.12)",
             }}
           >
-            <video
-              ref={localVideoRef}
-              autoPlay
-              playsInline
-              muted
-              style={{
-                width: "100%",
-                minHeight: 420,
-                background: "#111827",
-                borderRadius: 18,
-                objectFit: "cover",
-              }}
-            />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+              <video
+                ref={localVideoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  width: "100%",
+                  minHeight: 260,
+                  background: "#111827",
+                  borderRadius: 18,
+                  objectFit: "cover",
+                }}
+              />
+
+              {Object.entries(remoteStreams).map(([socketId, stream]) => (
+                <RemoteVideo key={socketId} stream={stream} socketId={socketId} />
+              ))}
+            </div>
 
             <div
               style={{
@@ -417,3 +533,46 @@ const participantCard = {
   marginBottom: 10,
   fontWeight: 800,
 };
+
+
+function RemoteVideo({ stream, socketId }: { stream: MediaStream; socketId: string }) {
+  const ref = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <video
+        ref={ref}
+        autoPlay
+        playsInline
+        style={{
+          width: "100%",
+          minHeight: 260,
+          background: "#111827",
+          borderRadius: 18,
+          objectFit: "cover",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          left: 12,
+          bottom: 12,
+          padding: "6px 10px",
+          borderRadius: 999,
+          background: "rgba(0,0,0,0.55)",
+          color: "#ffffff",
+          fontSize: 12,
+          fontWeight: 800,
+        }}
+      >
+        Participant {socketId.slice(0, 6)}
+      </div>
+    </div>
+  );
+}

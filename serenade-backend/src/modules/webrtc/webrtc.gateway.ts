@@ -9,17 +9,16 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
-type JoinRoomPayload = {
-  meetingId: string;
-  userId?: string;
-  fullName?: string;
+type Participant = {
+  socketId: string;
+  userId?: string | null;
+  fullName: string;
 };
 
+const meetingParticipants = new Map<string, Participant[]>();
+
 @WebSocketGateway({
-  cors: {
-    origin: '*',
-    credentials: true,
-  },
+  cors: { origin: '*', credentials: true },
 })
 export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -33,23 +32,47 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    this.server.emit('participant-left', {
-      socketId: client.id,
-    });
+    for (const [meetingId, participants] of meetingParticipants.entries()) {
+      const existed = participants.some((p) => p.socketId === client.id);
+      if (!existed) continue;
+
+      meetingParticipants.set(
+        meetingId,
+        participants.filter((p) => p.socketId !== client.id),
+      );
+
+      this.server.to(`meeting:${meetingId}`).emit('participant-left', {
+        socketId: client.id,
+        meetingId,
+      });
+    }
   }
 
   @SubscribeMessage('join-meeting')
   handleJoinMeeting(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: JoinRoomPayload,
+    @MessageBody() payload: { meetingId: string; userId?: string; fullName?: string },
   ) {
     const room = `meeting:${payload.meetingId}`;
+    const currentParticipants = meetingParticipants.get(payload.meetingId) || [];
+
     client.join(room);
 
-    client.to(room).emit('participant-joined', {
+    client.emit('existing-participants', {
+      meetingId: payload.meetingId,
+      participants: currentParticipants,
+    });
+
+    const participant: Participant = {
       socketId: client.id,
       userId: payload.userId || null,
       fullName: payload.fullName || 'Participant',
+    };
+
+    meetingParticipants.set(payload.meetingId, [...currentParticipants, participant]);
+
+    client.to(room).emit('participant-joined', {
+      ...participant,
       meetingId: payload.meetingId,
     });
 
@@ -68,6 +91,12 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const room = `meeting:${payload.meetingId}`;
     client.leave(room);
 
+    const participants = meetingParticipants.get(payload.meetingId) || [];
+    meetingParticipants.set(
+      payload.meetingId,
+      participants.filter((p) => p.socketId !== client.id),
+    );
+
     client.to(room).emit('participant-left', {
       socketId: client.id,
       meetingId: payload.meetingId,
@@ -79,54 +108,37 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('webrtc-offer')
   handleOffer(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { meetingId: string; offer: unknown; targetSocketId?: string },
+    @MessageBody() payload: { meetingId: string; offer: unknown; targetSocketId: string },
   ) {
-    const room = `meeting:${payload.meetingId}`;
-
-    if (payload.targetSocketId) {
-      client.to(payload.targetSocketId).emit('webrtc-offer', {
-        fromSocketId: client.id,
-        offer: payload.offer,
-      });
-      return;
-    }
-
-    client.to(room).emit('webrtc-offer', {
+    client.to(payload.targetSocketId).emit('webrtc-offer', {
       fromSocketId: client.id,
       offer: payload.offer,
+      meetingId: payload.meetingId,
     });
   }
 
   @SubscribeMessage('webrtc-answer')
   handleAnswer(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { answer: unknown; targetSocketId: string },
+    @MessageBody() payload: { meetingId: string; answer: unknown; targetSocketId: string },
   ) {
     client.to(payload.targetSocketId).emit('webrtc-answer', {
       fromSocketId: client.id,
       answer: payload.answer,
+      meetingId: payload.meetingId,
     });
   }
 
   @SubscribeMessage('ice-candidate')
   handleIceCandidate(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { candidate: unknown; targetSocketId?: string; meetingId?: string },
+    @MessageBody() payload: { meetingId: string; candidate: unknown; targetSocketId: string },
   ) {
-    if (payload.targetSocketId) {
-      client.to(payload.targetSocketId).emit('ice-candidate', {
-        fromSocketId: client.id,
-        candidate: payload.candidate,
-      });
-      return;
-    }
-
-    if (payload.meetingId) {
-      client.to(`meeting:${payload.meetingId}`).emit('ice-candidate', {
-        fromSocketId: client.id,
-        candidate: payload.candidate,
-      });
-    }
+    client.to(payload.targetSocketId).emit('ice-candidate', {
+      fromSocketId: client.id,
+      candidate: payload.candidate,
+      meetingId: payload.meetingId,
+    });
   }
 
   @SubscribeMessage('toggle-media')
