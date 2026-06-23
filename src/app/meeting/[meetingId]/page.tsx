@@ -29,6 +29,7 @@ export default function MeetingRoomPage({
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [notice, setNotice] = useState("");
+  const [accessChecked, setAccessChecked] = useState(false);
 
   function createPeerConnection(targetSocketId: string) {
     const socket = socketRef.current;
@@ -338,13 +339,44 @@ export default function MeetingRoomPage({
   }
 
   useEffect(() => {
+    const saved = sessionStorage.getItem("ss_meeting_access");
+
+    if (!saved) {
+      window.location.href = "/meeting";
+      return;
+    }
+
+    try {
+      const access = JSON.parse(saved);
+
+      if (access.meetingId !== meetingId) {
+        window.location.href = "/meeting";
+        return;
+      }
+
+      setAccessChecked(true);
+    } catch {
+      window.location.href = "/meeting";
+    }
+
     return () => {
       socketRef.current?.disconnect();
       Object.values(peerConnectionsRef.current).forEach((pc) => pc.close());
       peerConnectionsRef.current = {};
       streamRef.current?.getTracks().forEach((track) => track.stop());
     };
-  }, []);
+  }, [meetingId]);
+
+  if (!accessChecked) {
+    return (
+      <main style={main}>
+        <div style={{ maxWidth: 640, margin: "0 auto", paddingTop: 80 }}>
+          <p style={eyebrow}>SERENADE SINGERS MEETING</p>
+          <h1 style={title}>Checking meeting access...</h1>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main style={main}>
