@@ -29,6 +29,8 @@ export default function MeetingRoomPage({
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [notice, setNotice] = useState("");
+  const [waitingApproval, setWaitingApproval] = useState(false);
+  const [approvedToJoin, setApprovedToJoin] = useState(false);
   const [accessChecked, setAccessChecked] = useState(false);
 
   function createPeerConnection(targetSocketId: string) {
@@ -97,6 +99,33 @@ export default function MeetingRoomPage({
     }
   }
 
+  async function requestWaitingRoom(socket: Socket) {
+    try {
+      const res = await fetch(`${SIGNALING_URL}/meetings/waiting-room/request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          meetingId,
+          fullName: "Serenade Member",
+          socketId: socket.id,
+        }),
+      });
+
+      const data = await res.json();
+
+      socket.emit("waiting-room-request", {
+        meetingId,
+        participantId: data.id,
+        fullName: "Serenade Member",
+      });
+
+      setWaitingApproval(true);
+      setStatus("Waiting for host approval...");
+    } catch {
+      setStatus("Unable to request meeting access.");
+    }
+  }
+
   async function joinMeeting() {
     try {
       setStatus("Starting camera and microphone...");
@@ -114,12 +143,32 @@ export default function MeetingRoomPage({
       });
 
       socket.on("joined-meeting", (data) => {
-        setJoined(true);
-        setStatus(`Joined meeting: ${data.meetingId}`);
-        socket.emit("join-meeting-chat", {
-          meetingId,
-          fullName: "Serenade Member",
-        });
+        setApprovedToJoin(true);
+        requestWaitingRoom(socket);
+      });
+
+      socket.on("waiting-room-status", (data) => {
+        setStatus(data.message || data.status);
+
+        if (data.status === "APPROVED") {
+          setWaitingApproval(false);
+          setApprovedToJoin(true);
+          setJoined(true);
+          setStatus("Joined meeting");
+
+          socket.emit("join-meeting-chat", {
+            meetingId,
+            fullName: "Serenade Member",
+          });
+        }
+
+        if (data.status === "REJECTED") {
+          setWaitingApproval(false);
+          setApprovedToJoin(false);
+          setJoined(false);
+          leaveMeeting();
+          setStatus("Your request was rejected by the host.");
+        }
       });
 
       socket.on("existing-participants", async (data) => {
@@ -205,6 +254,25 @@ export default function MeetingRoomPage({
 
       socket.on("screen-share-stopped", () => {
         setNotice("Screen sharing stopped");
+      });
+
+      socket.on("host-mute-all", () => {
+        const stream = streamRef.current;
+        stream?.getAudioTracks().forEach((track) => {
+          track.enabled = false;
+        });
+        setAudioOn(false);
+        setNotice("Host muted all participants.");
+      });
+
+      socket.on("host-end-meeting", (data) => {
+        setNotice(data.message || "Meeting ended by host.");
+        leaveMeeting();
+      });
+
+      socket.on("host-remove-participant", (data) => {
+        setNotice(data.message || "You were removed from the meeting.");
+        leaveMeeting();
       });
     } catch {
       setStatus("Unable to access camera or microphone.");
@@ -412,8 +480,8 @@ export default function MeetingRoomPage({
 
             <div style={controls}>
               {!joined ? (
-                <button onClick={joinMeeting} style={primaryButton}>
-                  Join Meeting
+                <button onClick={joinMeeting} disabled={waitingApproval} style={primaryButton}>
+                  {waitingApproval ? "Waiting for Host..." : "Join Meeting"}
                 </button>
               ) : (
                 <button onClick={leaveMeeting} style={dangerButton}>
