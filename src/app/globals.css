@@ -4699,3 +4699,19 @@ select:focus {
     min-width: 0 !important;
   }
 }
+
+@media (max-width: 980px) {
+  main section {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  main {
+    padding: 12px !important;
+  }
+
+  button {
+    width: 100%;
+  }
+}

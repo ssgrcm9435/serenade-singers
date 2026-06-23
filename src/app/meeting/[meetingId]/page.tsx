@@ -39,7 +39,7 @@ export default function MeetingRoomPage() {
       return;
     }
 
-    setStatus("Waiting for host approval...");
+    setStatus("Waiting for host approval");
 
     const res = await fetch(`${BACKEND_URL}/meetings/waiting-room/request`, {
       method: "POST",
@@ -67,53 +67,40 @@ export default function MeetingRoomPage() {
       if (me.status === "APPROVED") {
         clearInterval(pollRef.current);
         setApproved(true);
-        setStatus("Approved. You can start your camera.");
+        setStatus("Approved");
         await logJoin();
       }
 
       if (me.status === "REJECTED") {
         clearInterval(pollRef.current);
-        setStatus("Your request was rejected by the host.");
+        setStatus("Rejected by host");
       }
     }, 2500);
   }
 
   async function startCamera() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      if (videoRef.current) videoRef.current.srcObject = stream;
     } catch {
-      setStatus("Camera or microphone permission denied.");
+      setStatus("Camera or microphone permission denied");
     }
   }
 
   function toggleAudio() {
     const stream = streamRef.current;
     if (!stream) return;
-
     const next = !audioOn;
-    stream.getAudioTracks().forEach((track) => {
-      track.enabled = next;
-    });
+    stream.getAudioTracks().forEach((track) => (track.enabled = next));
     setAudioOn(next);
   }
 
   function toggleVideo() {
     const stream = streamRef.current;
     if (!stream) return;
-
     const next = !videoOn;
-    stream.getVideoTracks().forEach((track) => {
-      track.enabled = next;
-    });
+    stream.getVideoTracks().forEach((track) => (track.enabled = next));
     setVideoOn(next);
   }
 
@@ -139,12 +126,15 @@ export default function MeetingRoomPage() {
 
   async function leaveMeeting() {
     if (pollRef.current) clearInterval(pollRef.current);
-
     streamRef.current?.getTracks().forEach((track) => track.stop());
     await logLeave();
-
     sessionStorage.removeItem("ss_meeting_access");
     window.location.href = "/meeting";
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(window.location.href);
+    setStatus("Meeting link copied");
   }
 
   useEffect(() => {
@@ -157,167 +147,288 @@ export default function MeetingRoomPage() {
   }, [meetingId]);
 
   return (
-    <main style={main}>
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <Link href="/member-hub" style={backLink}>← Back to Members Hub</Link>
+    <main style={page}>
+      <header style={topbar}>
+        <div>
+          <p style={brand}>SERENADE MEET</p>
+          <h1 style={meetingTitle}>{meetingId}</h1>
+        </div>
 
-        <header style={header}>
-          <div>
-            <p style={eyebrow}>SERENADE SINGERS MEETING</p>
-            <h1 style={title}>{meetingId}</h1>
-            <p>{status}</p>
-          </div>
+        <div style={topActions}>
+          <span style={statusPill}>{status}</span>
+          <button onClick={copyLink} style={lightButton}>Copy Link</button>
+          <button onClick={leaveMeeting} style={leaveButton}>Leave</button>
+        </div>
+      </header>
 
-          <button onClick={leaveMeeting} style={dangerButton}>
-            Leave Meeting
-          </button>
-        </header>
-
-        {!approved ? (
-          <section style={card}>
-            <h2>Waiting Room</h2>
-            <p>Please wait until the host approves your request.</p>
-            <p><strong>Meeting ID:</strong> {meetingId}</p>
-            <button onClick={leaveMeeting} style={dangerButton}>
-              Cancel / Leave
-            </button>
-          </section>
-        ) : (
-          <section style={roomGrid}>
-            <div style={videoPanel}>
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                style={videoStyle}
-              />
-
-              <div style={controls}>
-                <button onClick={startCamera} style={button}>Start Camera</button>
-                <button onClick={toggleAudio} style={button}>{audioOn ? "Mute" : "Unmute"}</button>
-                <button onClick={toggleVideo} style={button}>{videoOn ? "Camera Off" : "Camera On"}</button>
-                <button onClick={leaveMeeting} style={dangerButton}>Leave Meeting</button>
-              </div>
+      <section style={layout}>
+        <div style={stage}>
+          {!approved ? (
+            <div style={waitingCard}>
+              <div style={waitingIcon}>♪</div>
+              <h2 style={{ margin: 0 }}>Waiting for Host Approval</h2>
+              <p style={muted}>Your request has been sent to the host. Please stay on this page.</p>
+              <p style={smallText}>Meeting ID: {meetingId}</p>
+              <button onClick={leaveMeeting} style={leaveButton}>Cancel Request</button>
             </div>
+          ) : (
+            <>
+              <div style={videoFrame}>
+                <video ref={videoRef} autoPlay playsInline muted style={videoStyle} />
+                <div style={nameBadge}>You</div>
+              </div>
 
-            <aside style={sidePanel}>
-              <h2>Participants</h2>
-              <div style={participantCard}>You</div>
+              <div style={toolbar}>
+                <button onClick={startCamera} style={toolButton}>Start Camera</button>
+                <button onClick={toggleAudio} style={toolButton}>{audioOn ? "Mute" : "Unmute"}</button>
+                <button onClick={toggleVideo} style={toolButton}>{videoOn ? "Camera Off" : "Camera On"}</button>
+                <button style={toolButton}>Share Screen</button>
+                <button style={toolButton}>Raise Hand</button>
+                <button onClick={leaveMeeting} style={leaveButton}>Leave</button>
+              </div>
+            </>
+          )}
+        </div>
 
-              <h2 style={{ marginTop: 24 }}>Meeting Chat</h2>
-              <div style={chatBox}>Chat foundation is ready.</div>
-            </aside>
+        <aside style={sidebar}>
+          <section style={sideCard}>
+            <h3 style={sideTitle}>Participants</h3>
+            <div style={participant}>You</div>
+            {participantId && <div style={participant}>Request ID: {participantId.slice(0, 8)}</div>}
           </section>
-        )}
-      </div>
+
+          <section style={sideCard}>
+            <h3 style={sideTitle}>Meeting Chat</h3>
+            <div style={chatBox}>No messages yet.</div>
+            <div style={chatInputRow}>
+              <input placeholder="Type message..." style={chatInput} />
+              <button style={sendButton}>Send</button>
+            </div>
+          </section>
+        </aside>
+      </section>
+
+      <Link href="/member-hub" style={backLink}>← Back to Members Hub</Link>
     </main>
   );
 }
 
-const main = {
+const page = {
   minHeight: "100vh",
-  background: "#061A2F",
-  color: "#fff",
-  padding: 24,
+  background: "linear-gradient(135deg, #061A2F 0%, #07111f 100%)",
+  color: "#ffffff",
+  padding: 22,
 };
 
-const backLink = {
-  color: "#D4AF37",
-  fontWeight: 900,
-  textDecoration: "none",
-};
-
-const header = {
+const topbar = {
+  maxWidth: 1280,
+  margin: "0 auto 20px",
+  padding: "16px 20px",
+  borderRadius: 24,
+  background: "rgba(255,255,255,0.07)",
+  border: "1px solid rgba(255,255,255,0.12)",
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  gap: 20,
-  margin: "24px 0",
+  gap: 16,
   flexWrap: "wrap" as const,
 };
 
-const eyebrow = {
+const brand = {
+  margin: 0,
   color: "#D4AF37",
   fontWeight: 900,
-  letterSpacing: 1,
+  letterSpacing: 1.5,
+  fontSize: 13,
 };
 
-const title = {
-  fontSize: 36,
-  margin: "8px 0",
+const meetingTitle = {
+  margin: "6px 0 0",
+  fontSize: 28,
+  lineHeight: 1.1,
 };
 
-const card = {
-  padding: 28,
-  borderRadius: 24,
+const topActions = {
+  display: "flex",
+  gap: 10,
+  alignItems: "center",
+  flexWrap: "wrap" as const,
+};
+
+const statusPill = {
+  padding: "10px 14px",
+  borderRadius: 999,
+  background: "rgba(212,175,55,0.16)",
+  color: "#FDE68A",
+  fontWeight: 900,
+};
+
+const layout = {
+  maxWidth: 1280,
+  margin: "0 auto",
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) 360px",
+  gap: 20,
+};
+
+const stage = {
+  minHeight: 620,
+  borderRadius: 28,
+  background: "rgba(2,6,23,0.82)",
+  border: "1px solid rgba(255,255,255,0.12)",
+  padding: 18,
+  display: "flex",
+  flexDirection: "column" as const,
+  justifyContent: "center",
+};
+
+const waitingCard = {
+  margin: "0 auto",
+  maxWidth: 520,
+  textAlign: "center" as const,
+  padding: 34,
+  borderRadius: 28,
   background: "rgba(255,255,255,0.08)",
   border: "1px solid rgba(255,255,255,0.14)",
 };
 
-const roomGrid = {
+const waitingIcon = {
+  width: 70,
+  height: 70,
+  margin: "0 auto 18px",
+  borderRadius: "50%",
   display: "grid",
-  gridTemplateColumns: "minmax(0, 2fr) minmax(280px, 1fr)",
-  gap: 20,
+  placeItems: "center",
+  background: "#D4AF37",
+  color: "#061A2F",
+  fontSize: 34,
+  fontWeight: 900,
 };
 
-const videoPanel = {
-  padding: 16,
+const muted = {
+  color: "rgba(255,255,255,0.72)",
+};
+
+const smallText = {
+  color: "rgba(255,255,255,0.6)",
+  fontSize: 14,
+};
+
+const videoFrame = {
+  position: "relative" as const,
+  flex: 1,
+  minHeight: 500,
   borderRadius: 24,
-  background: "#020617",
-  border: "1px solid rgba(255,255,255,0.14)",
+  overflow: "hidden",
+  background: "#000",
 };
 
 const videoStyle = {
   width: "100%",
-  minHeight: 420,
-  borderRadius: 18,
-  background: "#000",
+  height: "100%",
+  minHeight: 500,
   objectFit: "cover" as const,
+  background: "#000",
 };
 
-const controls = {
-  display: "flex",
-  gap: 12,
-  flexWrap: "wrap" as const,
-  justifyContent: "center",
+const nameBadge = {
+  position: "absolute" as const,
+  left: 18,
+  bottom: 18,
+  padding: "8px 12px",
+  borderRadius: 999,
+  background: "rgba(0,0,0,0.58)",
+  fontWeight: 900,
+};
+
+const toolbar = {
   marginTop: 16,
+  display: "flex",
+  justifyContent: "center",
+  gap: 10,
+  flexWrap: "wrap" as const,
 };
 
-const button = {
+const toolButton = {
   border: 0,
   borderRadius: 999,
-  padding: "12px 18px",
-  background: "#D4AF37",
+  padding: "12px 16px",
+  background: "#ffffff",
   color: "#061A2F",
   fontWeight: 900,
   cursor: "pointer",
 };
 
-const dangerButton = {
-  ...button,
-  background: "#EF4444",
-  color: "#fff",
+const lightButton = {
+  ...toolButton,
 };
 
-const sidePanel = {
-  padding: 20,
+const leaveButton = {
+  ...toolButton,
+  background: "#EF4444",
+  color: "#ffffff",
+};
+
+const sidebar = {
+  display: "grid",
+  gap: 16,
+  alignContent: "start",
+};
+
+const sideCard = {
+  padding: 18,
   borderRadius: 24,
   background: "rgba(255,255,255,0.08)",
-  border: "1px solid rgba(255,255,255,0.14)",
+  border: "1px solid rgba(255,255,255,0.12)",
 };
 
-const participantCard = {
+const sideTitle = {
+  marginTop: 0,
+};
+
+const participant = {
   padding: 12,
   borderRadius: 14,
   background: "rgba(255,255,255,0.12)",
   fontWeight: 900,
+  marginBottom: 10,
 };
 
 const chatBox = {
-  minHeight: 220,
+  minHeight: 260,
   padding: 14,
   borderRadius: 16,
-  background: "rgba(0,0,0,0.25)",
-  opacity: 0.8,
+  background: "rgba(0,0,0,0.22)",
+  color: "rgba(255,255,255,0.68)",
+};
+
+const chatInputRow = {
+  marginTop: 12,
+  display: "flex",
+  gap: 8,
+};
+
+const chatInput = {
+  flex: 1,
+  border: 0,
+  borderRadius: 999,
+  padding: "12px 14px",
+};
+
+const sendButton = {
+  border: 0,
+  borderRadius: 999,
+  padding: "12px 16px",
+  background: "#D4AF37",
+  color: "#061A2F",
+  fontWeight: 900,
+};
+
+const backLink = {
+  display: "block",
+  maxWidth: 1280,
+  margin: "18px auto 0",
+  color: "#D4AF37",
+  fontWeight: 900,
+  textDecoration: "none",
 };
