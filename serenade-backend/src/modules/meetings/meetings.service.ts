@@ -28,6 +28,45 @@ export class MeetingsService {
     });
   }
 
+  async requestJoin(meetingId: string, fullName: string, memberId?: string, socketId?: string) {
+    const meeting = await this.prisma.meeting.findUnique({
+      where: { meetingId },
+    });
+
+    if (!meeting) throw new NotFoundException('Meeting not found');
+
+    return this.prisma.waitingRoomParticipant.create({
+      data: {
+        meetingId,
+        fullName,
+        memberId,
+        socketId,
+        status: meeting.waitingRoom ? 'PENDING' : 'APPROVED',
+      },
+    });
+  }
+
+  waitingRoomList(meetingId: string) {
+    return this.prisma.waitingRoomParticipant.findMany({
+      where: { meetingId },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  approveParticipant(participantId: string) {
+    return this.prisma.waitingRoomParticipant.update({
+      where: { id: participantId },
+      data: { status: 'APPROVED' },
+    });
+  }
+
+  rejectParticipant(participantId: string) {
+    return this.prisma.waitingRoomParticipant.update({
+      where: { id: participantId },
+      data: { status: 'REJECTED' },
+    });
+  }
+
   async validateJoin(meetingId: string, passcode: string) {
     const meeting = await this.prisma.meeting.findUnique({
       where: { meetingId },
