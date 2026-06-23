@@ -99,6 +99,26 @@ export default function MeetingRoomPage({
     }
   }
 
+  async function logMeetingJoin() {
+    try {
+      await fetch(`${SIGNALING_URL}/meetings/${meetingId}/join-log`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+    } catch {}
+  }
+
+  async function logMeetingLeave() {
+    try {
+      await fetch(`${SIGNALING_URL}/meetings/${meetingId}/leave-log`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+    } catch {}
+  }
+
   async function requestWaitingRoom(socket: Socket) {
     try {
       const res = await fetch(`${SIGNALING_URL}/meetings/waiting-room/request`, {
@@ -155,6 +175,7 @@ export default function MeetingRoomPage({
           setApprovedToJoin(true);
           setJoined(true);
           setStatus("Joined meeting");
+          logMeetingJoin();
 
           socket.emit("join-meeting-chat", {
             meetingId,
@@ -280,6 +301,7 @@ export default function MeetingRoomPage({
   }
 
   function leaveMeeting() {
+    if (joined) logMeetingLeave();
     socketRef.current?.emit("leave-meeting", { meetingId });
     socketRef.current?.disconnect();
 
