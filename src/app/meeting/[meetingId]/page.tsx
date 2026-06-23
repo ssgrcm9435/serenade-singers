@@ -22,6 +22,9 @@ export default function MeetingRoomPage({
   const [audioOn, setAudioOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
   const [participants, setParticipants] = useState<string[]>([]);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [notice, setNotice] = useState("");
 
   async function startLocalMedia() {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -70,8 +73,41 @@ export default function MeetingRoomPage({
         setParticipants((prev) => prev.filter((id) => id !== data.socketId));
       });
 
+      socket.emit("join-meeting-chat", {
+        meetingId,
+        fullName: "Serenade Member",
+      });
+
       socket.on("participant-media-updated", (data) => {
         console.log("Participant media updated", data);
+      });
+
+      socket.on("meeting-chat-message", (data) => {
+        setChatMessages((prev) => [...prev, data]);
+      });
+
+      socket.on("meeting-chat-system", (data) => {
+        setChatMessages((prev) => [...prev, {
+          senderName: "System",
+          message: data.message,
+          createdAt: new Date().toISOString(),
+        }]);
+      });
+
+      socket.on("hand-raised", (data) => {
+        setNotice(`${data.fullName || "A participant"} raised hand`);
+      });
+
+      socket.on("host-announcement", (data) => {
+        setNotice(data.message);
+      });
+
+      socket.on("screen-share-started", () => {
+        setNotice("Screen sharing started");
+      });
+
+      socket.on("screen-share-stopped", () => {
+        setNotice("Screen sharing stopped");
       });
     } catch {
       setStatus("Unable to access camera or microphone.");
@@ -125,6 +161,50 @@ export default function MeetingRoomPage({
       audio: audioOn,
       video: next,
     });
+  }
+
+  async function shareScreen() {
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      });
+
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = screenStream;
+      }
+
+      socketRef.current?.emit("screen-share-started", { meetingId });
+
+      screenStream.getVideoTracks()[0].onended = async () => {
+        socketRef.current?.emit("screen-share-stopped", { meetingId });
+        if (streamRef.current && localVideoRef.current) {
+          localVideoRef.current.srcObject = streamRef.current;
+        }
+      };
+    } catch {
+      setStatus("Unable to start screen sharing.");
+    }
+  }
+
+  function raiseHand() {
+    socketRef.current?.emit("raise-hand", {
+      meetingId,
+      fullName: "Serenade Member",
+    });
+    setNotice("You raised your hand");
+  }
+
+  function sendChatMessage() {
+    if (!chatInput.trim()) return;
+
+    socketRef.current?.emit("meeting-chat-message", {
+      meetingId,
+      senderName: "Serenade Member",
+      message: chatInput.trim(),
+    });
+
+    setChatInput("");
   }
 
   useEffect(() => {
@@ -211,6 +291,14 @@ export default function MeetingRoomPage({
               <button onClick={toggleVideo} style={controlButton}>
                 {videoOn ? "Camera Off" : "Camera On"}
               </button>
+
+              <button onClick={shareScreen} style={controlButton}>
+                Share Screen
+              </button>
+
+              <button onClick={raiseHand} style={controlButton}>
+                Raise Hand
+              </button>
             </div>
           </div>
 
@@ -222,19 +310,76 @@ export default function MeetingRoomPage({
               border: "1px solid rgba(255,255,255,0.12)",
             }}
           >
+            {notice && (
+              <div
+                style={{
+                  padding: 12,
+                  borderRadius: 14,
+                  background: "rgba(212,175,55,0.18)",
+                  color: "#FDE68A",
+                  fontWeight: 900,
+                  marginBottom: 16,
+                }}
+              >
+                {notice}
+              </div>
+            )}
+
             <h2 style={{ marginTop: 0 }}>Participants</h2>
-            <p style={{ opacity: 0.75 }}>
-              Online participants will appear here.
-            </p>
-
-            <div style={{ marginTop: 16 }}>
+            <div style={{ marginTop: 12 }}>
               <div style={participantCard}>You</div>
-
               {participants.map((id) => (
                 <div key={id} style={participantCard}>
                   Participant {id.slice(0, 6)}
                 </div>
               ))}
+            </div>
+
+            <h2 style={{ marginTop: 24 }}>Meeting Chat</h2>
+            <div
+              style={{
+                height: 230,
+                overflowY: "auto",
+                background: "rgba(0,0,0,0.18)",
+                borderRadius: 16,
+                padding: 12,
+                marginBottom: 12,
+              }}
+            >
+              {chatMessages.length === 0 ? (
+                <p style={{ opacity: 0.65 }}>No messages yet.</p>
+              ) : (
+                chatMessages.map((msg, i) => (
+                  <div key={i} style={{ marginBottom: 10 }}>
+                    <strong style={{ color: "#D4AF37" }}>
+                      {msg.senderName || "Member"}
+                    </strong>
+                    <p style={{ margin: "4px 0 0", opacity: 0.9 }}>
+                      {msg.message}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") sendChatMessage();
+                }}
+                placeholder="Type message..."
+                style={{
+                  flex: 1,
+                  border: 0,
+                  borderRadius: 999,
+                  padding: "10px 12px",
+                }}
+              />
+              <button onClick={sendChatMessage} style={primaryButton}>
+                Send
+              </button>
             </div>
           </aside>
         </section>
