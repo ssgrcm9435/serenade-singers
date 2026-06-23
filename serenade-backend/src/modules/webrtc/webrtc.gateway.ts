@@ -88,12 +88,13 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
         fromSocketId: client.id,
         offer: payload.offer,
       });
-    } else {
-      client.to(room).emit('webrtc-offer', {
-        fromSocketId: client.id,
-        offer: payload.offer,
-      });
+      return;
     }
+
+    client.to(room).emit('webrtc-offer', {
+      fromSocketId: client.id,
+      offer: payload.offer,
+    });
   }
 
   @SubscribeMessage('webrtc-answer')
@@ -137,6 +138,51 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socketId: client.id,
       audio: payload.audio,
       video: payload.video,
+    });
+  }
+
+  @SubscribeMessage('screen-share-started')
+  handleScreenShareStarted(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { meetingId: string },
+  ) {
+    client.to(`meeting:${payload.meetingId}`).emit('screen-share-started', {
+      socketId: client.id,
+      meetingId: payload.meetingId,
+    });
+  }
+
+  @SubscribeMessage('screen-share-stopped')
+  handleScreenShareStopped(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { meetingId: string },
+  ) {
+    client.to(`meeting:${payload.meetingId}`).emit('screen-share-stopped', {
+      socketId: client.id,
+      meetingId: payload.meetingId,
+    });
+  }
+
+  @SubscribeMessage('raise-hand')
+  handleRaiseHand(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { meetingId: string; fullName?: string },
+  ) {
+    this.server.to(`meeting:${payload.meetingId}`).emit('hand-raised', {
+      socketId: client.id,
+      fullName: payload.fullName || 'Participant',
+      meetingId: payload.meetingId,
+    });
+  }
+
+  @SubscribeMessage('host-announcement')
+  handleHostAnnouncement(
+    @MessageBody() payload: { meetingId: string; message: string },
+  ) {
+    this.server.to(`meeting:${payload.meetingId}`).emit('host-announcement', {
+      meetingId: payload.meetingId,
+      message: payload.message,
+      createdAt: new Date().toISOString(),
     });
   }
 }
