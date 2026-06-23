@@ -13,7 +13,14 @@ export default function HostMeetingPage({ params }: { params: { meetingId: strin
   const meetingId = params.meetingId;
   const socketRef = useRef<Socket | null>(null);
   const [waitingList, setWaitingList] = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
   const [notice, setNotice] = useState("");
+
+  async function loadHistory() {
+    const res = await fetch(`${BACKEND_URL}/meetings/${meetingId}/history`);
+    const data = await res.json();
+    setHistory(Array.isArray(data) ? data : []);
+  }
 
   async function loadWaitingRoom() {
     const res = await fetch(`${BACKEND_URL}/meetings/${meetingId}/waiting-room`);
@@ -34,6 +41,7 @@ export default function HostMeetingPage({ params }: { params: { meetingId: strin
     });
 
     loadWaitingRoom();
+    loadHistory();
   }
 
   async function reject(p: any) {
@@ -97,6 +105,7 @@ export default function HostMeetingPage({ params }: { params: { meetingId: strin
           <button onClick={muteAll} style={button}>Mute All</button>
           <button onClick={endMeeting} style={{ ...button, background: "#EF4444", color: "#fff" }}>End Meeting</button>
           <button onClick={loadWaitingRoom} style={button}>Refresh Waiting Room</button>
+          <button onClick={loadHistory} style={button}>Refresh History</button>
         </div>
 
         <h2>Waiting Room</h2>
@@ -116,6 +125,23 @@ export default function HostMeetingPage({ params }: { params: { meetingId: strin
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => approve(p)} style={button}>Approve</button>
                 <button onClick={() => reject(p)} style={{ ...button, background: "#EF4444", color: "#fff" }}>Reject</button>
+              </div>
+            </div>
+          ))
+        )}
+
+        <h2 style={{ marginTop: 32 }}>Meeting History</h2>
+
+        {history.length === 0 ? (
+          <p>No meeting activity yet.</p>
+        ) : (
+          history.map((item) => (
+            <div key={item.id} style={card}>
+              <div>
+                <strong>{item.action}</strong>
+                <p style={{ margin: "4px 0", opacity: 0.75 }}>
+                  {new Date(item.createdAt).toLocaleString()}
+                </p>
               </div>
             </div>
           ))
