@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
+import { JoinMeetingDto } from './dto/join-meeting.dto';
 import { MeetingsService } from './meetings.service';
 
 @Controller('meetings')
@@ -9,6 +10,11 @@ export class MeetingsController {
   @Post()
   create(@Body() dto: CreateMeetingDto) {
     return this.meetingsService.create(dto);
+  }
+
+  @Post('join')
+  join(@Body() dto: JoinMeetingDto) {
+    return this.meetingsService.validateJoin(dto.meetingId, dto.passcode);
   }
 
   @Get()

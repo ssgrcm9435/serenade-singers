@@ -1,5 +1,5 @@
 import { generateMeetingId, generatePasscode } from './utils/meeting-code';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 
@@ -26,6 +26,27 @@ export class MeetingsService {
       orderBy: { startTime: 'asc' },
       include: { participants: true },
     });
+  }
+
+  async validateJoin(meetingId: string, passcode: string) {
+    const meeting = await this.prisma.meeting.findUnique({
+      where: { meetingId },
+    });
+
+    if (!meeting) throw new NotFoundException('Meeting not found');
+
+    if (meeting.passcode && meeting.passcode !== passcode) {
+      throw new UnauthorizedException('Invalid meeting passcode');
+    }
+
+    return {
+      success: true,
+      meetingId: meeting.meetingId,
+      roomName: meeting.roomName,
+      status: meeting.status,
+      waitingRoom: meeting.waitingRoom,
+      joinUrl: `/meeting/${meeting.meetingId}`,
+    };
   }
 
   async findOne(meetingId: string) {
