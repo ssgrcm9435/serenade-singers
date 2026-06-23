@@ -15,6 +15,7 @@ export default function HostMeetingPage({ params }: { params: { meetingId: strin
   const [waitingList, setWaitingList] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
+  const [raisedHands, setRaisedHands] = useState<any[]>([]);
   const [notice, setNotice] = useState("");
 
   async function loadAnalytics() {
@@ -90,6 +91,14 @@ export default function HostMeetingPage({ params }: { params: { meetingId: strin
       setNotice("New participant is waiting.");
     });
 
+    socket.on("hand-raised", (data) => {
+      setRaisedHands((prev) => {
+        if (prev.some((p) => p.socketId === data.socketId)) return prev;
+        return [...prev, data];
+      });
+      setNotice(`${data.fullName || "A participant"} raised hand.`);
+    });
+
     loadWaitingRoom();
 
     return () => {
@@ -116,6 +125,34 @@ export default function HostMeetingPage({ params }: { params: { meetingId: strin
           <button onClick={loadHistory} style={button}>Refresh History</button>
           <button onClick={loadAnalytics} style={button}>Refresh Analytics</button>
         </div>
+
+        <h2>Raised Hands</h2>
+
+        {raisedHands.length === 0 ? (
+          <p>No raised hands.</p>
+        ) : (
+          raisedHands.map((p) => (
+            <div key={p.socketId} style={card}>
+              <div>
+                <strong>{p.fullName || "Participant"}</strong>
+                <p style={{ margin: "4px 0", opacity: 0.75 }}>
+                  Waiting to speak
+                </p>
+              </div>
+
+              <button
+                onClick={() =>
+                  setRaisedHands((prev) =>
+                    prev.filter((x) => x.socketId !== p.socketId)
+                  )
+                }
+                style={button}
+              >
+                Clear
+              </button>
+            </div>
+          ))
+        )}
 
         <h2>Meeting Analytics</h2>
 
