@@ -3,16 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 const SIGNALING_URL =
   process.env.NEXT_PUBLIC_SIGNALING_URL || "http://localhost:3000";
 
-export default function MeetingRoomPage({
-  params,
-}: {
-  params: { meetingId: string };
-}) {
-  const meetingId = params.meetingId;
+export default function MeetingRoomPage() {
+  const params = useParams();
+  const meetingId = String(params.meetingId || "");
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -439,7 +437,7 @@ export default function MeetingRoomPage({
     try {
       const access = JSON.parse(saved);
 
-      if (access.meetingId !== meetingId) {
+      if (!meetingId || access.meetingId !== meetingId) {
         window.location.href = "/meeting";
         return;
       }
