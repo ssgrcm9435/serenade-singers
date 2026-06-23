@@ -34,6 +34,40 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
+  
+
+  @SubscribeMessage('chat-announcement')
+  handleAnnouncement(
+    @MessageBody()
+    payload: {
+      meetingId: string;
+      message: string;
+    },
+  ) {
+    this.server.to(`meeting:${payload.meetingId}`).emit(
+      'chat-announcement',
+      {
+        message: payload.message,
+        createdAt: new Date(),
+      },
+    );
+  }
+
+  @SubscribeMessage('chat-delete')
+  handleDeleteMessage(
+    @MessageBody()
+    payload: {
+      meetingId: string;
+      messageId: string;
+    },
+  ) {
+    this.server.to(`meeting:${payload.meetingId}`).emit(
+      'chat-delete',
+      payload,
+    );
+  }
+
+
   handleDisconnect(client: Socket) {
     for (const [meetingId, participants] of meetingParticipants.entries()) {
       if (!participants.some((p) => p.socketId === client.id)) continue;
