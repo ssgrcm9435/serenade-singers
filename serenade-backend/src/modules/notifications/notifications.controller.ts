@@ -22,6 +22,11 @@ export class NotificationsController {
     return this.notificationsService.createNotification(dto);
   }
 
+  @Post('send')
+  sendPushToAll(@Body() dto: CreateNotificationDto) {
+    return this.notificationsService.sendPushToAll(dto);
+  }
+
   @Get()
   listNotifications() {
     return this.notificationsService.listNotifications();
