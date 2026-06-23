@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: serenade-backend
+    env: node
+    plan: free
+    rootDir: serenade-backend
+    buildCommand: pnpm install --frozen-lockfile && pnpm prisma generate && pnpm run build
+    startCommand: pnpm run start:prod
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
