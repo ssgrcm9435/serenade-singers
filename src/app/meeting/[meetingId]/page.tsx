@@ -32,6 +32,7 @@ export default function MeetingRoomPage() {
   const [audioOn, setAudioOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
   const [remoteStreams, setRemoteStreams] = useState<RemoteStream[]>([]);
+  const [joinedSignalRoom, setJoinedSignalRoom] = useState(false);
 
   function getAccess() {
     try {
@@ -66,10 +67,21 @@ export default function MeetingRoomPage() {
 
     pc.ontrack = (event) => {
       const [remoteStream] = event.streams;
+
       setRemoteStreams((prev) => {
         if (prev.some((x) => x.socketId === targetSocketId)) return prev;
         return [...prev, { socketId: targetSocketId, stream: remoteStream }];
       });
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "connected") {
+        setStatus("Video/audio connected.");
+      }
+
+      if (["failed", "closed", "disconnected"].includes(pc.connectionState)) {
+        setStatus(`Peer connection ${pc.connectionState}.`);
+      }
     };
 
     peerConnectionsRef.current[targetSocketId] = pc;
@@ -88,13 +100,20 @@ export default function MeetingRoomPage() {
     });
   }
 
-  async function startCamera() {
+  async function startCamera(joinAfterStart = true) {
     try {
-      if (streamRef.current) return;
+      if (streamRef.current) {
+        if (joinAfterStart) joinSignalRoom();
+        return;
+      }
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
 
       streamRef.current = stream;
@@ -105,10 +124,9 @@ export default function MeetingRoomPage() {
 
       setStatus("Camera and microphone started.");
 
-      socketRef.current?.emit("join-meeting", {
-        meetingId,
-        fullName: getAccess().fullName || "Serenade Member",
-      });
+      if (joinAfterStart) {
+        setTimeout(() => joinSignalRoom(), 300);
+      }
     } catch {
       setStatus("Camera or microphone permission denied.");
     }
@@ -185,23 +203,29 @@ export default function MeetingRoomPage() {
   }
 
   function connectSocket() {
-    if (socketRef.current) return;
+    if (socketRef.current) return socketRef.current;
 
     const socket = io(BACKEND_URL, {
-      transports: ["websocket"],
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
     });
 
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      setStatus("Connected to meeting server.");
+      setStatus("Connected. Start camera to enter video room.");
     });
 
     socket.on("existing-participants", async (data) => {
-      if (!streamRef.current) return;
+      if (!streamRef.current) {
+        setStatus("Camera required before connecting to participants.");
+        return;
+      }
 
       for (const participant of data.participants || []) {
-        if (participant.socketId !== socket.id) {
+        if (participant.socketId && participant.socketId !== socket.id) {
           await makeOffer(participant.socketId);
         }
       }
@@ -210,14 +234,19 @@ export default function MeetingRoomPage() {
     socket.on("participant-joined", async (participant) => {
       if (!streamRef.current) return;
 
-      if (participant.socketId !== socket.id) {
+      if (participant.socketId && participant.socketId !== socket.id) {
         await makeOffer(participant.socketId);
       }
     });
 
     socket.on("webrtc-offer", async (data) => {
+      if (!streamRef.current) {
+        await startCamera(false);
+      }
+
       const pc = createPeerConnection(data.fromSocketId);
       await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
@@ -231,19 +260,26 @@ export default function MeetingRoomPage() {
     socket.on("webrtc-answer", async (data) => {
       const pc = peerConnectionsRef.current[data.fromSocketId];
       if (!pc) return;
+
       await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
     });
 
     socket.on("ice-candidate", async (data) => {
       const pc = peerConnectionsRef.current[data.fromSocketId];
       if (!pc || !data.candidate) return;
-      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } catch {}
     });
 
     socket.on("participant-left", (data) => {
       peerConnectionsRef.current[data.socketId]?.close();
       delete peerConnectionsRef.current[data.socketId];
-      setRemoteStreams((prev) => prev.filter((x) => x.socketId !== data.socketId));
+
+      setRemoteStreams((prev) =>
+        prev.filter((x) => x.socketId !== data.socketId),
+      );
     });
 
     socket.on("host-mute-all", () => {
@@ -261,6 +297,22 @@ export default function MeetingRoomPage() {
     socket.on("host-remove-participant", () => {
       leaveMeeting();
     });
+
+    return socket;
+  }
+
+  function joinSignalRoom() {
+    if (!approved || !streamRef.current || joinedSignalRoom) return;
+
+    const socket = connectSocket();
+
+    socket.emit("join-meeting", {
+      meetingId,
+      fullName: getAccess().fullName || "Serenade Member",
+    });
+
+    setJoinedSignalRoom(true);
+    setStatus("Joined video room.");
   }
 
   async function logJoin() {
@@ -355,7 +407,7 @@ export default function MeetingRoomPage() {
               </div>
 
               <div style={toolbar}>
-                <button onClick={startCamera} style={toolButton}>Start Camera</button>
+                <button onClick={() => startCamera(true)} style={toolButton}>Start Camera</button>
                 <button onClick={toggleAudio} style={toolButton}>{audioOn ? "Mute" : "Unmute"}</button>
                 <button onClick={toggleVideo} style={toolButton}>{videoOn ? "Camera Off" : "Camera On"}</button>
                 <button style={toolButton}>Share Screen</button>
@@ -401,7 +453,7 @@ function RemoteVideo({ item }: { item: RemoteStream }) {
 
   return (
     <div style={videoFrame}>
-      <video ref={ref} autoPlay playsInline style={videoStyle} />
+      <video ref={ref} autoPlay playsInline controls={false} style={videoStyle} />
       <div style={nameBadge}>Guest {item.socketId.slice(0, 5)}</div>
     </div>
   );
