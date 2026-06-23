@@ -58,22 +58,23 @@ model Message {
 }
 
 model Meeting {
-  id          String        @id @default(cuid())
-  meetingId   String        @unique
-  title       String
-  description String?
-  hostId      String?
-  startTime   DateTime
-  status      MeetingStatus @default(SCHEDULED)
-  roomName          String        @unique
-  passcode          String?
-  waitingRoom       Boolean       @default(true)
-  recordingEnabled  Boolean       @default(false)
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  id               String        @id @default(cuid())
+  meetingId        String        @unique
+  title            String
+  description      String?
+  hostId           String?
+  startTime        DateTime
+  status           MeetingStatus @default(SCHEDULED)
+  roomName         String        @unique
+  passcode         String?
+  waitingRoom      Boolean       @default(true)
+  recordingEnabled Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
-  participants MeetingParticipant[]
-  callLogs      CallLog[]
+  participants            MeetingParticipant[]
+  callLogs                CallLog[]
+  waitingRoomParticipants WaitingRoomParticipant[]
 }
 
 model MeetingParticipant {
@@ -116,15 +117,14 @@ model UserDevice {
   user User @relation(fields: [userId], references: [id])
 }
 
-
 model WaitingRoomParticipant {
-  id          String   @id @default(cuid())
-  meetingId   String
-  memberId    String?
-  fullName    String
-  socketId    String?
-  status      String   @default("PENDING")
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  meetingId String
+  memberId  String?
+  fullName  String
+  socketId  String?
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
 
   meeting Meeting @relation(fields: [meetingId], references: [meetingId])
 
