@@ -66,6 +66,11 @@ export class MeetingsController {
     return this.meetingsService.meetingHistory(meetingId);
   }
 
+  @Get(':meetingId/analytics')
+  meetingAnalytics(@Param('meetingId') meetingId: string) {
+    return this.meetingsService.meetingAnalytics(meetingId);
+  }
+
   @Get(':meetingId')
   findOne(@Param('meetingId') meetingId: string) {
     return this.meetingsService.findOne(meetingId);

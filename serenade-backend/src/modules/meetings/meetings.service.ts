@@ -120,6 +120,27 @@ export class MeetingsService {
     });
   }
 
+  async meetingAnalytics(meetingId: string) {
+    const meeting = await this.prisma.meeting.findUnique({
+      where: { meetingId },
+    });
+
+    if (!meeting) throw new NotFoundException('Meeting not found');
+
+    const logs = await this.prisma.callLog.findMany({
+      where: { meetingId: meeting.id },
+    });
+
+    return {
+      meetingId,
+      totalJoinEvents: logs.filter((l) => l.action === 'PARTICIPANT_JOINED').length,
+      totalLeaveEvents: logs.filter((l) => l.action === 'PARTICIPANT_LEFT').length,
+      startedCount: logs.filter((l) => l.action === 'MEETING_STARTED').length,
+      endedCount: logs.filter((l) => l.action === 'MEETING_ENDED').length,
+      totalLogs: logs.length,
+    };
+  }
+
   async meetingHistory(meetingId: string) {
     const meeting = await this.prisma.meeting.findUnique({
       where: { meetingId },
