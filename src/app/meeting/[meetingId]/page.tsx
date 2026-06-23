@@ -16,35 +16,34 @@ export default function MeetingRoomPage({
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
   const peerConnectionsRef = useRef<Record<string, RTCPeerConnection>>({});
 
   const [joined, setJoined] = useState(false);
   const [status, setStatus] = useState("Ready to join meeting");
   const [audioOn, setAudioOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
+  const [screenSharing, setScreenSharing] = useState(false);
   const [participants, setParticipants] = useState<string[]>([]);
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [notice, setNotice] = useState("");
 
-
   function createPeerConnection(targetSocketId: string) {
     const socket = socketRef.current;
     const localStream = streamRef.current;
-
     if (!socket || !localStream) return null;
 
-    const existing = peerConnectionsRef.current[targetSocketId];
-    if (existing) return existing;
+    if (peerConnectionsRef.current[targetSocketId]) {
+      return peerConnectionsRef.current[targetSocketId];
+    }
 
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
-    localStream.getTracks().forEach((track) => {
-      pc.addTrack(track, localStream);
-    });
+    localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
@@ -71,7 +70,6 @@ export default function MeetingRoomPage({
   async function callParticipant(targetSocketId: string) {
     const socket = socketRef.current;
     const pc = createPeerConnection(targetSocketId);
-
     if (!socket || !pc) return;
 
     const offer = await pc.createOffer();
@@ -91,6 +89,7 @@ export default function MeetingRoomPage({
     });
 
     streamRef.current = stream;
+    cameraTrackRef.current = stream.getVideoTracks()[0] || null;
 
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = stream;
@@ -102,10 +101,7 @@ export default function MeetingRoomPage({
       setStatus("Starting camera and microphone...");
       await startLocalMedia();
 
-      const socket = io(SIGNALING_URL, {
-        transports: ["websocket"],
-      });
-
+      const socket = io(SIGNALING_URL, { transports: ["websocket"] });
       socketRef.current = socket;
 
       socket.on("connect", () => {
@@ -119,6 +115,10 @@ export default function MeetingRoomPage({
       socket.on("joined-meeting", (data) => {
         setJoined(true);
         setStatus(`Joined meeting: ${data.meetingId}`);
+        socket.emit("join-meeting-chat", {
+          meetingId,
+          fullName: "Serenade Member",
+        });
       });
 
       socket.on("existing-participants", async (data) => {
@@ -166,24 +166,13 @@ export default function MeetingRoomPage({
       socket.on("webrtc-answer", async (data) => {
         const pc = peerConnectionsRef.current[data.fromSocketId];
         if (!pc) return;
-
         await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
       });
 
       socket.on("ice-candidate", async (data) => {
         const pc = peerConnectionsRef.current[data.fromSocketId];
         if (!pc || !data.candidate) return;
-
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-      });
-
-      socket.emit("join-meeting-chat", {
-        meetingId,
-        fullName: "Serenade Member",
-      });
-
-      socket.on("participant-media-updated", (data) => {
-        console.log("Participant media updated", data);
       });
 
       socket.on("meeting-chat-message", (data) => {
@@ -191,11 +180,14 @@ export default function MeetingRoomPage({
       });
 
       socket.on("meeting-chat-system", (data) => {
-        setChatMessages((prev) => [...prev, {
-          senderName: "System",
-          message: data.message,
-          createdAt: new Date().toISOString(),
-        }]);
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            senderName: "System",
+            message: data.message,
+            createdAt: new Date().toISOString(),
+          },
+        ]);
       });
 
       socket.on("hand-raised", (data) => {
@@ -278,21 +270,46 @@ export default function MeetingRoomPage({
         audio: false,
       });
 
+      const screenTrack = screenStream.getVideoTracks()[0];
+      if (!screenTrack) return;
+
+      Object.values(peerConnectionsRef.current).forEach((pc) => {
+        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+        sender?.replaceTrack(screenTrack);
+      });
+
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = screenStream;
       }
 
+      setScreenSharing(true);
       socketRef.current?.emit("screen-share-started", { meetingId });
 
-      screenStream.getVideoTracks()[0].onended = async () => {
-        socketRef.current?.emit("screen-share-stopped", { meetingId });
-        if (streamRef.current && localVideoRef.current) {
-          localVideoRef.current.srcObject = streamRef.current;
-        }
+      screenTrack.onended = () => {
+        stopScreenShare();
       };
     } catch {
       setStatus("Unable to start screen sharing.");
     }
+  }
+
+  function stopScreenShare() {
+    const cameraTrack = cameraTrackRef.current;
+    const localStream = streamRef.current;
+
+    if (cameraTrack) {
+      Object.values(peerConnectionsRef.current).forEach((pc) => {
+        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+        sender?.replaceTrack(cameraTrack);
+      });
+    }
+
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+    }
+
+    setScreenSharing(false);
+    socketRef.current?.emit("screen-share-stopped", { meetingId });
   }
 
   function raiseHand() {
@@ -315,6 +332,11 @@ export default function MeetingRoomPage({
     setChatInput("");
   }
 
+  async function copyMeetingLink() {
+    await navigator.clipboard.writeText(window.location.href);
+    setNotice("Meeting link copied");
+  }
+
   useEffect(() => {
     return () => {
       socketRef.current?.disconnect();
@@ -325,71 +347,38 @@ export default function MeetingRoomPage({
   }, []);
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#061A2F",
-        color: "#ffffff",
-        padding: 24,
-      }}
-    >
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <Link href="/member-hub" style={{ color: "#D4AF37", fontWeight: 800 }}>
+    <main style={main}>
+      <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+        <Link href="/member-hub" style={{ color: "#D4AF37", fontWeight: 900 }}>
           ← Back to Members Hub
         </Link>
 
-        <div style={{ marginTop: 24, marginBottom: 24 }}>
-          <p style={{ color: "#D4AF37", fontWeight: 900, letterSpacing: 1 }}>
-            SERENADE SINGERS MEETING
-          </p>
-          <h1 style={{ fontSize: 36, margin: "8px 0" }}>{meetingId}</h1>
-          <p style={{ opacity: 0.8 }}>{status}</p>
+        <div style={header}>
+          <div>
+            <p style={eyebrow}>SERENADE SINGERS MEETING</p>
+            <h1 style={title}>{meetingId}</h1>
+            <p style={{ opacity: 0.8 }}>{status}</p>
+          </div>
+
+          <button onClick={copyMeetingLink} style={controlButton}>
+            Copy Link
+          </button>
         </div>
 
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 2fr) minmax(260px, 1fr)",
-            gap: 20,
-          }}
-        >
-          <div
-            style={{
-              background: "#020617",
-              borderRadius: 24,
-              padding: 16,
-              border: "1px solid rgba(255,255,255,0.12)",
-            }}
-          >
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                style={{
-                  width: "100%",
-                  minHeight: 260,
-                  background: "#111827",
-                  borderRadius: 18,
-                  objectFit: "cover",
-                }}
-              />
+        <section style={grid}>
+          <div style={videoPanel}>
+            <div style={videoGrid}>
+              <div style={{ position: "relative" }}>
+                <video ref={localVideoRef} autoPlay playsInline muted style={videoStyle} />
+                <NameBadge label="You" />
+              </div>
 
               {Object.entries(remoteStreams).map(([socketId, stream]) => (
                 <RemoteVideo key={socketId} stream={stream} socketId={socketId} />
               ))}
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                gap: 12,
-                justifyContent: "center",
-                flexWrap: "wrap",
-                marginTop: 16,
-              }}
-            >
+            <div style={controls}>
               {!joined ? (
                 <button onClick={joinMeeting} style={primaryButton}>
                   Join Meeting
@@ -408,9 +397,15 @@ export default function MeetingRoomPage({
                 {videoOn ? "Camera Off" : "Camera On"}
               </button>
 
-              <button onClick={shareScreen} style={controlButton}>
-                Share Screen
-              </button>
+              {!screenSharing ? (
+                <button onClick={shareScreen} style={controlButton}>
+                  Share Screen
+                </button>
+              ) : (
+                <button onClick={stopScreenShare} style={dangerButton}>
+                  Stop Share
+                </button>
+              )}
 
               <button onClick={raiseHand} style={controlButton}>
                 Raise Hand
@@ -418,28 +413,8 @@ export default function MeetingRoomPage({
             </div>
           </div>
 
-          <aside
-            style={{
-              background: "rgba(255,255,255,0.06)",
-              borderRadius: 24,
-              padding: 20,
-              border: "1px solid rgba(255,255,255,0.12)",
-            }}
-          >
-            {notice && (
-              <div
-                style={{
-                  padding: 12,
-                  borderRadius: 14,
-                  background: "rgba(212,175,55,0.18)",
-                  color: "#FDE68A",
-                  fontWeight: 900,
-                  marginBottom: 16,
-                }}
-              >
-                {notice}
-              </div>
-            )}
+          <aside style={sidePanel}>
+            {notice && <div style={noticeBox}>{notice}</div>}
 
             <h2 style={{ marginTop: 0 }}>Participants</h2>
             <div style={{ marginTop: 12 }}>
@@ -452,16 +427,7 @@ export default function MeetingRoomPage({
             </div>
 
             <h2 style={{ marginTop: 24 }}>Meeting Chat</h2>
-            <div
-              style={{
-                height: 230,
-                overflowY: "auto",
-                background: "rgba(0,0,0,0.18)",
-                borderRadius: 16,
-                padding: 12,
-                marginBottom: 12,
-              }}
-            >
+            <div style={chatBox}>
               {chatMessages.length === 0 ? (
                 <p style={{ opacity: 0.65 }}>No messages yet.</p>
               ) : (
@@ -486,12 +452,7 @@ export default function MeetingRoomPage({
                   if (e.key === "Enter") sendChatMessage();
                 }}
                 placeholder="Type message..."
-                style={{
-                  flex: 1,
-                  border: 0,
-                  borderRadius: 999,
-                  padding: "10px 12px",
-                }}
+                style={chatInputStyle}
               />
               <button onClick={sendChatMessage} style={primaryButton}>
                 Send
@@ -503,6 +464,97 @@ export default function MeetingRoomPage({
     </main>
   );
 }
+
+function RemoteVideo({ stream, socketId }: { stream: MediaStream; socketId: string }) {
+  const ref = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <video ref={ref} autoPlay playsInline style={videoStyle} />
+      <NameBadge label={`Participant ${socketId.slice(0, 6)}`} />
+    </div>
+  );
+}
+
+function NameBadge({ label }: { label: string }) {
+  return <div style={nameBadge}>{label}</div>;
+}
+
+const main = {
+  minHeight: "100vh",
+  background: "#061A2F",
+  color: "#ffffff",
+  padding: 24,
+};
+
+const header = {
+  marginTop: 24,
+  marginBottom: 24,
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 16,
+  alignItems: "center",
+  flexWrap: "wrap" as const,
+};
+
+const eyebrow = {
+  color: "#D4AF37",
+  fontWeight: 900,
+  letterSpacing: 1,
+};
+
+const title = {
+  fontSize: 36,
+  margin: "8px 0",
+};
+
+const grid = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 2fr) minmax(280px, 1fr)",
+  gap: 20,
+};
+
+const videoPanel = {
+  background: "#020617",
+  borderRadius: 24,
+  padding: 16,
+  border: "1px solid rgba(255,255,255,0.12)",
+};
+
+const videoGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+  gap: 12,
+};
+
+const videoStyle = {
+  width: "100%",
+  minHeight: 260,
+  background: "#111827",
+  borderRadius: 18,
+  objectFit: "cover" as const,
+};
+
+const controls = {
+  display: "flex",
+  gap: 12,
+  justifyContent: "center",
+  flexWrap: "wrap" as const,
+  marginTop: 16,
+};
+
+const sidePanel = {
+  background: "rgba(255,255,255,0.06)",
+  borderRadius: 24,
+  padding: 20,
+  border: "1px solid rgba(255,255,255,0.12)",
+};
 
 const primaryButton = {
   border: 0,
@@ -534,45 +586,39 @@ const participantCard = {
   fontWeight: 800,
 };
 
+const noticeBox = {
+  padding: 12,
+  borderRadius: 14,
+  background: "rgba(212,175,55,0.18)",
+  color: "#FDE68A",
+  fontWeight: 900,
+  marginBottom: 16,
+};
 
-function RemoteVideo({ stream, socketId }: { stream: MediaStream; socketId: string }) {
-  const ref = useRef<HTMLVideoElement | null>(null);
+const chatBox = {
+  height: 230,
+  overflowY: "auto" as const,
+  background: "rgba(0,0,0,0.18)",
+  borderRadius: 16,
+  padding: 12,
+  marginBottom: 12,
+};
 
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.srcObject = stream;
-    }
-  }, [stream]);
+const chatInputStyle = {
+  flex: 1,
+  border: 0,
+  borderRadius: 999,
+  padding: "10px 12px",
+};
 
-  return (
-    <div style={{ position: "relative" }}>
-      <video
-        ref={ref}
-        autoPlay
-        playsInline
-        style={{
-          width: "100%",
-          minHeight: 260,
-          background: "#111827",
-          borderRadius: 18,
-          objectFit: "cover",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          left: 12,
-          bottom: 12,
-          padding: "6px 10px",
-          borderRadius: 999,
-          background: "rgba(0,0,0,0.55)",
-          color: "#ffffff",
-          fontSize: 12,
-          fontWeight: 800,
-        }}
-      >
-        Participant {socketId.slice(0, 6)}
-      </div>
-    </div>
-  );
-}
+const nameBadge = {
+  position: "absolute" as const,
+  left: 12,
+  bottom: 12,
+  padding: "6px 10px",
+  borderRadius: 999,
+  background: "rgba(0,0,0,0.55)",
+  color: "#ffffff",
+  fontSize: 12,
+  fontWeight: 800,
+};
