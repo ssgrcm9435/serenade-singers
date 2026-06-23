@@ -4665,3 +4665,37 @@ select:focus {
     display: block !important;
   }
 }
+
+/* Meeting Room Professional Responsive Fix */
+@media (max-width: 900px) {
+  main:has(video) {
+    padding: 14px !important;
+  }
+
+  main:has(video) section {
+    grid-template-columns: 1fr !important;
+  }
+
+  main:has(video) video {
+    min-height: 220px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  main:has(video) {
+    padding: 10px !important;
+  }
+
+  main:has(video) h1 {
+    font-size: 26px !important;
+  }
+
+  main:has(video) button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  main:has(video) input {
+    min-width: 0 !important;
+  }
+}
