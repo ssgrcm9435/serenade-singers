@@ -114,6 +114,20 @@ export class MeetingsService {
     return meeting;
   }
 
+  lockMeeting(meetingId: string) {
+    return this.prisma.meeting.update({
+      where: { meetingId },
+      data: { locked: true },
+    });
+  }
+
+  unlockMeeting(meetingId: string) {
+    return this.prisma.meeting.update({
+      where: { meetingId },
+      data: { locked: false },
+    });
+  }
+
   async end(meetingId: string) {
     const meeting = await this.prisma.meeting.update({
       where: { meetingId },

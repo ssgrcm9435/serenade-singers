@@ -36,8 +36,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     for (const [meetingId, participants] of meetingParticipants.entries()) {
-      const existed = participants.some((p) => p.socketId === client.id);
-      if (!existed) continue;
+      if (!participants.some((p) => p.socketId === client.id)) continue;
 
       meetingParticipants.set(
         meetingId,
@@ -207,10 +206,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() payload: { meetingId: string },
   ) {
     client.join(`host:${payload.meetingId}`);
-
-    client.emit('host-room-joined', {
-      meetingId: payload.meetingId,
-    });
+    client.emit('host-room-joined', { meetingId: payload.meetingId });
   }
 
   @SubscribeMessage('waiting-room-request')
@@ -242,11 +238,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('waiting-room-approved')
   handleWaitingRoomApproved(
-    @MessageBody()
-    payload: {
-      meetingId: string;
-      socketId: string;
-    },
+    @MessageBody() payload: { meetingId: string; socketId: string },
   ) {
     this.server.to(payload.socketId).emit('waiting-room-status', {
       meetingId: payload.meetingId,
@@ -257,16 +249,39 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('waiting-room-rejected')
   handleWaitingRoomRejected(
-    @MessageBody()
-    payload: {
-      meetingId: string;
-      socketId: string;
-    },
+    @MessageBody() payload: { meetingId: string; socketId: string },
   ) {
     this.server.to(payload.socketId).emit('waiting-room-status', {
       meetingId: payload.meetingId,
       status: 'REJECTED',
       message: 'Your request to join was rejected.',
+    });
+  }
+
+  @SubscribeMessage('host-mute-all')
+  handleHostMuteAll(@MessageBody() payload: { meetingId: string }) {
+    this.server.to(`meeting:${payload.meetingId}`).emit('host-mute-all', {
+      meetingId: payload.meetingId,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  @SubscribeMessage('host-end-meeting')
+  handleHostEndMeeting(@MessageBody() payload: { meetingId: string }) {
+    this.server.to(`meeting:${payload.meetingId}`).emit('host-end-meeting', {
+      meetingId: payload.meetingId,
+      message: 'The host ended this meeting.',
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  @SubscribeMessage('host-remove-participant')
+  handleHostRemoveParticipant(
+    @MessageBody() payload: { meetingId: string; socketId: string },
+  ) {
+    this.server.to(payload.socketId).emit('host-remove-participant', {
+      meetingId: payload.meetingId,
+      message: 'You have been removed from the meeting.',
     });
   }
 }

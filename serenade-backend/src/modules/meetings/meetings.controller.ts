@@ -1,8 +1,11 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { JoinMeetingDto } from './dto/join-meeting.dto';
 import { ApproveWaitingDto, RequestJoinDto } from './dto/waiting-room.dto';
 import { MeetingsService } from './meetings.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('meetings')
 export class MeetingsController {
@@ -51,6 +54,20 @@ export class MeetingsController {
   @Get(':meetingId')
   findOne(@Param('meetingId') meetingId: string) {
     return this.meetingsService.findOne(meetingId);
+  }
+
+  @Patch(':meetingId/lock')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MANAGEMENT')
+  lock(@Param('meetingId') meetingId: string) {
+    return this.meetingsService.lockMeeting(meetingId);
+  }
+
+  @Patch(':meetingId/unlock')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'MANAGEMENT')
+  unlock(@Param('meetingId') meetingId: string) {
+    return this.meetingsService.unlockMeeting(meetingId);
   }
 
   @Patch(':meetingId/start')
