@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_SIGNALING_URL ||
+  "";
+
+
 type Row = Record<string, any>;
 
 const sections = [
@@ -13,6 +19,7 @@ const sections = [
   "Finance",
   "Announcements",
   "Events",
+  "Meetings",
   "Documents",
   "Learning Center",
   "Email Center",
@@ -370,6 +377,7 @@ export default function AdminDashboardPage() {
           {activeSection === "Finance" && <DataTable title="Finance" rows={data.financialReports} />}
           {activeSection === "Announcements" && <DataTable title="Announcements" rows={data.announcements} />}
           {activeSection === "Events" && <DataTable title="Events" rows={data.events} />}
+          {activeSection === "Meetings" && <AdminMeetingsPanel />}
           {activeSection === "Documents" && <DataTable title="Documents" rows={data.documents} />}
           {activeSection === "Learning Center" && (
             <>
@@ -699,6 +707,105 @@ function DataTable({ title, rows }: { title: string; rows: Row[] }) {
           </table>
         </div>
       )}
+    </section>
+  );
+}
+
+function AdminMeetingsPanel() {
+  const [meetings, setMeetings] = useState<any[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [message, setMessage] = useState("");
+
+  async function loadMeetings() {
+    if (!BACKEND_URL) {
+      setMessage("Backend URL is missing.");
+      return;
+    }
+
+    const res = await fetch(`${BACKEND_URL}/meetings`);
+    const data = await res.json();
+    setMeetings(Array.isArray(data) ? data : []);
+  }
+
+  async function createMeeting() {
+    setMessage("");
+
+    if (!title.trim() || !startTime) {
+      setMessage("Please enter meeting title and start time.");
+      return;
+    }
+
+    const roomName =
+      title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") +
+      "-" +
+      Date.now();
+
+    const res = await fetch(`${BACKEND_URL}/meetings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        description,
+        startTime: new Date(startTime).toISOString(),
+        roomName,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setMessage(data.message || "Unable to create meeting.");
+      return;
+    }
+
+    setMessage(`Meeting created: ${data.meetingId} / Passcode: ${data.passcode || "-"}`);
+    setTitle("");
+    setDescription("");
+    setStartTime("");
+    loadMeetings();
+  }
+
+  return (
+    <section style={card}>
+      <h2 style={sectionTitle}>Meeting Management</h2>
+      <p style={muted}>
+        Create meetings, copy Meeting ID and Passcode, open host controls, and manage online rehearsals.
+      </p>
+
+      <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
+        <input style={input} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Meeting title" />
+        <input style={input} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" />
+        <input style={input} type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <button style={button} onClick={createMeeting}>Create Meeting</button>
+          <button style={button} onClick={loadMeetings}>Refresh Meetings</button>
+          <a style={{ ...button, textDecoration: "none" }} href="/meeting" target="_blank">Open Join Page</a>
+        </div>
+      </div>
+
+      {message && <p style={muted}>{message}</p>}
+
+      <div style={{ marginTop: 22, display: "grid", gap: 12 }}>
+        {meetings.length === 0 ? (
+          <p style={muted}>No meetings loaded yet.</p>
+        ) : (
+          meetings.map((m) => (
+            <article key={m.id || m.meetingId} style={{ ...card, marginTop: 0 }}>
+              <h3 style={{ margin: 0 }}>{m.title}</h3>
+              <p style={muted}>Meeting ID: <strong>{m.meetingId}</strong></p>
+              <p style={muted}>Passcode: <strong>{m.passcode || "-"}</strong></p>
+              <p style={muted}>{m.startTime ? new Date(m.startTime).toLocaleString() : ""} · {m.status}</p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
+                <a style={{ ...button, textDecoration: "none" }} href={`/meeting/${m.meetingId}/host`} target="_blank">Host Panel</a>
+                <a style={{ ...button, textDecoration: "none" }} href={`/meeting/${m.meetingId}`} target="_blank">Meeting Room</a>
+              </div>
+            </article>
+          ))
+        )}
+      </div>
     </section>
   );
 }

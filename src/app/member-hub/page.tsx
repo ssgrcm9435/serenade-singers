@@ -7,6 +7,12 @@ const KBZPAY_INFO = {
 };
 
 import { useEffect, useState } from "react";
+
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_SIGNALING_URL ||
+  "";
+
 import Cropper from "react-easy-crop";
 
 type UserInfo = {
@@ -33,6 +39,7 @@ const menuItems = [
   "Overview",
   "Announcements",
   "Events",
+  "Meetings",
   "Learning Center",
   "Members Directory",
   "Financial Transparency",
@@ -922,6 +929,8 @@ export default function MemberHubPage() {
             </Section>
           )}
 
+          {activeSection === "Meetings" && <MemberMeetingsPanel />}
+
           {activeSection === "Events" && (
             <Section title="Events">
               {events.length === 0 ? <Empty /> : events.map((e, i) => (
@@ -1353,6 +1362,82 @@ function Stat({ title, value }: { title: string; value: string | number }) {
       <p style={statLabel}>{title}</p>
       <h3 style={statValue}>{value}</h3>
     </article>
+  );
+}
+
+function MemberMeetingsPanel() {
+  const [meetings, setMeetings] = useState<any[]>([]);
+  const [meetingId, setMeetingId] = useState("");
+  const [passcode, setPasscode] = useState("");
+  const [message, setMessage] = useState("");
+
+  async function loadMeetings() {
+    if (!BACKEND_URL) {
+      setMessage("Backend URL is missing.");
+      return;
+    }
+
+    const res = await fetch(`${BACKEND_URL}/meetings`);
+    const data = await res.json();
+    setMeetings(Array.isArray(data) ? data : []);
+  }
+
+  async function joinMeeting() {
+    setMessage("");
+
+    const res = await fetch(`${BACKEND_URL}/meetings/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ meetingId: meetingId.trim().toUpperCase(), passcode: passcode.trim() }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      setMessage(data.message || "Unable to join meeting.");
+      return;
+    }
+
+    sessionStorage.setItem(
+      "ss_meeting_access",
+      JSON.stringify({
+        meetingId: data.meetingId,
+        passcode,
+        approvedAt: new Date().toISOString(),
+      })
+    );
+
+    window.location.href = `/meeting/${data.meetingId}`;
+  }
+
+  return (
+    <Section title="Meetings">
+      <p style={muted}>Join official Serenade Singers online rehearsals, workshops, and management meetings.</p>
+
+      <div style={row}>
+        <input style={input} value={meetingId} onChange={(e) => setMeetingId(e.target.value)} placeholder="Meeting ID" />
+        <input style={input} value={passcode} onChange={(e) => setPasscode(e.target.value)} placeholder="Passcode" type="password" />
+        <button style={button} onClick={joinMeeting}>Join Meeting</button>
+        <button style={button} onClick={loadMeetings}>Load Upcoming</button>
+      </div>
+
+      {message && <p style={notice}>{message}</p>}
+
+      <div style={{ marginTop: 22, display: "grid", gap: 12 }}>
+        {meetings.length === 0 ? (
+          <p style={muted}>No meetings loaded yet.</p>
+        ) : (
+          meetings.map((m) => (
+            <article key={m.id || m.meetingId} style={infoCard}>
+              <h4 style={infoTitle}>{m.title}</h4>
+              <p style={metaText}>{m.startTime ? new Date(m.startTime).toLocaleString() : ""} · {m.status}</p>
+              <p style={muted}>Meeting ID: <strong>{m.meetingId}</strong></p>
+              <p style={muted}>Ask the host for the passcode.</p>
+            </article>
+          ))
+        )}
+      </div>
+    </Section>
   );
 }
 
