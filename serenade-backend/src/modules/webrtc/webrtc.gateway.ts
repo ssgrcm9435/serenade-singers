@@ -18,7 +18,10 @@ type Participant = {
 const meetingParticipants = new Map<string, Participant[]>();
 
 @WebSocketGateway({
-  cors: { origin: '*', credentials: true },
+  cors: {
+    origin: '*',
+    credentials: true,
+  },
 })
 export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -195,6 +198,75 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
       meetingId: payload.meetingId,
       message: payload.message,
       createdAt: new Date().toISOString(),
+    });
+  }
+
+  @SubscribeMessage('join-host-room')
+  handleJoinHostRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { meetingId: string },
+  ) {
+    client.join(`host:${payload.meetingId}`);
+
+    client.emit('host-room-joined', {
+      meetingId: payload.meetingId,
+    });
+  }
+
+  @SubscribeMessage('waiting-room-request')
+  handleWaitingRoomRequest(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    payload: {
+      meetingId: string;
+      participantId?: string;
+      fullName: string;
+      memberId?: string;
+    },
+  ) {
+    this.server.to(`host:${payload.meetingId}`).emit('waiting-room-request', {
+      socketId: client.id,
+      meetingId: payload.meetingId,
+      participantId: payload.participantId || null,
+      fullName: payload.fullName,
+      memberId: payload.memberId || null,
+      createdAt: new Date().toISOString(),
+    });
+
+    client.emit('waiting-room-status', {
+      meetingId: payload.meetingId,
+      status: 'PENDING',
+      message: 'Waiting for host approval.',
+    });
+  }
+
+  @SubscribeMessage('waiting-room-approved')
+  handleWaitingRoomApproved(
+    @MessageBody()
+    payload: {
+      meetingId: string;
+      socketId: string;
+    },
+  ) {
+    this.server.to(payload.socketId).emit('waiting-room-status', {
+      meetingId: payload.meetingId,
+      status: 'APPROVED',
+      message: 'You have been approved to join.',
+    });
+  }
+
+  @SubscribeMessage('waiting-room-rejected')
+  handleWaitingRoomRejected(
+    @MessageBody()
+    payload: {
+      meetingId: string;
+      socketId: string;
+    },
+  ) {
+    this.server.to(payload.socketId).emit('waiting-room-status', {
+      meetingId: payload.meetingId,
+      status: 'REJECTED',
+      message: 'Your request to join was rejected.',
     });
   }
 }
