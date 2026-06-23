@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  MEMBER
+  VOLUNTEER
+  ADMIN
+  MANAGEMENT
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  memberId  String?  @unique
+  fullName  String
+  email     String   @unique
+  role      UserRole @default(MEMBER)
+  photoUrl  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+  meetings MeetingParticipant[]
+  devices  UserDevice[]
+}
+
+model ChatRoom {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   @default("GROUP")
+  createdAt DateTime @default(now())
+
+  messages Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  roomId    String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  room   ChatRoom @relation(fields: [roomId], references: [id])
+  sender User     @relation(fields: [senderId], references: [id])
+}
+
+model Meeting {
+  id          String        @id @default(cuid())
+  meetingId   String        @unique
+  title       String
+  description String?
+  hostId      String?
+  startTime   DateTime
+  status      MeetingStatus @default(SCHEDULED)
+  roomName    String        @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  participants MeetingParticipant[]
+  callLogs      CallLog[]
+}
+
+model MeetingParticipant {
+  id        String    @id @default(cuid())
+  meetingId String
+  userId    String
+  joinedAt  DateTime?
+  leftAt    DateTime?
+
+  meeting Meeting @relation(fields: [meetingId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+model CallLog {
+  id        String   @id @default(cuid())
+  meetingId String
+  userId    String?
+  action    String
+  createdAt DateTime @default(now())
+
+  meeting Meeting @relation(fields: [meetingId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  type      String
+  target    String?
+  createdAt DateTime @default(now())
+}
+
+model UserDevice {
+  id        String   @id @default(cuid())
+  userId    String
+  fcmToken  String   @unique
+  device    String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
