@@ -14,7 +14,14 @@ export default function HostMeetingPage({ params }: { params: { meetingId: strin
   const socketRef = useRef<Socket | null>(null);
   const [waitingList, setWaitingList] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
   const [notice, setNotice] = useState("");
+
+  async function loadAnalytics() {
+    const res = await fetch(`${BACKEND_URL}/meetings/${meetingId}/analytics`);
+    const data = await res.json();
+    setAnalytics(data);
+  }
 
   async function loadHistory() {
     const res = await fetch(`${BACKEND_URL}/meetings/${meetingId}/history`);
@@ -42,6 +49,7 @@ export default function HostMeetingPage({ params }: { params: { meetingId: strin
 
     loadWaitingRoom();
     loadHistory();
+    loadAnalytics();
   }
 
   async function reject(p: any) {
@@ -106,7 +114,20 @@ export default function HostMeetingPage({ params }: { params: { meetingId: strin
           <button onClick={endMeeting} style={{ ...button, background: "#EF4444", color: "#fff" }}>End Meeting</button>
           <button onClick={loadWaitingRoom} style={button}>Refresh Waiting Room</button>
           <button onClick={loadHistory} style={button}>Refresh History</button>
+          <button onClick={loadAnalytics} style={button}>Refresh Analytics</button>
         </div>
+
+        <h2>Meeting Analytics</h2>
+
+        {analytics ? (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 24 }}>
+            <div style={card}><strong>Join Events</strong><p>{analytics.totalJoinEvents}</p></div>
+            <div style={card}><strong>Leave Events</strong><p>{analytics.totalLeaveEvents}</p></div>
+            <div style={card}><strong>Total Logs</strong><p>{analytics.totalLogs}</p></div>
+          </div>
+        ) : (
+          <p>No analytics loaded.</p>
+        )}
 
         <h2>Waiting Room</h2>
 
