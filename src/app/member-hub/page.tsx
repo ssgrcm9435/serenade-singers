@@ -1685,3 +1685,35 @@ const smallCropButton = {
   fontWeight: 900,
   cursor: "pointer",
 };
+
+
+const eventGroupTitle = {
+  marginTop: 28,
+  marginBottom: 14,
+  fontSize: 24,
+  fontWeight: 900,
+  color: "#061A2F",
+};
+
+const historyCard = {
+  ...infoCard,
+  borderLeft: "6px solid #22C55E",
+  background: "#F8FAFC",
+};
+
+const historyHeader = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: 16,
+  flexWrap: "wrap" as const,
+};
+
+const completedBadge = {
+  display: "inline-block",
+  padding: "8px 14px",
+  borderRadius: 999,
+  background: "#DCFCE7",
+  color: "#166534",
+  fontWeight: 900,
+};
