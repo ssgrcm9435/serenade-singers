@@ -1441,6 +1441,151 @@ function MemberMeetingsPanel() {
   );
 }
 
+
+function EventDetailsTable({ event }: { event: any }) {
+  const description = String(event.Description || event.description || "");
+
+  const schedule = description
+    .split("\\n")
+    .filter((line) => line.includes("—") && line.match(/^\\d{2}:\\d{2}/))
+    .map((line) => {
+      const [time, ...activity] = line.split("—");
+      return {
+        time: time.trim(),
+        activity: activity.join("—").trim(),
+      };
+    });
+
+  const objectives = description
+    .split("\\n")
+    .filter((line) => line.trim().startsWith("•"))
+    .map((line) => line.replace("•", "").trim());
+
+  return (
+    <div style={{ marginTop: 16 }}>
+      <table style={eventTable}>
+        <tbody>
+          <tr>
+            <th style={eventTh}>Event Name</th>
+            <td style={eventTd}>{event["Event Name"] || event.eventName}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Date</th>
+            <td style={eventTd}>{event["Event Date"] || event.eventDate}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Time</th>
+            <td style={eventTd}>{event["Event Time"] || event.eventTime}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Location</th>
+            <td style={eventTd}>{event.Location || event.location}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Category</th>
+            <td style={eventTd}>{event.Category || event.category}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Status</th>
+            <td style={eventTd}>
+              <span style={eventStatus}>
+                {event.Status || event.status}
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Organizer</th>
+            <td style={eventTd}>Serenade Singers</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {schedule.length > 0 && (
+        <>
+          <h3 style={eventSubTitle}>Program Schedule</h3>
+          <table style={eventTable}>
+            <thead>
+              <tr>
+                <th style={eventTh}>Time</th>
+                <th style={eventTh}>Activity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {schedule.map((item, index) => (
+                <tr key={index}>
+                  <td style={eventTd}>{item.time}</td>
+                  <td style={eventTd}>{item.activity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+
+      {objectives.length > 0 && (
+        <>
+          <h3 style={eventSubTitle}>Event Objectives</h3>
+          <ul style={eventList}>
+            {objectives.map((item, index) => (
+              <li key={index}>{item}</li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+const eventTable = {
+  width: "100%",
+  borderCollapse: "collapse" as const,
+  marginTop: 14,
+  overflow: "hidden",
+  borderRadius: 16,
+};
+
+const eventTh = {
+  textAlign: "left" as const,
+  padding: "12px 14px",
+  background: "#061A2F",
+  color: "#D4AF37",
+  border: "1px solid #dbe3ee",
+  fontWeight: 900,
+  width: "28%",
+};
+
+const eventTd = {
+  padding: "12px 14px",
+  background: "#ffffff",
+  color: "#0f172a",
+  border: "1px solid #dbe3ee",
+  lineHeight: 1.6,
+};
+
+const eventStatus = {
+  display: "inline-block",
+  padding: "6px 12px",
+  borderRadius: 999,
+  background: "#DCFCE7",
+  color: "#166534",
+  fontWeight: 900,
+};
+
+const eventSubTitle = {
+  marginTop: 24,
+  marginBottom: 10,
+  color: "#061A2F",
+  fontSize: 20,
+  fontWeight: 900,
+};
+
+const eventList = {
+  marginTop: 10,
+  paddingLeft: 22,
+  lineHeight: 1.8,
+  color: "#334155",
+};
+
 function Empty() {
   return <p style={muted}>No data available yet.</p>;
 }
