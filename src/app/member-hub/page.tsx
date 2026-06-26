@@ -931,18 +931,7 @@ export default function MemberHubPage() {
 
           {activeSection === "Meetings" && <MemberMeetingsPanel />}
 
-          {activeSection === "Events" && (
-            <Section title="Events">
-              {events.length === 0 ? <Empty /> : events.map((e, i) => (
-                <InfoCard
-                  key={i}
-                  title={e.eventName}
-                  text={e.description}
-                  meta={`${e.eventDate || ""} ${e.eventTime || ""} · ${e.location || ""}`}
-                />
-              ))}
-            </Section>
-          )}
+          {activeSection === "Events" && <ProfessionalEventsSection events={events || []} />}
 
           {activeSection === "Financial Transparency" && (
             <Section title="Financial Transparency">
@@ -1586,6 +1575,171 @@ const eventList = {
   color: "#334155",
 };
 
+
+function ProfessionalEventsSection({ events }: { events: any[] }) {
+  const list = Array.isArray(events) ? events : [];
+
+  const upcoming = list.filter((event) =>
+    String(event.Status || event.status || "").toLowerCase() !== "completed"
+  );
+
+  const history = list.filter((event) =>
+    String(event.Status || event.status || "").toLowerCase() === "completed"
+  );
+
+  return (
+    <Section title="Events">
+      <h3 style={eventGroupTitle}>Upcoming Events</h3>
+
+      {upcoming.length === 0 ? (
+        <p style={metaText}>No upcoming events.</p>
+      ) : (
+        upcoming.map((event, index) => (
+          <ProfessionalEventCard key={`upcoming-${index}`} event={event} />
+        ))
+      )}
+
+      <h3 style={eventGroupTitle}>Event History</h3>
+
+      {history.length === 0 ? (
+        <p style={metaText}>No completed event history.</p>
+      ) : (
+        history.map((event, index) => (
+          <ProfessionalEventCard key={`history-${index}`} event={event} isHistory />
+        ))
+      )}
+    </Section>
+  );
+}
+
+function ProfessionalEventCard({
+  event,
+  isHistory = false,
+}: {
+  event: any;
+  isHistory?: boolean;
+}) {
+  const name = event["Event Name"] || event.eventName || "Untitled Event";
+  const date = formatEventDate(event["Event Date"] || event.eventDate || "");
+  const time = event["Event Time"] || event.eventTime || "";
+  const location = event.Location || event.location || "";
+  const category = event.Category || event.category || "";
+  const status = event.Status || event.status || "";
+  const description = String(event.Description || event.description || "");
+
+  const schedule = extractSchedule(description);
+  const objectives = extractObjectives(description);
+
+  return (
+    <article style={isHistory ? historyCard : infoCard}>
+      <div style={eventCardHeader}>
+        <div>
+          <h3 style={infoTitle}>{name}</h3>
+          <p style={metaText}>{date} · {time} · {location}</p>
+        </div>
+        <span style={isHistory ? completedBadge : activeBadge}>{status}</span>
+      </div>
+
+      <table style={eventTable}>
+        <tbody>
+          <tr>
+            <th style={eventTh}>Event Name</th>
+            <td style={eventTd}>{name}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Date</th>
+            <td style={eventTd}>{date}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Time</th>
+            <td style={eventTd}>{time}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Location</th>
+            <td style={eventTd}>{location}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Category</th>
+            <td style={eventTd}>{category}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Status</th>
+            <td style={eventTd}>{status}</td>
+          </tr>
+          <tr>
+            <th style={eventTh}>Organizer</th>
+            <td style={eventTd}>Serenade Singers</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {schedule.length > 0 && (
+        <>
+          <h4 style={eventSubTitle}>Program Schedule</h4>
+          <table style={eventTable}>
+            <thead>
+              <tr>
+                <th style={eventTh}>Time</th>
+                <th style={eventTh}>Activity</th>
+              </tr>
+            </thead>
+            <tbody>
+              {schedule.map((item, index) => (
+                <tr key={index}>
+                  <td style={eventTd}>{item.time}</td>
+                  <td style={eventTd}>{item.activity}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+
+      {objectives.length > 0 && (
+        <>
+          <h4 style={eventSubTitle}>Event Objectives</h4>
+          <ul style={eventList}>
+            {objectives.map((item, index) => (
+              <li key={index}>{item}</li>
+            ))}
+          </ul>
+        </>
+      )}
+    </article>
+  );
+}
+
+function extractSchedule(description: string) {
+  return description
+    .split(/\n|(?=\d{2}:\d{2}[–-]\d{2}:\d{2})/g)
+    .map((line) => line.trim())
+    .filter((line) => /^\d{2}:\d{2}[–-]\d{2}:\d{2}/.test(line) && line.includes("—"))
+    .map((line) => {
+      const [time, ...activity] = line.split("—");
+      return { time: time.trim(), activity: activity.join("—").trim() };
+    });
+}
+
+function extractObjectives(description: string) {
+  return description
+    .split(/\n|(?=•)/g)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("•"))
+    .map((line) => line.replace("•", "").trim());
+}
+
+function formatEventDate(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+
 function Empty() {
   return <p style={muted}>No data available yet.</p>;
 }
@@ -1717,3 +1871,27 @@ const completedBadge = {
   color: "#166534",
   fontWeight: 900,
 };
+
+
+const eventCardHeader = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  gap: 16,
+  flexWrap: "wrap" as const,
+};
+
+const activeBadge = {
+  display: "inline-block",
+  padding: "8px 14px",
+  borderRadius: 999,
+  background: "#FEF3C7",
+  color: "#92400E",
+  fontWeight: 900,
+};
+
+
+
+
+
+
