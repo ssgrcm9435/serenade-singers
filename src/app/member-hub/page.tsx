@@ -7,6 +7,7 @@ const KBZPAY_INFO = {
 };
 
 import { useEffect, useRef, useState } from "react";
+import { PitchDetector } from "pitchy";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ||
@@ -1430,42 +1431,11 @@ function suggestVoiceType(lowMidi: number | null, highMidi: number | null) {
 }
 
 function autoCorrelate(buffer: Float32Array, sampleRate: number) {
-  let size = buffer.length;
-  let rms = 0;
+  const detector = PitchDetector.forFloat32Array(buffer.length);
+  const [pitch, clarity] = detector.findPitch(buffer, sampleRate);
 
-  for (let i = 0; i < size; i++) {
-    const value = buffer[i];
-    rms += value * value;
-  }
-
-  rms = Math.sqrt(rms / size);
-  if (rms < 0.006) return -1;
-
-  let bestOffset = -1;
-  let bestCorrelation = 0;
-
-  const minFrequency = 70;
-  const maxFrequency = 900;
-  const minOffset = Math.floor(sampleRate / maxFrequency);
-  const maxOffset = Math.floor(sampleRate / minFrequency);
-
-  for (let offset = minOffset; offset <= maxOffset; offset++) {
-    let correlation = 0;
-
-    for (let i = 0; i < size - offset; i++) {
-      correlation += 1 - Math.abs(buffer[i] - buffer[i + offset]);
-    }
-
-    correlation = correlation / (size - offset);
-
-    if (correlation > bestCorrelation) {
-      bestCorrelation = correlation;
-      bestOffset = offset;
-    }
-  }
-
-  if (bestCorrelation > 0.35 && bestOffset > 0) {
-    return sampleRate / bestOffset;
+  if (clarity > 0.75 && pitch > 65 && pitch < 1000) {
+    return pitch;
   }
 
   return -1;
