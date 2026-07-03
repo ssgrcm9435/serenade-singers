@@ -1753,11 +1753,47 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
 
         <details style={infoCard}>
           <summary style={{cursor:"pointer",fontWeight:900,fontSize:16}}>
-            ⓘ Voice Practice လမ်းညွှန်
+            ⓘ Voice Range & Voice Practice လမ်းညွှန်
           </summary>
 
           <div style={{marginTop:16,lineHeight:1.9}}>
             <p>🎵 ဤစနစ်သည် သင့်အသံကို လေ့ကျင့်ရန်နှင့် Voice Range ကို စစ်ဆေးရန် ရည်ရွယ်ထားပါသည်။</p>
+
+            <p><strong>Voice Range Test လမ်းညွှန်</strong></p>
+
+            <p>• Voice Range Test သည် သင့်အသံ၏ အနိမ့်ဆုံး Note၊ အမြင့်ဆုံး Note၊ Auto Current Key နှင့် Suggested Voice Type ကို စစ်ဆေးရန် ဖြစ်ပါသည်။</p>
+
+            <p>• Test စတင်ရန် Voice Range Test ကိုရွေးပြီး Start ကိုနှိပ်ပါ။</p>
+
+            <p>• Major Scale ကို ဖြည်းဖြည်းနှင့် ငြိမ်ငြိမ် သီဆိုပါ။</p>
+
+            <p>
+            Do Re Mi Fa So La Ti Do<br/>
+            Do Ti La So Fa Mi Re Do
+            </p>
+
+            <p>• Note တစ်လုံးချင်းကို ၁ မှ ၂ စက္ကန့်ခန့် ထိန်းထားပါ။ စနစ်သည် Stable Pitch ဖြစ်မှသာ Note ကို လက်ခံပါသည်။</p>
+
+            <p>• Gauge အလယ်သို့ ရောက်လျှင် Pitch မှန်ပါသည်။ ဘယ်ဘက်သို့ ရောက်လျှင် Flat ဖြစ်ပြီး၊ ညာဘက်သို့ ရောက်လျှင် Sharp ဖြစ်ပါသည်။</p>
+
+            <p>• Test ပြီးပါက Save Voice Range ကိုနှိပ်ပြီး Form Submit ပြုလုပ်ပါ။ Save မနှိပ်ပါက Result မသိမ်းဆည်းပါ။</p>
+
+            <p>• Data မှန်ကန်စေရန် အသစ်ပြန်လည်စစ်ဆေးလိုပါက Stop ကိုအရင်နှိပ်ပြီးမှ Start ကိုပြန်နှိပ်ရန် မဖြစ်မနေလိုအပ်ပါသည်။</p>
+
+            <p><strong>Voice Practice လမ်းညွှန်</strong></p>
+
+            <p>• Voice Practice သည် Key နှင့် Octave အလိုက် Do Re Mi Fa So La Ti Do ကို လေ့ကျင့်ရန် ဖြစ်ပါသည်။</p>
+
+            <p>• လေ့ကျင့်လိုသော Key၊ Octave နှင့် Practice Mode ကိုရွေးပါ။</p>
+
+            <p>• Play Current Note သို့မဟုတ် Play Full Scale ကိုနှိပ်ပြီး Reference အသံကို အရင်နားထောင်ပါ။</p>
+
+            <p>• Reference အသံပြီးမှ တူညီသော Pitch ဖြင့် ပြန်လည်သီဆိုပါ။</p>
+
+            <p>• Step by Step Mode တွင် လက်ရှိ Note မှန်ကန်မှ နောက် Note သို့ အလိုအလျောက် ဆက်သွားပါမည်။</p>
+
+            <p>• Practice ပြုလုပ်ထားသော Progress သည် လေ့ကျင့်မှုအတွက်သာ ဖြစ်ပြီး Voice Range Result ကို Save Voice Range နှိပ်မှသာ သိမ်းဆည်းပါမည်။</p>
+
 
             <p>• Chrome Browser ကို အသုံးပြုပြီး Microphone Permission ကို Allow ပေးပါ။</p>
 
@@ -1848,6 +1884,24 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
                 <Stat title="Highest Note" value={highestNote} />
                 <Stat title="Voice Range" value={`${lowestNote} → ${highestNote}`} />
                 <Stat title="Suggested Voice Type" value={suggestedVoiceType} />
+              </div>
+
+              <div style={savedOverviewCard}>
+                <h4 style={infoTitle}>Saved Voice Data Overview</h4>
+                <p style={muted}>Save Voice Range နှိပ်ပြီးသိမ်းဆည်းမည့် Data အကျဉ်းချုပ် ဖြစ်ပါသည်။</p>
+
+                <div style={summaryGrid}>
+                  <Stat title="Member Name" value={user.fullName || "-"} />
+                  <Stat title="Member ID" value={user.memberId || "-"} />
+                  <Stat title="Gmail" value={user.gmail || "-"} />
+                  <Stat title="Initial Voice Type" value={user.voicePart || "-"} />
+                  <Stat title="Final Voice Type" value={suggestedVoiceType} />
+                  <Stat title="Auto Current Key" value={currentKey} />
+                  <Stat title="Lowest Note" value={lowestNote} />
+                  <Stat title="Highest Note" value={highestNote} />
+                  <Stat title="Vocal Range" value={`${lowestNote} → ${highestNote}`} />
+                  <Stat title="Target Practice" value={`${selectedKey} Major / Octave ${selectedOctave}`} />
+                </div>
               </div>
             </div>
           </>
@@ -2660,4 +2714,12 @@ const activeScaleStep = {
   ...scaleStepCard,
   background: "#ECFDF5",
   border: "2px solid #22C55E",
+};
+
+const savedOverviewCard = {
+  marginTop: 18,
+  padding: 18,
+  borderRadius: 20,
+  background: "#F8FAFC",
+  border: "1px solid #CBD5E1",
 };
