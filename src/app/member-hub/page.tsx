@@ -1471,11 +1471,11 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
     setStatus("Stopped");
   }
 
-  function playTone(frequency: number, duration = 0.65) {
+  function playTone(frequency: number, duration = 1.2) {
     playbackLockRef.current = true;
     window.setTimeout(() => {
       playbackLockRef.current = false;
-    }, Math.round((duration + 0.25) * 1000));
+    }, Math.round((duration + 0.55) * 1000));
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     const ctx = synthRef.current || new AudioContextClass();
     synthRef.current = ctx;
@@ -1486,8 +1486,9 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
 
     const master = ctx.createGain();
     master.gain.setValueAtTime(0.001, ctx.currentTime);
-    master.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime + 0.025);
-    master.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    master.gain.exponentialRampToValueAtTime(0.32, ctx.currentTime + 0.04);
+    master.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + duration * 0.65);
+    master.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration + 0.35);
 
     if (playbackVoice === "piano") {
       const partials = [
@@ -1509,7 +1510,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
         osc.connect(gain);
         gain.connect(master);
         osc.start();
-        osc.stop(ctx.currentTime + duration + 0.05);
+        osc.stop(ctx.currentTime + duration + 0.4);
       });
     }
 
@@ -1525,7 +1526,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
         osc.connect(gain);
         gain.connect(master);
         osc.start();
-        osc.stop(ctx.currentTime + duration + 0.05);
+        osc.stop(ctx.currentTime + duration + 0.4);
       });
     }
 
