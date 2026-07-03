@@ -1449,6 +1449,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const frameRef = useRef<number | null>(null);
   const stableMidiRef = useRef<number | null>(null);
   const stableCountRef = useRef(0);
+  const stepIndexRef = useRef(0);
   const rootMidiRef = useRef<number | null>(null);
   const synthRef = useRef<AudioContext | null>(null);
 
@@ -1509,6 +1510,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
     setInputLevel(0);
     setStatus("Listening");
     setStepIndex(0);
+    stepIndexRef.current = 0;
     setCorrectSteps(Array(8).fill(false));
     setSaveMessage("");
     stableMidiRef.current = null;
@@ -1618,7 +1620,8 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
         }
 
         if (mode === "practice") {
-          const target = scale[Math.min(stepIndex, scale.length - 1)];
+          const currentStep = Math.min(stepIndexRef.current, scale.length - 1);
+          const target = scale[currentStep];
           const cents = centsDifference(pitch, target.midi);
           setGaugeCents(cents);
           setExpectedNote(`${target.solfege} / ${target.note}`);
@@ -1627,12 +1630,13 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
           if (Math.abs(cents) <= 35 && stable) {
             setCorrectSteps((prev) => {
               const next = [...prev];
-              next[stepIndex] = true;
+              next[currentStep] = true;
               return next;
             });
 
             if (practiceMode === "step") {
-              const nextStep = Math.min(stepIndex + 1, scale.length - 1);
+              const nextStep = Math.min(currentStep + 1, scale.length - 1);
+              stepIndexRef.current = nextStep;
               setStepIndex(nextStep);
               playTone(scale[nextStep].hz, 0.45);
             }
