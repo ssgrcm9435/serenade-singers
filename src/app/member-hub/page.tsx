@@ -1461,6 +1461,8 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const stepIndexRef = useRef(0);
   const rootMidiRef = useRef<number | null>(null);
   const synthRef = useRef<AudioContext | null>(null);
+  const isPlaybackRef = useRef(false);
+  const resetTokenRef = useRef(0);
   const playbackLockRef = useRef(false);
 
   const scale = buildMajorScale(selectedKey, selectedOctave, scaleDirection);
@@ -1562,34 +1564,63 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   }
 
   function resetPractice() {
+    resetTokenRef.current += 1;
+    stableMidiRef.current = null;
+    stableCountRef.current = 0;
+    rootMidiRef.current = null;
+
     setStepIndex(0);
     setCorrectSteps(Array(8).fill(false));
     setPracticeFeedback("");
     setCountdown("");
     setGaugeCents(0);
+    setCurrentNote("-");
+    setDetectedHz("-");
     setExpectedNote("-");
     setExpectedHz("-");
-    setStatus("Practice reset.");
+    setInputLevel(0);
+    setStatus("Practice reset. Press Start again.");
   }
 
   async function startWithCountdown() {
+    const token = resetTokenRef.current + 1;
+    resetTokenRef.current = token;
+
+    resetPractice();
+
     setCountdown("3");
     await new Promise((resolve) => setTimeout(resolve, 700));
+    if (resetTokenRef.current !== token) return;
+
     setCountdown("2");
     await new Promise((resolve) => setTimeout(resolve, 700));
+    if (resetTokenRef.current !== token) return;
+
     setCountdown("1");
     await new Promise((resolve) => setTimeout(resolve, 700));
+    if (resetTokenRef.current !== token) return;
+
     setCountdown("Sing");
     await new Promise((resolve) => setTimeout(resolve, 500));
+    if (resetTokenRef.current !== token) return;
+
     setCountdown("");
     await startTest();
   }
 
   async function playScale() {
+    isPlaybackRef.current = true;
+    setStatus("Playing full scale. Microphone evaluation paused.");
+
     for (let i = 0; i < scale.length; i++) {
-      playTone(scale[i].hz, 1.05);
-      await new Promise((resolve) => setTimeout(resolve, 1250));
+      playTone(scale[i].hz, 0.45);
+      await new Promise((resolve) => setTimeout(resolve, 560));
     }
+
+    window.setTimeout(() => {
+      isPlaybackRef.current = false;
+      setStatus("Playback finished. Sing now.");
+    }, 500);
   }
 
   function resetSession() {
@@ -1666,6 +1697,12 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
 
         const level = Math.min(100, Math.round(rms * 900));
         setInputLevel(level);
+
+        if (isPlaybackRef.current) {
+          setStatus("Playback is running. Microphone evaluation paused.");
+          frameRef.current = requestAnimationFrame(detect);
+          return;
+        }
 
         const [pitch, clarity] = detector.findPitch(buffer, audioContextRef.current.sampleRate);
 
@@ -2796,18 +2833,17 @@ const savedOverviewCard = {
 
 
 const countdownOverlay = {
-  margin: "18px auto",
-  width: 160,
-  height: 160,
-  borderRadius: "50%",
-  background: "#061A2F",
+  position: "fixed" as const,
+  inset: 0,
+  zIndex: 9999,
+  background: "rgba(15, 23, 42, 0.62)",
   color: "#FFFFFF",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: 42,
+  fontSize: 72,
   fontWeight: 950,
-  boxShadow: "0 18px 45px rgba(15, 23, 42, 0.25)",
+  backdropFilter: "blur(6px)",
 };
 
 const successAnimation = {
