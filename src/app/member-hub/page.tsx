@@ -1372,6 +1372,15 @@ function midiToNote(midi: number) {
   return `${names[midi % 12]}${Math.floor(midi / 12) - 1}`;
 }
 
+function midiToFrequency(midi: number) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function getCentsDifference(frequency: number, expectedMidi: number) {
+  const expectedFrequency = midiToFrequency(expectedMidi);
+  return Math.round(1200 * Math.log2(frequency / expectedFrequency));
+}
+
 function frequencyToNote(frequency: number) {
   const midi = Math.round(69 + 12 * Math.log2(frequency / 440));
   return { midi, note: midiToNote(midi) };
@@ -1475,6 +1484,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const [evaluation, setEvaluation] = useState("Waiting");
   const [correctCount, setCorrectCount] = useState(0);
   const [attemptCount, setAttemptCount] = useState(0);
+  const [tunerCents, setTunerCents] = useState(0);
   const [saveMessage, setSaveMessage] = useState("");
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -1507,6 +1517,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
       setAttemptCount(0);
       setNoteHistory([]);
       setPitchLevel(0);
+      setTunerCents(0);
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -1545,7 +1556,9 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
             const currentRoot = root ?? detected.midi;
             const expectedMidi = currentRoot + MAJOR_SCALE_PATTERN[Math.min(scaleStep, MAJOR_SCALE_PATTERN.length - 1)];
             const result = getPitchEvaluation(detected.midi, expectedMidi);
+            const cents = Math.max(-50, Math.min(50, getCentsDifference(frequency, expectedMidi)));
 
+            setTunerCents(cents);
             setExpectedNote(midiToNote(expectedMidi));
             setEvaluation(result);
             setAttemptCount((count) => count + 1);
@@ -1663,6 +1676,26 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
           {noteHistory.length ? noteHistory.map((note, index) => (
             <span key={`${note}-${index}`} style={notePill}>{note}</span>
           )) : <span style={muted}>Detected notes will appear here while singing.</span>}
+        </div>
+
+        <div style={tunerCard}>
+          <h4 style={infoTitle}>Live Pitch Meter</h4>
+          <p style={muted}>Sing slowly. Keep the needle near the center.</p>
+
+          <div style={tunerTrack}>
+            <div style={tunerCenterLine} />
+            <div style={{ ...tunerNeedle, left: `${50 + tunerCents}%` }} />
+          </div>
+
+          <div style={tunerLabels}>
+            <span>Flat</span>
+            <span>Correct</span>
+            <span>Sharp</span>
+          </div>
+
+          <p style={{ ...muted, fontWeight: 900 }}>
+            {tunerCents < -8 ? "Too Low / Flat" : tunerCents > 8 ? "Too High / Sharp" : "Good Pitch / Center"}
+          </p>
         </div>
 
         <div style={evaluationCard}>
@@ -2298,4 +2331,51 @@ const evaluationCard = {
   background: "#FFFFFF",
   border: "1px solid #CBD5E1",
   boxShadow: "0 12px 30px rgba(15, 23, 42, 0.08)",
+};
+
+
+const tunerCard = {
+  marginTop: 20,
+  padding: 20,
+  borderRadius: 22,
+  background: "#F8FAFC",
+  border: "1px solid #CBD5E1",
+};
+
+const tunerTrack = {
+  position: "relative" as const,
+  height: 38,
+  borderRadius: 999,
+  background: "linear-gradient(90deg, #FCA5A5, #FEF3C7, #BBF7D0, #FEF3C7, #FCA5A5)",
+  overflow: "hidden",
+  border: "1px solid #CBD5E1",
+};
+
+const tunerCenterLine = {
+  position: "absolute" as const,
+  left: "50%",
+  top: 0,
+  width: 3,
+  height: "100%",
+  background: "#061A2F",
+  transform: "translateX(-50%)",
+};
+
+const tunerNeedle = {
+  position: "absolute" as const,
+  top: 3,
+  width: 8,
+  height: 32,
+  borderRadius: 999,
+  background: "#111827",
+  transform: "translateX(-50%)",
+  transition: "left 0.12s ease",
+};
+
+const tunerLabels = {
+  display: "flex",
+  justifyContent: "space-between",
+  marginTop: 8,
+  fontWeight: 900,
+  color: "#061A2F",
 };
