@@ -1944,23 +1944,6 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
                 <Stat title="Suggested Voice Type" value={suggestedVoiceType} />
               </div>
 
-              <div style={savedOverviewCard}>
-                <h4 style={infoTitle}>Saved Voice Data Overview</h4>
-                <p style={muted}>Save Voice Range နှိပ်ပြီးသိမ်းဆည်းမည့် Data အကျဉ်းချုပ် ဖြစ်ပါသည်။</p>
-
-                <div style={summaryGrid}>
-                  <Stat title="Member Name" value={user.fullName || "-"} />
-                  <Stat title="Member ID" value={user.memberId || "-"} />
-                  <Stat title="Gmail" value={user.gmail || "-"} />
-                  <Stat title="Initial Voice Type" value={user.voicePart || "-"} />
-                  <Stat title="Final Voice Type" value={suggestedVoiceType} />
-                  <Stat title="Auto Current Key" value={currentKey} />
-                  <Stat title="Lowest Note" value={lowestNote} />
-                  <Stat title="Highest Note" value={highestNote} />
-                  <Stat title="Vocal Range" value={`${lowestNote} → ${highestNote}`} />
-                  <Stat title="Target Practice" value={`${selectedKey} Major / Octave ${selectedOctave}`} />
-                </div>
-              </div>
             </div>
           </>
         )}
