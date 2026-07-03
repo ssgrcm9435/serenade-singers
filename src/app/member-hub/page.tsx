@@ -1535,8 +1535,8 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
 
   async function playScale() {
     for (let i = 0; i < scale.length; i++) {
-      playTone(scale[i].hz, 0.45);
-      await new Promise((resolve) => setTimeout(resolve, 560));
+      playTone(scale[i].hz, 1.05);
+      await new Promise((resolve) => setTimeout(resolve, 1250));
     }
   }
 
