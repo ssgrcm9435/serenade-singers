@@ -8,6 +8,10 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Serenade Singers",
   description: "Modern premium choir and music community website.",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
