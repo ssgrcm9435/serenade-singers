@@ -1583,25 +1583,25 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   }
 
   async function startWithCountdown() {
+    resetPractice();
+
     const token = resetTokenRef.current + 1;
     resetTokenRef.current = token;
 
-    resetPractice();
-
     setCountdown("3");
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    await new Promise((resolve) => setTimeout(resolve, 650));
     if (resetTokenRef.current !== token) return;
 
     setCountdown("2");
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    await new Promise((resolve) => setTimeout(resolve, 650));
     if (resetTokenRef.current !== token) return;
 
     setCountdown("1");
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    await new Promise((resolve) => setTimeout(resolve, 650));
     if (resetTokenRef.current !== token) return;
 
     setCountdown("Sing");
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 450));
     if (resetTokenRef.current !== token) return;
 
     setCountdown("");
@@ -2834,16 +2834,22 @@ const savedOverviewCard = {
 
 const countdownOverlay = {
   position: "fixed" as const,
-  inset: 0,
+  left: "50%",
+  top: "50%",
   zIndex: 9999,
-  background: "rgba(15, 23, 42, 0.62)",
+  width: 150,
+  height: 150,
+  borderRadius: "50%",
+  background: "rgba(6, 26, 47, 0.96)",
   color: "#FFFFFF",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: 72,
+  fontSize: 52,
   fontWeight: 950,
-  backdropFilter: "blur(6px)",
+  transform: "translate(-50%, -50%)",
+  boxShadow: "0 18px 45px rgba(15, 23, 42, 0.35)",
+  border: "4px solid rgba(255, 255, 255, 0.75)",
 };
 
 const successAnimation = {
