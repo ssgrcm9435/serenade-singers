@@ -6,7 +6,7 @@ const KBZPAY_INFO = {
   qr: "/images/kbzpay-qr.jpg",
 };
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ||
@@ -41,6 +41,7 @@ const menuItems = [
   "Events",
   "Meetings",
   "Learning Center",
+  "Voice Test",
   "Members Directory",
   "Financial Transparency",
   "Documents",
@@ -1039,6 +1040,10 @@ export default function MemberHubPage() {
             </Section>
           )}
 
+          {activeSection === "Voice Test" && (
+            <VoiceTestPanel user={user} post={post} loading={loading} setLoading={setLoading} />
+          )}
+
           {activeSection === "Members Directory" && (
             <Section title="Members Directory">
               {membersDirectory.length === 0 ? (
@@ -1351,6 +1356,229 @@ function Stat({ title, value }: { title: string; value: string | number }) {
       <p style={statLabel}>{title}</p>
       <h3 style={statValue}>{value}</h3>
     </article>
+  );
+}
+
+
+type VoiceTestPanelProps = {
+  user: UserInfo;
+  post: (action: string, payload?: Record<string, any>) => Promise<any>;
+  loading: boolean;
+  setLoading: (value: boolean) => void;
+};
+
+function midiToNote(midi: number) {
+  const names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  return `${names[midi % 12]}${Math.floor(midi / 12) - 1}`;
+}
+
+function frequencyToNote(frequency: number) {
+  const midi = Math.round(69 + 12 * Math.log2(frequency / 440));
+  return { midi, note: midiToNote(midi) };
+}
+
+function suggestVoiceType(lowMidi: number | null, highMidi: number | null) {
+  if (lowMidi === null || highMidi === null) return "Testing";
+  if (lowMidi <= 40 && highMidi <= 64) return "Bass";
+  if (lowMidi <= 48 && highMidi <= 67) return "Tenor";
+  if (lowMidi <= 55 && highMidi <= 74) return "Alto";
+  if (highMidi >= 72) return "Soprano";
+  return "Choir Voice";
+}
+
+function autoCorrelate(buffer: Float32Array, sampleRate: number) {
+  let rms = 0;
+  for (let i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i];
+  rms = Math.sqrt(rms / buffer.length);
+  if (rms < 0.01) return -1;
+
+  let bestOffset = -1;
+  let bestCorrelation = 0;
+
+  for (let offset = 60; offset < 1000; offset++) {
+    let correlation = 0;
+    for (let i = 0; i < buffer.length - offset; i++) {
+      correlation += 1 - Math.abs(buffer[i] - buffer[i + offset]);
+    }
+    correlation = correlation / (buffer.length - offset);
+
+    if (correlation > bestCorrelation) {
+      bestCorrelation = correlation;
+      bestOffset = offset;
+    }
+  }
+
+  if (bestCorrelation > 0.91 && bestOffset > 0) return sampleRate / bestOffset;
+  return -1;
+}
+
+function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps) {
+  const [running, setRunning] = useState(false);
+  const [currentNote, setCurrentNote] = useState("-");
+  const [lowestNote, setLowestNote] = useState("-");
+  const [highestNote, setHighestNote] = useState("-");
+  const [lowestMidi, setLowestMidi] = useState<number | null>(null);
+  const [highestMidi, setHighestMidi] = useState<number | null>(null);
+  const [currentKey, setCurrentKey] = useState("C Major");
+  const [targetKey, setTargetKey] = useState("C Major");
+  const [saveMessage, setSaveMessage] = useState("");
+
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const frameRef = useRef<number | null>(null);
+
+  const suggestedVoiceType = suggestVoiceType(lowestMidi, highestMidi);
+
+  function stopTest() {
+    if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    audioContextRef.current?.close();
+    frameRef.current = null;
+    streamRef.current = null;
+    audioContextRef.current = null;
+    analyserRef.current = null;
+    setRunning(false);
+  }
+
+  async function startTest() {
+    setSaveMessage("");
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const audioContext = new AudioContextClass();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(stream);
+
+      analyser.fftSize = 2048;
+      source.connect(analyser);
+
+      streamRef.current = stream;
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+      setRunning(true);
+
+      const buffer = new Float32Array(analyser.fftSize);
+
+      const detect = () => {
+        if (!analyserRef.current || !audioContextRef.current) return;
+
+        analyserRef.current.getFloatTimeDomainData(buffer);
+        const frequency = autoCorrelate(buffer, audioContextRef.current.sampleRate);
+
+        if (frequency > 50 && frequency < 1200) {
+          const detected = frequencyToNote(frequency);
+          setCurrentNote(`${detected.note} (${Math.round(frequency)} Hz)`);
+
+          setLowestMidi((prev) => {
+            if (prev === null || detected.midi < prev) {
+              setLowestNote(detected.note);
+              return detected.midi;
+            }
+            return prev;
+          });
+
+          setHighestMidi((prev) => {
+            if (prev === null || detected.midi > prev) {
+              setHighestNote(detected.note);
+              return detected.midi;
+            }
+            return prev;
+          });
+        }
+
+        frameRef.current = requestAnimationFrame(detect);
+      };
+
+      detect();
+    } catch {
+      setSaveMessage("Microphone access failed. Please allow microphone permission.");
+      setRunning(false);
+    }
+  }
+
+  async function saveVoiceAssessment() {
+    setSaveMessage("");
+
+    if (lowestMidi === null || highestMidi === null) {
+      setSaveMessage("Please test your voice range first.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const data = await post("saveVoiceAssessment", {
+        gmail: user.gmail,
+        memberId: user.memberId,
+        fullName: user.fullName,
+        currentVoicePart: user.voicePart || "",
+        lowestNote,
+        highestNote,
+        lowestMidi,
+        highestMidi,
+        suggestedVoiceType,
+        currentKey,
+        targetKey,
+      });
+
+      setSaveMessage(data.success ? "Voice assessment saved successfully." : data.message || "Unable to save voice assessment.");
+    } catch {
+      setSaveMessage("Unable to save voice assessment.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    return () => stopTest();
+  }, []);
+
+  return (
+    <Section title="Voice Test">
+      <div style={infoCard}>
+        <h4 style={infoTitle}>Auto Voice Range Test</h4>
+        <p style={muted}>
+          Press Start, sing from your comfortable lowest note to your highest note, then save the result.
+        </p>
+
+        <div style={summaryGrid}>
+          <Stat title="Current Note" value={currentNote} />
+          <Stat title="Lowest Note" value={lowestNote} />
+          <Stat title="Highest Note" value={highestNote} />
+          <Stat title="Suggested Voice" value={suggestedVoiceType} />
+        </div>
+
+        <div style={row}>
+          <select value={currentKey} onChange={(e) => setCurrentKey(e.target.value)} style={input}>
+            {["C Major", "D Major", "E Major", "F Major", "G Major", "A Major", "B♭ Major", "E♭ Major"].map((keyName) => (
+              <option key={keyName}>{keyName}</option>
+            ))}
+          </select>
+
+          <select value={targetKey} onChange={(e) => setTargetKey(e.target.value)} style={input}>
+            {["C Major", "D Major", "E Major", "F Major", "G Major", "A Major", "B♭ Major", "E♭ Major"].map((keyName) => (
+              <option key={keyName}>{keyName}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={row}>
+          {!running ? (
+            <button onClick={startTest} style={button}>Start Voice Test</button>
+          ) : (
+            <button onClick={stopTest} style={{ ...button, background: "#B91C1C" }}>Stop Voice Test</button>
+          )}
+
+          <button onClick={saveVoiceAssessment} disabled={loading} style={button}>
+            {loading ? "Saving..." : "Save Voice Range"}
+          </button>
+        </div>
+
+        {saveMessage && <p style={notice}>{saveMessage}</p>}
+      </div>
+    </Section>
   );
 }
 

@@ -98,6 +98,10 @@ function doPost(e) {
       return json_(getMembersDirectory_());
     }
 
+    if (action === "saveVoiceAssessment") {
+      return json_(saveVoiceAssessment_(body));
+    }
+
     if (action === "getMemberShirtHistory") {
       return json_(getMemberShirtHistory_(body.gmail));
     }
@@ -547,6 +551,105 @@ function validateRequiredFields_(body, required) {
     throw new Error("Missing required fields: " + missing.join(", "));
   }
 }
+
+
+function ensureVoiceAssessmentHeaders_(sheet) {
+  const headers = [
+    "Timestamp",
+    "Member ID",
+    "Full Name",
+    "Gmail",
+    "Initial Voice Type",
+    "Final Voice Type",
+    "Assessment Status",
+    "Vocal Range",
+    "Choir Section",
+    "Assessed By",
+    "Assessment Date",
+    "Pitch Accuracy",
+    "Rhythm",
+    "Breath Control",
+    "Blend Quality",
+    "Musicality",
+    "Remarks",
+    "Final Decision",
+    "Lowest Note",
+    "Highest Note",
+    "Lowest MIDI",
+    "Highest MIDI",
+    "Current Key",
+    "Target Key",
+    "Source",
+  ];
+
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(headers);
+  } else {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+
+  sheet.getRange(1, 1, 1, headers.length)
+    .setFontWeight("bold")
+    .setBackground("#061A2F")
+    .setFontColor("#FFFFFF");
+
+  sheet.setFrozenRows(1);
+}
+
+function saveVoiceAssessment_(body) {
+  const gmail = normalizeEmail_(body.gmail);
+
+  if (!gmail) {
+    return {
+      success: false,
+      message: "Registered Gmail is required.",
+    };
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getOrCreateSheet_(ss, "Voice_Assessment");
+  ensureVoiceAssessmentHeaders_(sheet);
+
+  const timestamp = new Date();
+  const lowestNote = body.lowestNote || "";
+  const highestNote = body.highestNote || "";
+  const suggestedVoiceType = body.suggestedVoiceType || "";
+  const vocalRange = lowestNote && highestNote ? `${lowestNote} - ${highestNote}` : "";
+
+  sheet.appendRow([
+    timestamp,
+    body.memberId || "",
+    body.fullName || "",
+    gmail,
+    body.currentVoicePart || "",
+    suggestedVoiceType,
+    "Auto Tested",
+    vocalRange,
+    suggestedVoiceType,
+    "Auto Voice Test",
+    timestamp,
+    "",
+    "",
+    "",
+    "",
+    "",
+    `Current Key: ${body.currentKey || ""}; Target Key: ${body.targetKey || ""}`,
+    "Saved",
+    lowestNote,
+    highestNote,
+    body.lowestMidi || "",
+    body.highestMidi || "",
+    body.currentKey || "",
+    body.targetKey || "",
+    "Member Hub",
+  ]);
+
+  return {
+    success: true,
+    message: "Voice assessment saved successfully.",
+  };
+}
+
 
 /*******************************************************
  * SHEET SETUP
