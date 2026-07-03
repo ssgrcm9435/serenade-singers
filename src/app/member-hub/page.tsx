@@ -1377,6 +1377,20 @@ function frequencyToNote(frequency: number) {
   return { midi, note: midiToNote(midi) };
 }
 
+const MAJOR_SCALE_PATTERN = [0, 2, 4, 5, 7, 9, 11, 12, 11, 9, 7, 5, 4, 2, 0];
+
+function getPitchEvaluation(detectedMidi: number, expectedMidi: number) {
+  const diff = detectedMidi - expectedMidi;
+
+  if (diff === 0) return "Correct";
+  if (diff === 1) return "Sharp";
+  if (diff === -1) return "Flat";
+  if (diff > 1) return "Too Sharp";
+  if (diff < -1) return "Too Flat";
+
+  return "Try Again";
+}
+
 function estimateMajorKey(notes: string[]) {
   const clean = notes
     .map((note) => note.replace(/[0-9]/g, ""))
@@ -1455,6 +1469,12 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const [targetKey, setTargetKey] = useState("C Major");
   const [noteHistory, setNoteHistory] = useState<string[]>([]);
   const [pitchLevel, setPitchLevel] = useState(0);
+  const [scaleRootMidi, setScaleRootMidi] = useState<number | null>(null);
+  const [scaleStep, setScaleStep] = useState(0);
+  const [expectedNote, setExpectedNote] = useState("-");
+  const [evaluation, setEvaluation] = useState("Waiting");
+  const [correctCount, setCorrectCount] = useState(0);
+  const [attemptCount, setAttemptCount] = useState(0);
   const [saveMessage, setSaveMessage] = useState("");
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -1479,6 +1499,15 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
     setSaveMessage("");
 
     try {
+      setScaleRootMidi(null);
+      setScaleStep(0);
+      setExpectedNote("-");
+      setEvaluation("Listening");
+      setCorrectCount(0);
+      setAttemptCount(0);
+      setNoteHistory([]);
+      setPitchLevel(0);
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       const audioContext = new AudioContextClass();
@@ -1510,6 +1539,23 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
             const next = [...prev, detected.note].slice(-24);
             setCurrentKey(estimateMajorKey(next));
             return next;
+          });
+
+          setScaleRootMidi((root) => {
+            const currentRoot = root ?? detected.midi;
+            const expectedMidi = currentRoot + MAJOR_SCALE_PATTERN[Math.min(scaleStep, MAJOR_SCALE_PATTERN.length - 1)];
+            const result = getPitchEvaluation(detected.midi, expectedMidi);
+
+            setExpectedNote(midiToNote(expectedMidi));
+            setEvaluation(result);
+            setAttemptCount((count) => count + 1);
+
+            if (result === "Correct") {
+              setCorrectCount((count) => count + 1);
+              setScaleStep((step) => Math.min(step + 1, MAJOR_SCALE_PATTERN.length - 1));
+            }
+
+            return currentRoot;
           });
 
           setLowestMidi((prev) => {
@@ -1562,6 +1608,8 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
         suggestedVoiceType,
         currentKey,
         targetKey,
+        scaleAccuracy: attemptCount ? Math.round((correctCount / attemptCount) * 100) : 0,
+        scaleEvaluation: evaluation,
       });
 
       setSaveMessage(data.success ? "Voice assessment saved successfully." : data.message || "Unable to save voice assessment.");
@@ -1615,6 +1663,24 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
           {noteHistory.length ? noteHistory.map((note, index) => (
             <span key={`${note}-${index}`} style={notePill}>{note}</span>
           )) : <span style={muted}>Detected notes will appear here while singing.</span>}
+        </div>
+
+        <div style={evaluationCard}>
+          <h4 style={infoTitle}>Major Scale Evaluation</h4>
+          <p style={muted}>The system uses your first stable detected note as Do, then checks the major scale automatically.</p>
+
+          <div style={summaryGrid}>
+            <Stat title="Scale Step" value={`${Math.min(scaleStep + 1, 15)} / 15`} />
+            <Stat title="Expected Note" value={expectedNote} />
+            <Stat title="Detected Note" value={currentNote} />
+            <Stat title="Result" value={evaluation} />
+            <Stat title="Accuracy" value={attemptCount ? `${Math.round((correctCount / attemptCount) * 100)}%` : "0%"} />
+          </div>
+
+          <div style={{ fontSize: 20, fontWeight: 900, lineHeight: 1.8, color: "#061A2F" }}>
+            Do Re Mi Fa Sol La Ti Do<br />
+            Do Ti La Sol Fa Mi Re Do
+          </div>
         </div>
 
         <div style={row}>
@@ -2222,4 +2288,14 @@ const notePill = {
   background: "#EEF2FF",
   color: "#1E3A8A",
   fontWeight: 900,
+};
+
+
+const evaluationCard = {
+  marginTop: 20,
+  padding: 20,
+  borderRadius: 22,
+  background: "#FFFFFF",
+  border: "1px solid #CBD5E1",
+  boxShadow: "0 12px 30px rgba(15, 23, 42, 0.08)",
 };
