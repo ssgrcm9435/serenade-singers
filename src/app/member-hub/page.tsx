@@ -1552,8 +1552,20 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
       <div style={infoCard}>
         <h4 style={infoTitle}>Auto Voice Range Test</h4>
         <p style={muted}>
-          Press Start, sing from your comfortable lowest note to your highest note, then save the result.
+          Press Start, then sing the Major Scale slowly and clearly. Hold each note for 1–2 seconds.
         </p>
+
+        <div style={infoCard}>
+          <h4 style={infoTitle}>Major Scale Singing Instruction</h4>
+          <p style={muted}>Sing this pattern for your voice test:</p>
+          <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.8, color: "#061A2F" }}>
+            Do Re Mi Fa Sol La Ti Do<br />
+            Do Ti La Sol Fa Mi Re Do
+          </div>
+          <p style={muted}>
+            Use “Ah” or solfège syllables. Sing naturally, not too loudly. Start from a comfortable key.
+          </p>
+        </div>
 
         <div style={summaryGrid}>
           <Stat title="Current Note" value={currentNote} />
