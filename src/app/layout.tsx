@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Modern premium choir and music community website.",
   icons: {
     icon: "/icon.png",
-    shortcut: "/favicon.ico",
+    shortcut: "/icon.png",
   },
 };
 
