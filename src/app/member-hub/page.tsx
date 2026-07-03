@@ -1846,12 +1846,9 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
       <div style={infoCard}>
         <h4 style={infoTitle}>Professional Voice Gauge</h4>
 
-        <details style={infoCard}>
-          <summary style={{cursor:"pointer",fontWeight:900,fontSize:16}}>
-            ⓘ Voice Range & Voice Practice လမ်းညွှန်
-          </summary>
-
-          <div style={{marginTop:16,lineHeight:1.9}}>
+        <div style={guideWindow}>
+          <h4 style={guideTitle}>ⓘ Voice Range & Voice Practice လမ်းညွှန်</h4>
+          <div style={guideScroll}>
             <p>🎵 ဤစနစ်သည် သင့်အသံကို လေ့ကျင့်ရန်နှင့် Voice Range ကို စစ်ဆေးရန် ရည်ရွယ်ထားပါသည်။</p>
 
             <p><strong>Voice Range Test လမ်းညွှန်</strong></p>
@@ -1931,7 +1928,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
 
             <p>• နေ့စဉ် ပုံမှန်လေ့ကျင့်ခြင်းဖြင့် Pitch Accuracy၊ Intonation၊ Breath Control နှင့် Vocal Stability တိုးတက်လာနိုင်ပါသည်။</p>
           </div>
-        </details>
+        </div>
 
         <p style={muted}>
           Sing the major scale slowly: Do Re Mi Fa So La Ti Do. The gauge shows whether your pitch is flat, correct, or sharp.
@@ -1990,12 +1987,14 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
             <h4 style={infoTitle}>12-Key Voice Practice</h4>
 
             <div style={practiceGuideCard}>
-              <p><strong>ⓘ 12-Key Voice Practice လမ်းညွှန်</strong></p>
+              <h4 style={guideTitle}>ⓘ 12-Key Voice Practice လမ်းညွှန်</h4>
+              <div style={guideScroll}>
               <p><strong>Scale ဆိုတာဘာလဲ?</strong> Scale ဆိုသည်မှာ အသံ Notes များကို အနိမ့်မှ အမြင့်သို့ သို့မဟုတ် အမြင့်မှ အနိမ့်သို့ စနစ်တကျ အစဉ်လိုက် စီထားသော အသံအစုအဝေး ဖြစ်ပါသည်။ ဤစနစ်တွင် Major Scale ဖြစ်သော Do Re Mi Fa So La Ti Do နှင့် Do Ti La So Fa Mi Re Do ကို လေ့ကျင့်ပါမည်။</p>
               <p><strong>Key ဆိုတာဘာလဲ?</strong> Key ဆိုသည်မှာ Scale တစ်ခု၏ အခြေခံအသံ Starting Note ဖြစ်ပါသည်။ ဥပမာ C Major, D Major, G Major စသည်ဖြင့် Key ပြောင်းလဲသွားလျှင် Scale တစ်ခုလုံး၏ အသံအမြင့်အနိမ့်လည်း ပြောင်းလဲသွားပါသည်။</p>
               <p><strong>Octave ဆိုတာဘာလဲ?</strong> Octave ဆိုသည်မှာ အသံ၏ အမြင့်အနိမ့် အဆင့်ဖြစ်ပါသည်။ Octave 3 သည် နိမ့်သောအသံ၊ Octave 4 သည် ပုံမှန်လေ့ကျင့်အသံ၊ Octave 5 သည် မြင့်သောအသံ ဖြစ်ပါသည်။ မိမိအသံနှင့် သင့်တော်သော Octave ကို ရွေးချယ်ပါ။</p>
               <p><strong>Note ဆိုတာဘာလဲ?</strong> Note ဆိုသည်မှာ Scale ထဲရှိ အသံတစ်လုံးချင်းစီ ဖြစ်ပါသည်။ System သည် Solfège, Note Name နှင့် Frequency Hz ကို ဖော်ပြပေးပါသည်။ ဥပမာ Do = C4 = 261.63 Hz ဖြစ်နိုင်ပါသည်။</p>
               <p><strong>အသုံးပြုပုံ</strong> Key, Octave, Practice Mode နှင့် Sound Type ကို ရွေးပါ။ Play Current Note ဖြင့် လက်ရှိ Note ကို နားထောင်ပါ။ Play Full Scale ဖြင့် Scale တစ်ခုလုံးကို နားထောင်ပါ။ Step by Step Mode တွင် Do မှန်မှ Re သို့ ဆက်သွားမည်ဖြစ်ပြီး Gauge အလယ်တွင် Needle ရောက်အောင် Pitch ကို ထိန်းဆိုပါ။</p>
+              </div>
             </div>
 
             <div style={row}>
@@ -2893,3 +2892,28 @@ const practiceGuideCard = {
   lineHeight: 1.8,
   fontSize: 14,
 };
+
+
+const guideWindow = {
+  marginTop: 16,
+  padding: 18,
+  borderRadius: 22,
+  background: "#F8FAFC",
+  border: "1px solid #CBD5E1",
+};
+
+const guideTitle = {
+  margin: "0 0 12px",
+  color: "#061A2F",
+  fontSize: 16,
+  fontWeight: 950,
+};
+
+const guideScroll = {
+  maxHeight: 260,
+  overflowY: "auto" as const,
+  paddingRight: 10,
+  lineHeight: 1.9,
+  color: "#334155",
+};
+
