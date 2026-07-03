@@ -1426,6 +1426,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const [selectedKey, setSelectedKey] = useState("C");
   const [selectedOctave, setSelectedOctave] = useState(4);
   const [practiceMode, setPracticeMode] = useState<"step" | "full" | "together">("step");
+  const [playbackVoice, setPlaybackVoice] = useState<"piano" | "choir">("piano");
 
   const [currentNote, setCurrentNote] = useState("-");
   const [detectedHz, setDetectedHz] = useState("-");
@@ -1474,19 +1475,56 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
     const ctx = synthRef.current || new AudioContextClass();
     synthRef.current = ctx;
 
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
 
-    osc.type = "sine";
-    osc.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.001, ctx.currentTime);
+    master.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime + 0.025);
+    master.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + duration + 0.05);
+    if (playbackVoice === "piano") {
+      const partials = [
+        { ratio: 1, gain: 0.72 },
+        { ratio: 2, gain: 0.22 },
+        { ratio: 3, gain: 0.10 },
+        { ratio: 4, gain: 0.05 },
+      ];
+
+      partials.forEach((partial) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "triangle";
+        osc.frequency.value = frequency * partial.ratio;
+        gain.gain.setValueAtTime(partial.gain, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start();
+        osc.stop(ctx.currentTime + duration + 0.05);
+      });
+    }
+
+    if (playbackVoice === "choir") {
+      [-0.006, 0, 0.006].forEach((detune, index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.value = frequency * (1 + detune);
+        gain.gain.setValueAtTime(index === 1 ? 0.45 : 0.24, ctx.currentTime);
+
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start();
+        osc.stop(ctx.currentTime + duration + 0.05);
+      });
+    }
+
+    master.connect(ctx.destination);
   }
 
   async function playScale() {
@@ -1769,10 +1807,17 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
                 <option value="full">Full Scale</option>
                 <option value="together">Sing Together</option>
               </select>
+
+              <select value={playbackVoice} onChange={(e) => setPlaybackVoice(e.target.value as "piano" | "choir")} style={input}>
+                <option value="piano">Piano Sound</option>
+                <option value="choir">Choir Sound</option>
+              </select>
             </div>
 
             <div style={row}>
-              <button onClick={() => playTone(scale[stepIndex].hz)} style={ghostButton}>Play Current Note</button>
+              <button onClick={() => playTone(scale[stepIndex].hz)} style={ghostButton}>
+                Play Current Note ({playbackVoice === "piano" ? "Piano" : "Choir"})
+              </button>
               <button onClick={playScale} style={ghostButton}>Play Full Scale</button>
             </div>
 
