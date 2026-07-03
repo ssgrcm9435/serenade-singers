@@ -1388,18 +1388,27 @@ function suggestVoiceType(lowMidi: number | null, highMidi: number | null) {
 
 function autoCorrelate(buffer: Float32Array, sampleRate: number) {
   let rms = 0;
-  for (let i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i];
+
+  for (let i = 0; i < buffer.length; i++) {
+    rms += buffer[i] * buffer[i];
+  }
+
   rms = Math.sqrt(rms / buffer.length);
-  if (rms < 0.01) return -1;
+
+  if (rms < 0.004) return -1;
 
   let bestOffset = -1;
   let bestCorrelation = 0;
+  const minOffset = Math.floor(sampleRate / 1000);
+  const maxOffset = Math.floor(sampleRate / 65);
 
-  for (let offset = 60; offset < 1000; offset++) {
+  for (let offset = minOffset; offset <= maxOffset; offset++) {
     let correlation = 0;
+
     for (let i = 0; i < buffer.length - offset; i++) {
-      correlation += 1 - Math.abs(buffer[i] - buffer[i + offset]);
+      correlation += buffer[i] * buffer[i + offset];
     }
+
     correlation = correlation / (buffer.length - offset);
 
     if (correlation > bestCorrelation) {
@@ -1408,7 +1417,10 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number) {
     }
   }
 
-  if (bestCorrelation > 0.91 && bestOffset > 0) return sampleRate / bestOffset;
+  if (bestCorrelation > 0.25 && bestOffset > 0) {
+    return sampleRate / bestOffset;
+  }
+
   return -1;
 }
 
@@ -1467,7 +1479,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
         analyserRef.current.getFloatTimeDomainData(buffer);
         const frequency = autoCorrelate(buffer, audioContextRef.current.sampleRate);
 
-        if (frequency > 50 && frequency < 1200) {
+        if (frequency > 65 && frequency < 1000) {
           const detected = frequencyToNote(frequency);
           setCurrentNote(`${detected.note} (${Math.round(frequency)} Hz)`);
 
