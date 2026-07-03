@@ -1453,6 +1453,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const stepIndexRef = useRef(0);
   const rootMidiRef = useRef<number | null>(null);
   const synthRef = useRef<AudioContext | null>(null);
+  const playbackLockRef = useRef(false);
 
   const scale = buildMajorScale(selectedKey, selectedOctave);
   const suggestedVoiceType = suggestVoiceType(lowestMidi, highestMidi);
@@ -1471,6 +1472,10 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   }
 
   function playTone(frequency: number, duration = 0.65) {
+    playbackLockRef.current = true;
+    window.setTimeout(() => {
+      playbackLockRef.current = false;
+    }, Math.round((duration + 0.25) * 1000));
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     const ctx = synthRef.current || new AudioContextClass();
     synthRef.current = ctx;
@@ -1593,6 +1598,12 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
 
       const detect = () => {
         if (!analyserRef.current || !audioContextRef.current) return;
+
+        if (playbackLockRef.current) {
+          setStatus("Reference tone playing. Mic evaluation paused.");
+          frameRef.current = requestAnimationFrame(detect);
+          return;
+        }
 
         analyserRef.current.getFloatTimeDomainData(buffer);
 
