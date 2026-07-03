@@ -1372,8 +1372,10 @@ type VoiceTestPanelProps = {
 
 const NOTE_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 const KEY_OPTIONS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
-const MAJOR_PATTERN = [0, 2, 4, 5, 7, 9, 11, 12];
-const SOLFEGE = ["Do", "Re", "Mi", "Fa", "So", "La", "Ti", "Do"];
+const ASC_MAJOR_PATTERN = [0, 2, 4, 5, 7, 9, 11, 12];
+const DESC_MAJOR_PATTERN = [12, 11, 9, 7, 5, 4, 2, 0];
+const ASC_SOLFEGE = ["Do", "Re", "Mi", "Fa", "So", "La", "Ti", "Do"];
+const DESC_SOLFEGE = ["Do", "Ti", "La", "So", "Fa", "Mi", "Re", "Do"];
 
 function midiToNote(midi: number) {
   return `${NOTE_NAMES[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
@@ -1401,10 +1403,13 @@ function keyRootMidi(keyName: string, octave: number) {
   return (octave + 1) * 12 + semitone;
 }
 
-function buildMajorScale(keyName: string, octave: number) {
+function buildMajorScale(keyName: string, octave: number, direction: "ascending" | "descending") {
   const root = keyRootMidi(keyName, octave);
-  return MAJOR_PATTERN.map((step, index) => ({
-    solfege: SOLFEGE[index],
+  const pattern = direction === "ascending" ? ASC_MAJOR_PATTERN : DESC_MAJOR_PATTERN;
+  const solfege = direction === "ascending" ? ASC_SOLFEGE : DESC_SOLFEGE;
+
+  return pattern.map((step, index) => ({
+    solfege: solfege[index],
     midi: root + step,
     note: midiToNote(root + step),
     hz: midiToFrequency(root + step),
@@ -1427,6 +1432,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const [selectedOctave, setSelectedOctave] = useState(4);
   const [practiceMode, setPracticeMode] = useState<"step" | "full" | "together">("step");
   const [playbackVoice, setPlaybackVoice] = useState<"piano" | "choir">("piano");
+  const [scaleDirection, setScaleDirection] = useState<"ascending" | "descending">("ascending");
 
   const [currentNote, setCurrentNote] = useState("-");
   const [detectedHz, setDetectedHz] = useState("-");
@@ -1455,7 +1461,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const synthRef = useRef<AudioContext | null>(null);
   const playbackLockRef = useRef(false);
 
-  const scale = buildMajorScale(selectedKey, selectedOctave);
+  const scale = buildMajorScale(selectedKey, selectedOctave, scaleDirection);
   const suggestedVoiceType = suggestVoiceType(lowestMidi, highestMidi);
   const activeTarget = mode === "practice" ? scale[Math.min(stepIndex, scale.length - 1)] : null;
 
@@ -1930,6 +1936,20 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
                 <option value="piano">Piano Sound</option>
                 <option value="choir">Choir Sound</option>
               </select>
+
+              <select
+                value={scaleDirection}
+                onChange={(e) => {
+                  setScaleDirection(e.target.value as "ascending" | "descending");
+                  setStepIndex(0);
+                  stepIndexRef.current = 0;
+                  setCorrectSteps(Array(8).fill(false));
+                }}
+                style={input}
+              >
+                <option value="ascending">Ascending: Do Re Mi Fa So La Ti Do</option>
+                <option value="descending">Descending: Do Ti La So Fa Mi Re Do</option>
+              </select>
             </div>
 
             <div style={row}>
@@ -1945,7 +1965,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
                   <strong>{item.solfege}</strong>
                   <span>{item.note}</span>
                   <small>{item.hz.toFixed(2)} Hz</small>
-                  <small>{correctSteps[index] ? "✓ Passed" : index === stepIndex ? "Current" : "Waiting"}</small>
+                  <small>{correctSteps[index] ? "✓ Passed" : index === stepIndex ? scaleDirection === "ascending" ? "Ascending" : "Descending" : "Waiting"}</small>
                 </div>
               ))}
             </div>
