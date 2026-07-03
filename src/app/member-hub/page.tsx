@@ -1362,6 +1362,7 @@ function Stat({ title, value }: { title: string; value: string | number }) {
 
 
 
+
 type VoiceTestPanelProps = {
   user: UserInfo;
   post: (action: string, payload?: Record<string, any>) => Promise<any>;
@@ -1369,9 +1370,13 @@ type VoiceTestPanelProps = {
   setLoading: (value: boolean) => void;
 };
 
+const NOTE_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+const KEY_OPTIONS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+const MAJOR_PATTERN = [0, 2, 4, 5, 7, 9, 11, 12];
+const SOLFEGE = ["Do", "Re", "Mi", "Fa", "So", "La", "Ti", "Do"];
+
 function midiToNote(midi: number) {
-  const names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  return `${names[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
+  return `${NOTE_NAMES[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
 }
 
 function midiToFrequency(midi: number) {
@@ -1387,12 +1392,24 @@ function frequencyToNote(frequency: number) {
   return { midi, note: midiToNote(midi) };
 }
 
-function getCentsDifference(frequency: number, expectedMidi: number) {
-  const expectedFrequency = midiToFrequency(expectedMidi);
-  return Math.max(-50, Math.min(50, Math.round(1200 * Math.log2(frequency / expectedFrequency))));
+function centsDifference(frequency: number, targetMidi: number) {
+  return Math.max(-50, Math.min(50, Math.round(1200 * Math.log2(frequency / midiToFrequency(targetMidi)))));
 }
 
-const MAJOR_SCALE_PATTERN = [0, 2, 4, 5, 7, 9, 11, 12, 11, 9, 7, 5, 4, 2, 0];
+function keyRootMidi(keyName: string, octave: number) {
+  const semitone = NOTE_NAMES.indexOf(keyName);
+  return (octave + 1) * 12 + semitone;
+}
+
+function buildMajorScale(keyName: string, octave: number) {
+  const root = keyRootMidi(keyName, octave);
+  return MAJOR_PATTERN.map((step, index) => ({
+    solfege: SOLFEGE[index],
+    midi: root + step,
+    note: midiToNote(root + step),
+    hz: midiToFrequency(root + step),
+  }));
+}
 
 function suggestVoiceType(lowMidi: number | null, highMidi: number | null) {
   if (lowMidi === null || highMidi === null) return "Testing";
@@ -1404,83 +1421,106 @@ function suggestVoiceType(lowMidi: number | null, highMidi: number | null) {
 }
 
 function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps) {
+  const [mode, setMode] = useState<"range" | "practice">("range");
   const [running, setRunning] = useState(false);
+  const [selectedKey, setSelectedKey] = useState("C");
+  const [selectedOctave, setSelectedOctave] = useState(4);
+  const [practiceMode, setPracticeMode] = useState<"step" | "full" | "together">("step");
+
   const [currentNote, setCurrentNote] = useState("-");
-  const [lowestNote, setLowestNote] = useState("-");
-  const [highestNote, setHighestNote] = useState("-");
+  const [detectedHz, setDetectedHz] = useState("-");
+  const [expectedNote, setExpectedNote] = useState("-");
+  const [expectedHz, setExpectedHz] = useState("-");
+  const [currentKey, setCurrentKey] = useState("Auto");
   const [lowestMidi, setLowestMidi] = useState<number | null>(null);
   const [highestMidi, setHighestMidi] = useState<number | null>(null);
-  const [currentKey, setCurrentKey] = useState("Auto");
-  const [targetKey, setTargetKey] = useState("C Major");
-  const [noteHistory, setNoteHistory] = useState<string[]>([]);
-  const [pitchLevel, setPitchLevel] = useState(0);
+  const [lowestNote, setLowestNote] = useState("-");
+  const [highestNote, setHighestNote] = useState("-");
+  const [gaugeCents, setGaugeCents] = useState(0);
   const [inputLevel, setInputLevel] = useState(0);
-  const [scaleRootMidi, setScaleRootMidi] = useState<number | null>(null);
-  const [scaleStep, setScaleStep] = useState(0);
-  const [expectedNote, setExpectedNote] = useState("-");
-  const [evaluation, setEvaluation] = useState("Waiting");
-  const [correctCount, setCorrectCount] = useState(0);
-  const [attemptCount, setAttemptCount] = useState(0);
-  const [tunerCents, setTunerCents] = useState(0);
-  const [micStatus, setMicStatus] = useState("Not started");
+  const [status, setStatus] = useState("Not started");
+  const [stepIndex, setStepIndex] = useState(0);
+  const [correctSteps, setCorrectSteps] = useState<boolean[]>(Array(8).fill(false));
   const [saveMessage, setSaveMessage] = useState("");
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<number | null>(null);
-  const scaleStepRef = useRef(0);
+  const stableMidiRef = useRef<number | null>(null);
+  const stableCountRef = useRef(0);
   const rootMidiRef = useRef<number | null>(null);
-  const lastAcceptedMidiRef = useRef<number | null>(null);
-  const stableFramesRef = useRef(0);
+  const synthRef = useRef<AudioContext | null>(null);
 
+  const scale = buildMajorScale(selectedKey, selectedOctave);
   const suggestedVoiceType = suggestVoiceType(lowestMidi, highestMidi);
+  const activeTarget = mode === "practice" ? scale[Math.min(stepIndex, scale.length - 1)] : null;
 
   function stopTest() {
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
     streamRef.current?.getTracks().forEach((track) => track.stop());
     audioContextRef.current?.close();
-
     frameRef.current = null;
     streamRef.current = null;
     audioContextRef.current = null;
     analyserRef.current = null;
-
     setRunning(false);
-    setMicStatus("Stopped");
+    setStatus("Stopped");
+  }
+
+  function playTone(frequency: number, duration = 0.65) {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const ctx = synthRef.current || new AudioContextClass();
+    synthRef.current = ctx;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = frequency;
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + duration + 0.05);
+  }
+
+  async function playScale() {
+    for (let i = 0; i < scale.length; i++) {
+      playTone(scale[i].hz, 0.45);
+      await new Promise((resolve) => setTimeout(resolve, 560));
+    }
+  }
+
+  function resetSession() {
+    setCurrentNote("-");
+    setDetectedHz("-");
+    setExpectedNote("-");
+    setExpectedHz("-");
+    setCurrentKey("Auto");
+    setLowestMidi(null);
+    setHighestMidi(null);
+    setLowestNote("-");
+    setHighestNote("-");
+    setGaugeCents(0);
+    setInputLevel(0);
+    setStatus("Listening");
+    setStepIndex(0);
+    setCorrectSteps(Array(8).fill(false));
+    setSaveMessage("");
+    stableMidiRef.current = null;
+    stableCountRef.current = 0;
+    rootMidiRef.current = null;
   }
 
   async function startTest() {
-    setSaveMessage("");
-    setCurrentNote("-");
-    setLowestNote("-");
-    setHighestNote("-");
-    setLowestMidi(null);
-    setHighestMidi(null);
-    setCurrentKey("Auto");
-    setNoteHistory([]);
-    setPitchLevel(0);
-    setInputLevel(0);
-    setScaleRootMidi(null);
-    setScaleStep(0);
-    setExpectedNote("-");
-    setEvaluation("Listening");
-    setCorrectCount(0);
-    setAttemptCount(0);
-    setTunerCents(0);
-    setMicStatus("Requesting microphone...");
-
-    scaleStepRef.current = 0;
-    rootMidiRef.current = null;
-    lastAcceptedMidiRef.current = null;
-    stableFramesRef.current = 0;
+    resetSession();
+    setStatus("Requesting microphone...");
 
     try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        setMicStatus("Microphone API unavailable. Use Chrome with HTTPS.");
-        return;
-      }
-
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
@@ -1492,9 +1532,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       const audioContext = new AudioContextClass();
 
-      if (audioContext.state === "suspended") {
-        await audioContext.resume();
-      }
+      if (audioContext.state === "suspended") await audioContext.resume();
 
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 4096;
@@ -1511,7 +1549,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
       analyserRef.current = analyser;
 
       setRunning(true);
-      setMicStatus("Microphone connected. Sing one steady note.");
+      setStatus("Microphone connected. Sing the major scale slowly.");
 
       const detect = () => {
         if (!analyserRef.current || !audioContextRef.current) return;
@@ -1519,87 +1557,89 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
         analyserRef.current.getFloatTimeDomainData(buffer);
 
         let rms = 0;
-        for (let i = 0; i < buffer.length; i++) {
-          rms += buffer[i] * buffer[i];
-        }
-
+        for (let i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i];
         rms = Math.sqrt(rms / buffer.length);
+
         const level = Math.min(100, Math.round(rms * 900));
         setInputLevel(level);
 
         const [pitch, clarity] = detector.findPitch(buffer, audioContextRef.current.sampleRate);
 
-        if (level < 3) {
-          setMicStatus("No voice input. Move closer or allow microphone.");
-          frameRef.current = requestAnimationFrame(detect);
-          return;
-        }
-
-        if (pitch < 65 || pitch > 1000 || clarity < 0.55) {
-          setMicStatus(`Sound input OK, waiting for stable pitch. Level ${level}%`);
+        if (level < 3 || pitch < 65 || pitch > 1000 || clarity < 0.55) {
+          setStatus(level < 3 ? "Listening. Sing closer to the microphone." : "Voice detected. Hold the note steady.");
           frameRef.current = requestAnimationFrame(detect);
           return;
         }
 
         const detected = frequencyToNote(pitch);
+        setCurrentNote(detected.note);
+        setDetectedHz(`${pitch.toFixed(2)} Hz`);
 
-        if (lastAcceptedMidiRef.current === detected.midi) {
-          stableFramesRef.current += 1;
+        if (stableMidiRef.current === detected.midi) {
+          stableCountRef.current += 1;
         } else {
-          lastAcceptedMidiRef.current = detected.midi;
-          stableFramesRef.current = 1;
+          stableMidiRef.current = detected.midi;
+          stableCountRef.current = 1;
         }
 
-        setCurrentNote(`${detected.note} (${Math.round(pitch)} Hz)`);
-        setPitchLevel(Math.min(100, Math.max(5, Math.round((pitch / 1000) * 100))));
-        setMicStatus(`Pitch detected: ${detected.note}`);
+        const stable = stableCountRef.current >= 5;
 
-        setLowestMidi((prev) => {
-          if (prev === null || detected.midi < prev) {
-            setLowestNote(detected.note);
-            return detected.midi;
+        if (mode === "range") {
+          if (rootMidiRef.current === null && stable) {
+            rootMidiRef.current = detected.midi;
+            setCurrentKey(`${detected.note.replace(/[0-9]/g, "")} Major`);
           }
-          return prev;
-        });
 
-        setHighestMidi((prev) => {
-          if (prev === null || detected.midi > prev) {
-            setHighestNote(detected.note);
-            return detected.midi;
+          const targetMidi = rootMidiRef.current ?? detected.midi;
+          const cents = centsDifference(pitch, targetMidi);
+          setGaugeCents(cents);
+          setExpectedNote("Auto scale");
+          setExpectedHz("Auto");
+
+          if (stable) {
+            setLowestMidi((prev) => {
+              if (prev === null || detected.midi < prev) {
+                setLowestNote(detected.note);
+                return detected.midi;
+              }
+              return prev;
+            });
+
+            setHighestMidi((prev) => {
+              if (prev === null || detected.midi > prev) {
+                setHighestNote(detected.note);
+                return detected.midi;
+              }
+              return prev;
+            });
           }
-          return prev;
-        });
 
-        setNoteHistory((prev) => [...prev, detected.note].slice(-24));
-
-        if (rootMidiRef.current === null && stableFramesRef.current >= 5) {
-          rootMidiRef.current = detected.midi;
-          setScaleRootMidi(detected.midi);
-          setCurrentKey(`${detected.note.replace(/[0-9]/g, "")} Major`);
-          setExpectedNote(midiToNote(detected.midi));
+          setStatus(stable ? "Stable note accepted." : "Hold the note steady.");
         }
 
-        if (rootMidiRef.current !== null) {
-          const expectedMidi = rootMidiRef.current + MAJOR_SCALE_PATTERN[scaleStepRef.current];
-          const cents = getCentsDifference(pitch, expectedMidi);
-          const absCents = Math.abs(cents);
+        if (mode === "practice") {
+          const target = scale[Math.min(stepIndex, scale.length - 1)];
+          const cents = centsDifference(pitch, target.midi);
+          setGaugeCents(cents);
+          setExpectedNote(`${target.solfege} / ${target.note}`);
+          setExpectedHz(`${target.hz.toFixed(2)} Hz`);
 
-          setTunerCents(cents);
-          setExpectedNote(midiToNote(expectedMidi));
-          setAttemptCount((count) => count + 1);
+          if (Math.abs(cents) <= 35 && stable) {
+            setCorrectSteps((prev) => {
+              const next = [...prev];
+              next[stepIndex] = true;
+              return next;
+            });
 
-          if (absCents <= 35) {
-            setEvaluation("Correct");
-            setCorrectCount((count) => count + 1);
-
-            if (stableFramesRef.current >= 5) {
-              scaleStepRef.current = Math.min(scaleStepRef.current + 1, MAJOR_SCALE_PATTERN.length - 1);
-              setScaleStep(scaleStepRef.current);
+            if (practiceMode === "step") {
+              const nextStep = Math.min(stepIndex + 1, scale.length - 1);
+              setStepIndex(nextStep);
+              playTone(scale[nextStep].hz, 0.45);
             }
-          } else if (cents < -35) {
-            setEvaluation("Flat");
+
+            setStatus("Correct. Move to the next note.");
           } else {
-            setEvaluation("Sharp");
+            setStatus(cents < -35 ? "Flat. Sing slightly higher." : cents > 35 ? "Sharp. Sing slightly lower." : "Good. Hold steady.");
           }
         }
 
@@ -1607,10 +1647,8 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
       };
 
       detect();
-    } catch (error) {
-      console.error(error);
-      setMicStatus("Microphone failed. Use Chrome and allow microphone permission.");
-      setSaveMessage("Microphone failed. Use Chrome and allow microphone permission.");
+    } catch {
+      setStatus("Microphone failed. Use Chrome with HTTPS and allow microphone.");
       setRunning(false);
     }
   }
@@ -1619,7 +1657,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
     setSaveMessage("");
 
     if (lowestMidi === null || highestMidi === null) {
-      setSaveMessage("Please test your voice range first.");
+      setSaveMessage("Please complete the voice range test first.");
       return;
     }
 
@@ -1637,9 +1675,9 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
         highestMidi,
         suggestedVoiceType,
         currentKey,
-        targetKey,
-        scaleAccuracy: attemptCount ? Math.round((correctCount / attemptCount) * 100) : 0,
-        scaleEvaluation: evaluation,
+        targetKey: `${selectedKey} Major Octave ${selectedOctave}`,
+        scaleAccuracy: correctSteps.filter(Boolean).length ? Math.round((correctSteps.filter(Boolean).length / scale.length) * 100) : 0,
+        scaleEvaluation: status,
       });
 
       setSaveMessage(data.success ? "Voice assessment saved successfully." : data.message || "Unable to save voice assessment.");
@@ -1655,104 +1693,112 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   }, []);
 
   return (
-    <Section title="Voice Test">
+    <Section title="Voice Range & Practice">
       <div style={infoCard}>
-        <h4 style={infoTitle}>Auto Voice Range Test</h4>
+        <h4 style={infoTitle}>Professional Voice Gauge</h4>
         <p style={muted}>
-          Press Start, allow microphone, then sing one steady note first. After detection starts, sing the major scale slowly.
+          Sing the major scale slowly: Do Re Mi Fa So La Ti Do. The gauge shows whether your pitch is flat, correct, or sharp.
         </p>
 
-        <div style={infoCard}>
-          <h4 style={infoTitle}>Major Scale Singing Instruction</h4>
-          <p style={muted}>Sing this pattern slowly. Hold each note for 1–2 seconds.</p>
-          <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1.8, color: "#061A2F" }}>
-            Do Re Mi Fa Sol La Ti Do<br />
-            Do Ti La Sol Fa Mi Re Do
-          </div>
+        <div style={row}>
+          <button onClick={() => setMode("range")} style={mode === "range" ? button : ghostButton}>Voice Range Test</button>
+          <button onClick={() => setMode("practice")} style={mode === "practice" ? button : ghostButton}>Voice Practice</button>
         </div>
 
-        <div style={summaryGrid}>
-          <Stat title="Current Note" value={currentNote} />
-          <Stat title="Auto Current Key" value={currentKey} />
-          <Stat title="Lowest Note" value={lowestNote} />
-          <Stat title="Highest Note" value={highestNote} />
-          <Stat title="Suggested Voice" value={suggestedVoiceType} />
-        </div>
-
-        <div style={visualizerWrap}>
-          <div style={visualizerBar}>
-            <div style={{ ...visualizerFill, width: `${pitchLevel}%` }} />
-          </div>
-          <p style={muted}>Live Pitch Visualizer</p>
-
-          <div style={visualizerBar}>
-            <div style={{ ...inputLevelFill, width: `${inputLevel}%` }} />
-          </div>
-          <p style={muted}>Microphone Input Level: {inputLevel}%</p>
-          <p style={{ ...muted, fontWeight: 900 }}>Status: {micStatus}</p>
-        </div>
-
-        <div style={tunerCard}>
-          <h4 style={infoTitle}>Live Pitch Meter</h4>
-          <p style={muted}>Flat left, correct center, sharp right.</p>
-
-          <div style={tunerTrack}>
-            <div style={tunerCenterLine} />
-            <div style={{ ...tunerNeedle, left: `${50 + tunerCents}%` }} />
+        <div style={gaugeCard}>
+          <div style={gaugeArc}>
+            <div style={{ ...gaugeNeedle, transform: `translateX(-50%) rotate(${gaugeCents * 1.7}deg)` }} />
+            <div style={gaugeHub} />
           </div>
 
-          <div style={tunerLabels}>
+          <div style={gaugeLabels}>
             <span>Flat</span>
             <span>Correct</span>
             <span>Sharp</span>
           </div>
 
-          <p style={{ ...muted, fontWeight: 900 }}>
-            {tunerCents < -35 ? "Too Low / Flat" : tunerCents > 35 ? "Too High / Sharp" : "Good Pitch / Center"}
-          </p>
+          <h3 style={gaugeStatus}>
+            {gaugeCents < -35 ? "Flat" : gaugeCents > 35 ? "Sharp" : "Correct"}
+          </h3>
         </div>
 
-        <div style={evaluationCard}>
-          <h4 style={infoTitle}>Major Scale Evaluation</h4>
+        <div style={summaryGrid}>
+          <Stat title="Current Note" value={currentNote} />
+          <Stat title="Detected Hz" value={detectedHz} />
+          <Stat title="Expected Note" value={expectedNote} />
+          <Stat title="Expected Hz" value={expectedHz} />
+          <Stat title="Input Level" value={`${inputLevel}%`} />
+        </div>
 
-          <div style={summaryGrid}>
-            <Stat title="Scale Step" value={`${Math.min(scaleStep + 1, 15)} / 15`} />
-            <Stat title="Expected Note" value={expectedNote} />
-            <Stat title="Detected Note" value={currentNote} />
-            <Stat title="Result" value={evaluation} />
-            <Stat title="Accuracy" value={attemptCount ? `${Math.round((correctCount / attemptCount) * 100)}%` : "0%"} />
+        {mode === "range" && (
+          <>
+            <div style={infoCard}>
+              <h4 style={infoTitle}>Voice Range Test</h4>
+              <p style={muted}>Sing: Do Re Mi Fa So La Ti Do, then Do Ti La So Fa Mi Re Do. Only stable notes are accepted.</p>
+
+              <div style={summaryGrid}>
+                <Stat title="Auto Key" value={currentKey} />
+                <Stat title="Lowest Note" value={lowestNote} />
+                <Stat title="Highest Note" value={highestNote} />
+                <Stat title="Voice Range" value={`${lowestNote} → ${highestNote}`} />
+                <Stat title="Suggested Voice Type" value={suggestedVoiceType} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {mode === "practice" && (
+          <div style={infoCard}>
+            <h4 style={infoTitle}>12-Key Voice Practice</h4>
+
+            <div style={row}>
+              <select value={selectedKey} onChange={(e) => setSelectedKey(e.target.value)} style={input}>
+                {KEY_OPTIONS.map((key) => <option key={key}>{key}</option>)}
+              </select>
+
+              <select value={selectedOctave} onChange={(e) => setSelectedOctave(Number(e.target.value))} style={input}>
+                {[2, 3, 4, 5].map((octave) => <option key={octave} value={octave}>Octave {octave}</option>)}
+              </select>
+
+              <select value={practiceMode} onChange={(e) => setPracticeMode(e.target.value as "step" | "full" | "together")} style={input}>
+                <option value="step">Step by Step</option>
+                <option value="full">Full Scale</option>
+                <option value="together">Sing Together</option>
+              </select>
+            </div>
+
+            <div style={row}>
+              <button onClick={() => playTone(scale[stepIndex].hz)} style={ghostButton}>Play Current Note</button>
+              <button onClick={playScale} style={ghostButton}>Play Full Scale</button>
+            </div>
+
+            <div style={scaleGrid}>
+              {scale.map((item, index) => (
+                <div key={`${item.note}-${index}`} style={index === stepIndex ? activeScaleStep : scaleStepCard}>
+                  <strong>{item.solfege}</strong>
+                  <span>{item.note}</span>
+                  <small>{item.hz.toFixed(2)} Hz</small>
+                  <small>{correctSteps[index] ? "✓ Passed" : index === stepIndex ? "Current" : "Waiting"}</small>
+                </div>
+              ))}
+            </div>
           </div>
+        )}
 
-          <div style={{ fontSize: 20, fontWeight: 900, lineHeight: 1.8, color: "#061A2F" }}>
-            Do Re Mi Fa Sol La Ti Do<br />
-            Do Ti La Sol Fa Mi Re Do
-          </div>
-        </div>
-
-        <div style={noteTrail}>
-          {noteHistory.length ? noteHistory.map((note, index) => (
-            <span key={`${note}-${index}`} style={notePill}>{note}</span>
-          )) : <span style={muted}>Detected notes will appear here while singing.</span>}
-        </div>
+        <p style={{ ...muted, fontWeight: 900 }}>Status: {status}</p>
 
         <div style={row}>
           {!running ? (
-            <button onClick={startTest} style={button}>Start Voice Test</button>
+            <button onClick={startTest} style={button}>Start</button>
           ) : (
-            <button onClick={stopTest} style={{ ...button, background: "#B91C1C" }}>Stop Voice Test</button>
+            <button onClick={stopTest} style={{ ...button, background: "#B91C1C" }}>Stop</button>
           )}
 
-          <button onClick={saveVoiceAssessment} disabled={loading} style={button}>
-            {loading ? "Saving..." : "Save Voice Range"}
-          </button>
-        </div>
-
-        <div style={row}>
-          <select value={targetKey} onChange={(e) => setTargetKey(e.target.value)} style={input}>
-            {["C Major", "D Major", "E Major", "F Major", "G Major", "A Major", "B♭ Major", "E♭ Major"].map((keyName) => (
-              <option key={keyName}>{keyName}</option>
-            ))}
-          </select>
+          {mode === "range" && (
+            <button onClick={saveVoiceAssessment} disabled={loading} style={button}>
+              {loading ? "Saving..." : "Save Voice Range"}
+            </button>
+          )}
         </div>
 
         {saveMessage && <p style={notice}>{saveMessage}</p>}
@@ -2405,4 +2451,100 @@ const inputLevelFill = {
   borderRadius: 999,
   background: "linear-gradient(90deg, #F59E0B, #22C55E)",
   transition: "width 0.1s ease",
+};
+
+
+const gaugeCard = {
+  marginTop: 20,
+  padding: 22,
+  borderRadius: 24,
+  background: "#FFFFFF",
+  border: "1px solid #CBD5E1",
+  boxShadow: "0 16px 40px rgba(15, 23, 42, 0.10)",
+  textAlign: "center" as const,
+};
+
+const gaugeArc = {
+  position: "relative" as const,
+  width: "100%",
+  maxWidth: 420,
+  height: 210,
+  margin: "0 auto",
+  borderRadius: "420px 420px 0 0",
+  background: "conic-gradient(from 270deg at 50% 100%, #EF4444 0deg, #F97316 35deg, #FACC15 70deg, #22C55E 88deg, #22C55E 92deg, #FACC15 110deg, #F97316 145deg, #EF4444 180deg, transparent 181deg)",
+  overflow: "hidden",
+};
+
+const gaugeNeedle = {
+  position: "absolute" as const,
+  left: "50%",
+  bottom: 8,
+  width: 4,
+  height: 170,
+  background: "#111827",
+  borderRadius: 999,
+  transformOrigin: "50% 100%",
+  transition: "transform 0.12s ease",
+};
+
+const gaugeHub = {
+  position: "absolute" as const,
+  left: "50%",
+  bottom: 0,
+  width: 34,
+  height: 34,
+  background: "#FFFFFF",
+  border: "5px solid #111827",
+  borderRadius: "50%",
+  transform: "translateX(-50%)",
+};
+
+const gaugeLabels = {
+  display: "flex",
+  justifyContent: "space-between",
+  maxWidth: 420,
+  margin: "10px auto 0",
+  fontWeight: 900,
+  color: "#061A2F",
+};
+
+const gaugeStatus = {
+  margin: "12px 0 0",
+  fontSize: 30,
+  fontWeight: 950,
+  color: "#061A2F",
+};
+
+const ghostButton = {
+  padding: "12px 18px",
+  borderRadius: 999,
+  border: "1px solid #CBD5E1",
+  background: "#FFFFFF",
+  color: "#061A2F",
+  fontWeight: 900,
+  cursor: "pointer",
+};
+
+const scaleGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
+  gap: 10,
+  marginTop: 16,
+};
+
+const scaleStepCard = {
+  padding: 12,
+  borderRadius: 16,
+  background: "#F8FAFC",
+  border: "1px solid #E2E8F0",
+  display: "flex",
+  flexDirection: "column" as const,
+  gap: 4,
+  textAlign: "center" as const,
+};
+
+const activeScaleStep = {
+  ...scaleStepCard,
+  background: "#ECFDF5",
+  border: "2px solid #22C55E",
 };
