@@ -1750,6 +1750,56 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
     <Section title="Voice Range & Practice">
       <div style={infoCard}>
         <h4 style={infoTitle}>Professional Voice Gauge</h4>
+
+        <details style={infoCard}>
+          <summary style={{cursor:"pointer",fontWeight:900,fontSize:16}}>
+            ⓘ Voice Practice လမ်းညွှန်
+          </summary>
+
+          <div style={{marginTop:16,lineHeight:1.9}}>
+            <p>🎵 ဤစနစ်သည် သင့်အသံကို လေ့ကျင့်ရန်နှင့် Voice Range ကို စစ်ဆေးရန် ရည်ရွယ်ထားပါသည်။</p>
+
+            <p>• Chrome Browser ကို အသုံးပြုပြီး Microphone Permission ကို Allow ပေးပါ။</p>
+
+            <p>• တိတ်ဆိတ်သောနေရာတွင် လေ့ကျင့်ပါ။ နောက်ခံဆူညံသံများသည် Pitch Detection ကို ထိခိုက်စေနိုင်ပါသည်။</p>
+
+            <p>• Speaker ထက် Headphone သို့မဟုတ် Earphone အသုံးပြုရန် အကြံပြုပါသည်။</p>
+
+            <p>• အသံကို အော်ဆိုခြင်းမပြုလုပ်ဘဲ သဘာဝကျကျ သီဆိုပါ။</p>
+
+            <p>• Note တစ်လုံးကို ၁ မှ ၂ စက္ကန့်ခန့် ငြိမ်ငြိမ်ထိန်းထားပါ။ Stable Pitch ကိုသာ စနစ်က လက်ခံပါသည်။</p>
+
+            <p><strong>Voice Range Test</strong></p>
+
+            <p>
+            Do Re Mi Fa So La Ti Do<br/>
+            Do Ti La So Fa Mi Re Do
+            </p>
+
+            <p>System မှ Auto Detect Current Key၊ Lowest Note၊ Highest Note၊ Vocal Range နှင့် Suggested Voice Type ကို တွက်ချက်ပေးပါသည်။</p>
+
+            <p><strong>Voice Practice</strong></p>
+
+            <p>• Play Current Note ကိုနှိပ်ပြီး Reference အသံကို အရင်နားထောင်ပါ။</p>
+
+            <p>• Reference အသံပြီးမှ တူညီသော Pitch ဖြင့် ပြန်လည်သီဆိုပါ။</p>
+
+            <p>• Gauge အလယ်ဗဟို = Correct Pitch</p>
+
+            <p>• Gauge ဘယ်ဘက် = Flat (အသံနိမ့်)</p>
+
+            <p>• Gauge ညာဘက် = Sharp (အသံမြင့်)</p>
+
+            <p>• Step by Step Mode တွင် လက်ရှိ Note ကို မှန်ကန်စွာ သီဆိုနိုင်မှ နောက် Note သို့ အလိုအလျောက် ဆက်သွားပါမည်။</p>
+
+            <p>• Full Scale Mode တွင် Scale တစ်ခုလုံးကို ဆက်တိုက် လေ့ကျင့်နိုင်ပါသည်။</p>
+
+            <p>• Sing Together Mode တွင် Reference အသံနှင့်အတူ တစ်ပြိုင်နက် သီဆိုနိုင်ပါသည်။</p>
+
+            <p>• နေ့စဉ် ပုံမှန်လေ့ကျင့်ခြင်းဖြင့် Pitch Accuracy၊ Intonation၊ Breath Control နှင့် Vocal Stability တိုးတက်လာနိုင်ပါသည်။</p>
+          </div>
+        </details>
+
         <p style={muted}>
           Sing the major scale slowly: Do Re Mi Fa So La Ti Do. The gauge shows whether your pitch is flat, correct, or sharp.
         </p>
