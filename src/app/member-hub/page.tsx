@@ -1449,6 +1449,8 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const [stepIndex, setStepIndex] = useState(0);
   const [correctSteps, setCorrectSteps] = useState<boolean[]>(Array(8).fill(false));
   const [saveMessage, setSaveMessage] = useState("");
+  const [countdown, setCountdown] = useState("");
+  const [practiceFeedback, setPracticeFeedback] = useState("");
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -1537,6 +1539,50 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
     }
 
     master.connect(ctx.destination);
+  }
+
+  function playFeedbackSound(success: boolean) {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    const ctx = synthRef.current || new AudioContextClass();
+    synthRef.current = ctx;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sine";
+    osc.frequency.value = success ? 880 : 220;
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.22);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.25);
+  }
+
+  function resetPractice() {
+    setStepIndex(0);
+    setCorrectSteps(Array(8).fill(false));
+    setPracticeFeedback("");
+    setCountdown("");
+    setGaugeCents(0);
+    setExpectedNote("-");
+    setExpectedHz("-");
+    setStatus("Practice reset.");
+  }
+
+  async function startWithCountdown() {
+    setCountdown("3");
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    setCountdown("2");
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    setCountdown("1");
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    setCountdown("Sing");
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setCountdown("");
+    await startTest();
   }
 
   async function playScale() {
@@ -1697,8 +1743,14 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
               playTone(scale[nextStep].hz, 0.45);
             }
 
+            setPracticeFeedback("success");
+            playFeedbackSound(true);
+            setTimeout(() => setPracticeFeedback(""), 900);
             setStatus("Correct. Move to the next note.");
           } else {
+            if (Math.abs(cents) > 35) {
+              setPracticeFeedback("fail");
+            }
             setStatus(cents < -35 ? "Flat. Sing slightly higher." : cents > 35 ? "Sharp. Sing slightly lower." : "Good. Hold steady.");
           }
         }
@@ -1957,6 +2009,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
                 Play Current Note ({playbackVoice === "piano" ? "Piano" : "Choir"})
               </button>
               <button onClick={playScale} style={ghostButton}>Play Full Scale</button>
+              <button onClick={resetPractice} style={ghostButton}>Reset Practice</button>
             </div>
 
             <div style={scaleGrid}>
@@ -1972,11 +2025,25 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
           </div>
         )}
 
+        {countdown && (
+          <div style={countdownOverlay}>
+            {countdown}
+          </div>
+        )}
+
+        {practiceFeedback === "success" && (
+          <div style={successAnimation}>✓ Success</div>
+        )}
+
+        {practiceFeedback === "fail" && (
+          <div style={failNotice}>Try again — adjust your pitch.</div>
+        )}
+
         <p style={{ ...muted, fontWeight: 900 }}>Status: {status}</p>
 
         <div style={row}>
           {!running ? (
-            <button onClick={startTest} style={button}>Start</button>
+            <button onClick={startWithCountdown} style={button}>Start</button>
           ) : (
             <button onClick={stopTest} style={{ ...button, background: "#B91C1C" }}>Stop</button>
           )}
@@ -2742,4 +2809,41 @@ const savedOverviewCard = {
   borderRadius: 20,
   background: "#F8FAFC",
   border: "1px solid #CBD5E1",
+};
+
+
+const countdownOverlay = {
+  margin: "18px auto",
+  width: 160,
+  height: 160,
+  borderRadius: "50%",
+  background: "#061A2F",
+  color: "#FFFFFF",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 42,
+  fontWeight: 950,
+  boxShadow: "0 18px 45px rgba(15, 23, 42, 0.25)",
+};
+
+const successAnimation = {
+  marginTop: 16,
+  padding: "14px 18px",
+  borderRadius: 18,
+  background: "#DCFCE7",
+  color: "#166534",
+  fontWeight: 950,
+  textAlign: "center" as const,
+  animation: "pulse 0.6s ease",
+};
+
+const failNotice = {
+  marginTop: 16,
+  padding: "14px 18px",
+  borderRadius: 18,
+  background: "#FEE2E2",
+  color: "#991B1B",
+  fontWeight: 950,
+  textAlign: "center" as const,
 };
