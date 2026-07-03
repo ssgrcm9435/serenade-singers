@@ -1430,29 +1430,33 @@ function suggestVoiceType(lowMidi: number | null, highMidi: number | null) {
 }
 
 function autoCorrelate(buffer: Float32Array, sampleRate: number) {
+  let size = buffer.length;
   let rms = 0;
 
-  for (let i = 0; i < buffer.length; i++) {
-    rms += buffer[i] * buffer[i];
+  for (let i = 0; i < size; i++) {
+    const value = buffer[i];
+    rms += value * value;
   }
 
-  rms = Math.sqrt(rms / buffer.length);
-
-  if (rms < 0.004) return -1;
+  rms = Math.sqrt(rms / size);
+  if (rms < 0.006) return -1;
 
   let bestOffset = -1;
   let bestCorrelation = 0;
-  const minOffset = Math.floor(sampleRate / 1000);
-  const maxOffset = Math.floor(sampleRate / 65);
+
+  const minFrequency = 70;
+  const maxFrequency = 900;
+  const minOffset = Math.floor(sampleRate / maxFrequency);
+  const maxOffset = Math.floor(sampleRate / minFrequency);
 
   for (let offset = minOffset; offset <= maxOffset; offset++) {
     let correlation = 0;
 
-    for (let i = 0; i < buffer.length - offset; i++) {
-      correlation += buffer[i] * buffer[i + offset];
+    for (let i = 0; i < size - offset; i++) {
+      correlation += 1 - Math.abs(buffer[i] - buffer[i + offset]);
     }
 
-    correlation = correlation / (buffer.length - offset);
+    correlation = correlation / (size - offset);
 
     if (correlation > bestCorrelation) {
       bestCorrelation = correlation;
@@ -1460,7 +1464,7 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number) {
     }
   }
 
-  if (bestCorrelation > 0.25 && bestOffset > 0) {
+  if (bestCorrelation > 0.35 && bestOffset > 0) {
     return sampleRate / bestOffset;
   }
 
@@ -1485,6 +1489,8 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const [correctCount, setCorrectCount] = useState(0);
   const [attemptCount, setAttemptCount] = useState(0);
   const [tunerCents, setTunerCents] = useState(0);
+  const [micStatus, setMicStatus] = useState("Not started");
+  const [inputLevel, setInputLevel] = useState(0);
   const [saveMessage, setSaveMessage] = useState("");
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -1519,7 +1525,22 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
       setPitchLevel(0);
       setTunerCents(0);
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicStatus("Requesting microphone...");
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setMicStatus("Microphone API not available. Use Chrome with HTTPS.");
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+        },
+      });
+
+      setMicStatus("Microphone connected. Sing now.");
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       const audioContext = new AudioContextClass();
       const analyser = audioContext.createAnalyser();
@@ -1541,7 +1562,13 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
         analyserRef.current.getFloatTimeDomainData(buffer);
         const frequency = autoCorrelate(buffer, audioContextRef.current.sampleRate);
 
+        let rms = 0;
+        for (let i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i];
+        rms = Math.sqrt(rms / buffer.length);
+        setInputLevel(Math.min(100, Math.round(rms * 700)));
+
         if (frequency > 65 && frequency < 1000) {
+          setMicStatus("Pitch detected.");
           const detected = frequencyToNote(frequency);
           setCurrentNote(`${detected.note} (${Math.round(frequency)} Hz)`);
           setPitchLevel(Math.min(100, Math.max(5, Math.round((frequency / 1000) * 100))));
@@ -1586,6 +1613,12 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
             }
             return prev;
           });
+        } else {
+          if (rms > 0.006) {
+            setMicStatus("Sound detected, but pitch is not stable. Hold one note longer.");
+          } else {
+            setMicStatus("Listening... sing louder or move closer.");
+          }
         }
 
         frameRef.current = requestAnimationFrame(detect);
@@ -1593,6 +1626,7 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
 
       detect();
     } catch {
+      setMicStatus("Microphone access failed. Please allow microphone permission.");
       setSaveMessage("Microphone access failed. Please allow microphone permission.");
       setRunning(false);
     }
@@ -1670,6 +1704,12 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
             <div style={{ ...visualizerFill, width: `${pitchLevel}%` }} />
           </div>
           <p style={muted}>Live Pitch Visualizer</p>
+
+          <div style={visualizerBar}>
+            <div style={{ ...inputLevelFill, width: `${inputLevel}%` }} />
+          </div>
+          <p style={muted}>Microphone Input Level: {inputLevel}%</p>
+          <p style={{ ...muted, fontWeight: 900 }}>Status: {micStatus}</p>
         </div>
 
         <div style={noteTrail}>
@@ -2378,4 +2418,12 @@ const tunerLabels = {
   marginTop: 8,
   fontWeight: 900,
   color: "#061A2F",
+};
+
+
+const inputLevelFill = {
+  height: "100%",
+  borderRadius: 999,
+  background: "linear-gradient(90deg, #F59E0B, #22C55E)",
+  transition: "width 0.1s ease",
 };
