@@ -1377,6 +1377,26 @@ function frequencyToNote(frequency: number) {
   return { midi, note: midiToNote(midi) };
 }
 
+function estimateMajorKey(notes: string[]) {
+  const clean = notes
+    .map((note) => note.replace(/[0-9]/g, ""))
+    .filter(Boolean);
+
+  if (!clean.length) return "Auto Detecting";
+
+  const counts: Record<string, number> = {};
+
+  clean.forEach((note) => {
+    counts[note] = (counts[note] || 0) + 1;
+  });
+
+  const tonic = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+
+  if (!tonic) return "Auto Detecting";
+
+  return `${tonic} Major`;
+}
+
 function suggestVoiceType(lowMidi: number | null, highMidi: number | null) {
   if (lowMidi === null || highMidi === null) return "Testing";
   if (lowMidi <= 40 && highMidi <= 64) return "Bass";
@@ -1431,8 +1451,10 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
   const [highestNote, setHighestNote] = useState("-");
   const [lowestMidi, setLowestMidi] = useState<number | null>(null);
   const [highestMidi, setHighestMidi] = useState<number | null>(null);
-  const [currentKey, setCurrentKey] = useState("C Major");
+  const [currentKey, setCurrentKey] = useState("Auto Detecting");
   const [targetKey, setTargetKey] = useState("C Major");
+  const [noteHistory, setNoteHistory] = useState<string[]>([]);
+  const [pitchLevel, setPitchLevel] = useState(0);
   const [saveMessage, setSaveMessage] = useState("");
 
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -1482,6 +1504,13 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
         if (frequency > 65 && frequency < 1000) {
           const detected = frequencyToNote(frequency);
           setCurrentNote(`${detected.note} (${Math.round(frequency)} Hz)`);
+          setPitchLevel(Math.min(100, Math.max(5, Math.round((frequency / 1000) * 100))));
+
+          setNoteHistory((prev) => {
+            const next = [...prev, detected.note].slice(-24);
+            setCurrentKey(estimateMajorKey(next));
+            return next;
+          });
 
           setLowestMidi((prev) => {
             if (prev === null || detected.midi < prev) {
@@ -1569,18 +1598,26 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
 
         <div style={summaryGrid}>
           <Stat title="Current Note" value={currentNote} />
+          <Stat title="Auto Current Key" value={currentKey} />
           <Stat title="Lowest Note" value={lowestNote} />
           <Stat title="Highest Note" value={highestNote} />
           <Stat title="Suggested Voice" value={suggestedVoiceType} />
         </div>
 
-        <div style={row}>
-          <select value={currentKey} onChange={(e) => setCurrentKey(e.target.value)} style={input}>
-            {["C Major", "D Major", "E Major", "F Major", "G Major", "A Major", "B♭ Major", "E♭ Major"].map((keyName) => (
-              <option key={keyName}>{keyName}</option>
-            ))}
-          </select>
+        <div style={visualizerWrap}>
+          <div style={visualizerBar}>
+            <div style={{ ...visualizerFill, width: `${pitchLevel}%` }} />
+          </div>
+          <p style={muted}>Live Pitch Visualizer</p>
+        </div>
 
+        <div style={noteTrail}>
+          {noteHistory.length ? noteHistory.map((note, index) => (
+            <span key={`${note}-${index}`} style={notePill}>{note}</span>
+          )) : <span style={muted}>Detected notes will appear here while singing.</span>}
+        </div>
+
+        <div style={row}>
           <select value={targetKey} onChange={(e) => setTargetKey(e.target.value)} style={input}>
             {["C Major", "D Major", "E Major", "F Major", "G Major", "A Major", "B♭ Major", "E♭ Major"].map((keyName) => (
               <option key={keyName}>{keyName}</option>
@@ -2147,3 +2184,42 @@ const activeBadge = {
 
 
 
+
+
+const visualizerWrap = {
+  marginTop: 20,
+  padding: 18,
+  borderRadius: 18,
+  background: "#F8FAFC",
+  border: "1px solid #E5E7EB",
+};
+
+const visualizerBar = {
+  width: "100%",
+  height: 18,
+  borderRadius: 999,
+  overflow: "hidden",
+  background: "#E5E7EB",
+};
+
+const visualizerFill = {
+  height: "100%",
+  borderRadius: 999,
+  background: "linear-gradient(90deg, #1D4ED8, #16A34A)",
+  transition: "width 0.15s ease",
+};
+
+const noteTrail = {
+  display: "flex",
+  gap: 8,
+  flexWrap: "wrap" as const,
+  marginTop: 16,
+};
+
+const notePill = {
+  padding: "8px 12px",
+  borderRadius: 999,
+  background: "#EEF2FF",
+  color: "#1E3A8A",
+  fontWeight: 900,
+};
