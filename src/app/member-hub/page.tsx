@@ -1769,6 +1769,8 @@ function VoiceTestPanel({ user, post, loading, setLoading }: VoiceTestPanelProps
 
             <p>• Note တစ်လုံးကို ၁ မှ ၂ စက္ကန့်ခန့် ငြိမ်ငြိမ်ထိန်းထားပါ။ Stable Pitch ကိုသာ စနစ်က လက်ခံပါသည်။</p>
 
+            <p><strong>• Data မှန်ကန်စေရန် အသစ်ပြန်လည်လေ့ကျင့်လိုပါက Stop ကိုအရင်နှိပ်ပြီးမှ Start ကိုပြန်နှိပ်ရန် မဖြစ်မနေလိုအပ်ပါသည်။</strong></p>
+
             <p><strong>Voice Range Test</strong></p>
 
             <p>
