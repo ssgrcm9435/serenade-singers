@@ -68,6 +68,46 @@ ${serenadeKnowledge}`,
       data?.choices?.[0]?.message?.content ||
       "Sorry, I could not generate a response.";
 
+    const appsScriptUrl =
+      process.env.APPS_SCRIPT_URL || process.env.NEXT_PUBLIC_APPS_SCRIPT_URL;
+
+    if (appsScriptUrl) {
+      try {
+        await fetch(appsScriptUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8",
+          },
+          body: JSON.stringify({
+            action: "saveAIConversation",
+            conversationId: `AI-${Date.now()}`,
+            sessionId: "",
+            memberId: "",
+            fullName: "",
+            gmail: "",
+            userType: "Visitor",
+            currentPage: "/ai",
+            language: /[\u1000-\u109F]/.test(message) ? "Myanmar" : "English",
+            userMessage: message,
+            aiResponse: answer,
+            intent: "General",
+            category: "AI Assistant",
+            confidence: "",
+            model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+            status: "Open",
+            escalated:
+              answer.toLowerCase().includes("admin") ||
+              answer.includes("Admin")
+                ? "Yes"
+                : "No",
+            remarks: "Auto saved from AI Assistant",
+          }),
+        });
+      } catch {
+        console.warn("AI conversation logging failed.");
+      }
+    }
+
     return NextResponse.json({ answer });
   } catch (error) {
     return NextResponse.json(

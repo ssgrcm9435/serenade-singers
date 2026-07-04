@@ -122,6 +122,10 @@ function doPost(e) {
       return json_(rejectPayment_(body));
     }
 
+    if (action === "saveAIConversation") {
+      return json_(saveAIConversation_(body));
+    }
+
 
 
 
@@ -2317,3 +2321,87 @@ function removeMemberProfilePhoto_(body) {
 
   return { success: false, message: "Member not found." };
 }
+
+
+/*******************************************************
+ * AI CONVERSATION LOG
+ *******************************************************/
+
+function ensureAIConversationHeaders_(sheet) {
+  const headers = [
+    "Timestamp",
+    "Conversation ID",
+    "Session ID",
+    "Member ID",
+    "Full Name",
+    "Gmail",
+    "User Type",
+    "Current Page",
+    "Language",
+    "User Message",
+    "AI Response",
+    "Intent",
+    "Category",
+    "Confidence",
+    "Model",
+    "Status",
+    "Escalated",
+    "Admin Reply",
+    "Resolved By",
+    "Resolved Time",
+    "Feedback",
+    "Remarks"
+  ];
+
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(headers);
+  } else {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+
+  sheet.getRange(1, 1, 1, headers.length)
+    .setFontWeight("bold")
+    .setBackground("#061A2F")
+    .setFontColor("#FFFFFF");
+
+  sheet.setFrozenRows(1);
+}
+
+function saveAIConversation_(body) {
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getOrCreateSheet_(ss, "AI_Conversations");
+  ensureAIConversationHeaders_(sheet);
+
+  const timestamp = new Date();
+
+  sheet.appendRow([
+    timestamp,
+    body.conversationId || "",
+    body.sessionId || "",
+    body.memberId || "",
+    body.fullName || "",
+    normalizeEmail_(body.gmail || ""),
+    body.userType || "Visitor",
+    body.currentPage || "/ai",
+    body.language || "",
+    body.userMessage || "",
+    body.aiResponse || "",
+    body.intent || "General",
+    body.category || "AI Assistant",
+    body.confidence || "",
+    body.model || "",
+    body.status || "Open",
+    body.escalated || "No",
+    body.adminReply || "",
+    body.resolvedBy || "",
+    body.resolvedTime || "",
+    body.feedback || "",
+    body.remarks || ""
+  ]);
+
+  return {
+    success: true,
+    message: "AI conversation saved successfully."
+  };
+}
+
