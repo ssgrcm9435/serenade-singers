@@ -245,15 +245,22 @@ export default function AIAssistantPage() {
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
-    maxWidth: 900,
-    margin: "0 auto",
+    width: "100%",
+    maxWidth: "none",
+    margin: 0,
     padding: "16px",
     height: "100dvh",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
+    boxSizing: "border-box",
   },
-  hero: { marginBottom: 14, flexShrink: 0 },
+  hero: {
+    maxWidth: 1100,
+    width: "100%",
+    margin: "0 auto 14px",
+    flexShrink: 0,
+  },
   badge: {
     display: "inline-block",
     padding: "8px 14px",
@@ -266,6 +273,10 @@ const styles: Record<string, React.CSSProperties> = {
   title: { fontSize: "2.5rem", fontWeight: 900, color: "#061A2F", margin: 0 },
   subtitle: { maxWidth: 780, color: "#475569", lineHeight: 1.8, marginTop: 12 },
   suggestionBox: {
+    maxWidth: 1100,
+    width: "100%",
+    marginLeft: "auto",
+    marginRight: "auto",
     display: "flex",
     overflowX: "auto",
     gap: 10,
@@ -285,8 +296,13 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   chatBox: {
+    maxWidth: 1100,
+    marginLeft: "auto",
+    marginRight: "auto",
     flex: 1,
     minHeight: 0,
+    width: "100%",
+    boxSizing: "border-box",
     overflowY: "auto",
     overscrollBehavior: "contain",
     scrollBehavior: "smooth",
@@ -327,6 +343,9 @@ const styles: Record<string, React.CSSProperties> = {
   dotTwo: { animation: "aiDotBounce 1s infinite ease-in-out 0.15s" },
   dotThree: { animation: "aiDotBounce 1s infinite ease-in-out 0.3s" },
   inputArea: {
+    maxWidth: 1100,
+    marginLeft: "auto",
+    marginRight: "auto",
     display: "grid",
     gridTemplateColumns: "minmax(0, 1fr) 96px",
     gap: 12,
