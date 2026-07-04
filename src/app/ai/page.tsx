@@ -83,6 +83,18 @@ export default function AIAssistantPage() {
 
   return (
     <main style={styles.page}>
+      <style jsx global>{`
+        @keyframes aiDotBounce {
+          0%, 80%, 100% {
+            transform: translateY(0);
+            opacity: 0.35;
+          }
+          40% {
+            transform: translateY(-5px);
+            opacity: 1;
+          }
+        }
+      `}</style>
       <section style={styles.hero}>
         <div>
           <p style={styles.badge}>Serenade Singers Support</p>
@@ -132,7 +144,11 @@ export default function AIAssistantPage() {
           <div style={{ ...styles.messageRow, justifyContent: "flex-start" }}>
             <div style={{ ...styles.message, ...styles.typing }}>
               <span>AI is typing</span>
-              <span style={styles.dots}>•••</span>
+              <span style={styles.dots}>
+                <span style={styles.dotOne}>•</span>
+                <span style={styles.dotTwo}>•</span>
+                <span style={styles.dotThree}>•</span>
+              </span>
             </div>
           </div>
         )}
@@ -225,7 +241,10 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#64748B",
     fontWeight: 700,
   },
-  dots: { marginLeft: 8, letterSpacing: 3 },
+  dots: { marginLeft: 8, display: "inline-flex", gap: 3 },
+  dotOne: { animation: "aiDotBounce 1s infinite ease-in-out" },
+  dotTwo: { animation: "aiDotBounce 1s infinite ease-in-out 0.15s" },
+  dotThree: { animation: "aiDotBounce 1s infinite ease-in-out 0.3s" },
   inputArea: { display: "flex", gap: 12, marginTop: 18, alignItems: "stretch" },
   textarea: {
     flex: 1,
