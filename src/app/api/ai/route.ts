@@ -1,0 +1,78 @@
+import { NextResponse } from "next/server";
+import { serenadeKnowledge } from "@/lib/serenade-ai-knowledge";
+
+export async function POST(request: Request) {
+  try {
+    const { message } = await request.json();
+
+    if (!message || typeof message !== "string") {
+      return NextResponse.json(
+        { error: "Message is required." },
+        { status: 400 }
+      );
+    }
+
+    const apiKey = process.env.OPENROUTER_API_KEY;
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "OPENROUTER_API_KEY is not configured." },
+        { status: 500 }
+      );
+    }
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://serenade-singers.org",
+        "X-Title": "Serenade Singers AI Assistant",
+      },
+      body: JSON.stringify({
+        model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are Serenade Singers AI Assistant.
+
+Reply in the same language as the user. If the user asks in Burmese, reply in natural professional Burmese.
+
+Use only the verified knowledge below. If the answer is not available or needs official approval, politely tell the user to contact the Serenade Singers administration.
+
+Do not invent policies, prices, approvals, schedules, or official decisions.
+
+Knowledge:
+${serenadeKnowledge}`,
+          },
+          {
+            role: "user",
+            content: message,
+          },
+        ],
+        temperature: 0.4,
+        max_tokens: 900,
+      }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return NextResponse.json(
+        { error: "OpenRouter request failed.", detail: text },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    const answer =
+      data?.choices?.[0]?.message?.content ||
+      "Sorry, I could not generate a response.";
+
+    return NextResponse.json({ answer });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "AI assistant failed." },
+      { status: 500 }
+    );
+  }
+}
