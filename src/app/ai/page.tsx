@@ -117,6 +117,11 @@ export default function AIAssistantPage() {
   return (
     <main style={styles.page}>
       <style jsx global>{`
+        html, body {
+          overscroll-behavior: none;
+        }
+      `}</style>
+      <style jsx global>{`
         @media (max-width: 640px) {
           main {
             padding-left: 16px !important;
@@ -242,10 +247,11 @@ const styles: Record<string, React.CSSProperties> = {
   page: {
     maxWidth: 900,
     margin: "0 auto",
-    padding: "24px 16px",
-    minHeight: "100dvh",
+    padding: "16px",
+    height: "100dvh",
     display: "flex",
     flexDirection: "column",
+    overflow: "hidden",
   },
   hero: { marginBottom: 14, flexShrink: 0 },
   badge: {
@@ -280,9 +286,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   chatBox: {
     flex: 1,
-    minHeight: 360,
-    maxHeight: "none",
+    minHeight: 0,
     overflowY: "auto",
+    overscrollBehavior: "contain",
+    scrollBehavior: "smooth",
     border: "1px solid #E2E8F0",
     borderRadius: 24,
     padding: 20,
@@ -328,6 +335,8 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
     position: "sticky",
     bottom: 0,
+    flexShrink: 0,
+    zIndex: 5,
     background: "#faf9f6",
     paddingTop: 12,
     paddingBottom: "max(12px, env(safe-area-inset-bottom))",
