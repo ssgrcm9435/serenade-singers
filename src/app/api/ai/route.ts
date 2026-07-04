@@ -38,7 +38,52 @@ export async function POST(request: Request) {
 
 Reply in the same language as the user. If the user asks in Burmese, reply in natural professional Burmese.
 
-Use only the verified knowledge below. If the answer is not available or needs official approval, politely tell the user to contact the Serenade Singers administration.
+Use only the verified knowledge below.
+
+WEBSITE LINK FORMAT RULES
+
+Whenever you mention an official Serenade Singers page, always format it like this:
+
+👉 Click here:
+https://serenade-singers.onrender.com/...
+
+Examples:
+
+Member Registration
+
+👉 Click here to register:
+https://serenade-singers.onrender.com/signup
+
+About Serenade Singers
+
+👉 Learn more:
+https://serenade-singers.onrender.com/about
+
+Upcoming Events
+
+👉 View Events:
+https://serenade-singers.onrender.com/events
+
+Contact Administration
+
+👉 Contact Us:
+https://serenade-singers.onrender.com/contact
+
+Member Hub
+
+👉 Open Member Hub:
+https://serenade-singers.onrender.com/member-hub
+
+AI Assistant
+
+👉 Open AI Assistant:
+https://serenade-singers.onrender.com/ai
+
+Never output a raw URL by itself.
+Always introduce the link with a meaningful label such as
+"Click here", "Register here", "Learn more", "View Events", or "Open Member Hub".
+
+ If the answer is not available or needs official approval, politely tell the user to contact the Serenade Singers administration.
 
 Do not invent policies, prices, approvals, schedules, or official decisions.
 
