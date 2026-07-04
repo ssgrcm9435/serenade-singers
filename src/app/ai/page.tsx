@@ -34,7 +34,6 @@ export default function AIAssistantPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const lastUserMessageRef = useRef("");
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -44,12 +43,7 @@ export default function AIAssistantPage() {
     const text = (customText || input).trim();
     if (!text || loading) return;
 
-    lastUserMessageRef.current = text;
-
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: text, time: nowTime() },
-    ]);
+    setMessages((prev) => [...prev, { role: "user", content: text, time: nowTime() }]);
     setInput("");
     setLoading(true);
 
@@ -87,25 +81,6 @@ export default function AIAssistantPage() {
     }
   }
 
-  function clearChat() {
-    setMessages([
-      {
-        role: "assistant",
-        content:
-          "Chat ကိုရှင်းပြီးပါပြီ။ Serenade Singers အကြောင်း မေးမြန်းနိုင်ပါတယ်။",
-        time: nowTime(),
-      },
-    ]);
-  }
-
-  function regenerate() {
-    if (lastUserMessageRef.current) sendMessage(lastUserMessageRef.current);
-  }
-
-  async function copyText(text: string) {
-    await navigator.clipboard.writeText(text);
-  }
-
   return (
     <main style={styles.page}>
       <section style={styles.hero}>
@@ -117,13 +92,6 @@ export default function AIAssistantPage() {
             voice practice, meetings, events and support questions များကို
             မေးမြန်းနိုင်ပါသည်။
           </p>
-        </div>
-
-        <div style={styles.actions}>
-          <button onClick={clearChat} style={styles.lightButton}>Clear Chat</button>
-          <button onClick={regenerate} disabled={loading || !lastUserMessageRef.current} style={styles.lightButton}>
-            Regenerate
-          </button>
         </div>
       </section>
 
@@ -155,11 +123,6 @@ export default function AIAssistantPage() {
               <div style={styles.messageContent}>{message.content}</div>
               <div style={styles.messageFooter}>
                 <span>{message.time}</span>
-                {message.role === "assistant" && (
-                  <button onClick={() => copyText(message.content)} style={styles.copyButton}>
-                    Copy
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -191,29 +154,21 @@ export default function AIAssistantPage() {
           style={styles.textarea}
         />
 
-        <button onClick={() => sendMessage()} disabled={loading || !input.trim()} style={styles.sendButton}>
+        <button
+          onClick={() => sendMessage()}
+          disabled={loading || !input.trim()}
+          style={styles.sendButton}
+        >
           {loading ? "Sending..." : "Send"}
         </button>
       </section>
-
-      <p style={styles.footer}>Powered by OpenRouter AI · Conversations may be saved for admin review.</p>
     </main>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  page: {
-    maxWidth: 1100,
-    margin: "50px auto",
-    padding: 24,
-  },
-  hero: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 24,
-    alignItems: "flex-start",
-    marginBottom: 22,
-  },
+  page: { maxWidth: 1100, margin: "50px auto", padding: 24 },
+  hero: { marginBottom: 22 },
   badge: {
     display: "inline-block",
     padding: "8px 14px",
@@ -223,38 +178,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 800,
     marginBottom: 12,
   },
-  title: {
-    fontSize: "2.5rem",
-    fontWeight: 900,
-    color: "#061A2F",
-    margin: 0,
-  },
-  subtitle: {
-    maxWidth: 780,
-    color: "#475569",
-    lineHeight: 1.8,
-    marginTop: 12,
-  },
-  actions: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  lightButton: {
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    color: "#061A2F",
-    padding: "10px 14px",
-    borderRadius: 12,
-    fontWeight: 800,
-    cursor: "pointer",
-  },
-  suggestionBox: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 18,
-  },
+  title: { fontSize: "2.5rem", fontWeight: 900, color: "#061A2F", margin: 0 },
+  subtitle: { maxWidth: 780, color: "#475569", lineHeight: 1.8, marginTop: 12 },
+  suggestionBox: { display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 18 },
   suggestion: {
     border: "1px solid #CBD5E1",
     background: "#FFFFFF",
@@ -276,9 +202,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     gap: 14,
   },
-  messageRow: {
-    display: "flex",
-  },
+  messageRow: { display: "flex" },
   message: {
     maxWidth: "82%",
     padding: "14px 16px",
@@ -286,23 +210,14 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.75,
     whiteSpace: "pre-wrap",
   },
-  messageContent: {
-    fontSize: 15.5,
-  },
+  messageContent: { fontSize: 15.5 },
   messageFooter: {
     display: "flex",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     gap: 12,
     marginTop: 10,
     fontSize: 12,
     opacity: 0.8,
-  },
-  copyButton: {
-    border: "none",
-    background: "transparent",
-    color: "inherit",
-    fontWeight: 800,
-    cursor: "pointer",
   },
   typing: {
     background: "#F8FAFC",
@@ -310,16 +225,8 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#64748B",
     fontWeight: 700,
   },
-  dots: {
-    marginLeft: 8,
-    letterSpacing: 3,
-  },
-  inputArea: {
-    display: "flex",
-    gap: 12,
-    marginTop: 18,
-    alignItems: "stretch",
-  },
+  dots: { marginLeft: 8, letterSpacing: 3 },
+  inputArea: { display: "flex", gap: 12, marginTop: 18, alignItems: "stretch" },
   textarea: {
     flex: 1,
     minHeight: 64,
@@ -340,10 +247,5 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#FFFFFF",
     fontWeight: 900,
     cursor: "pointer",
-  },
-  footer: {
-    marginTop: 16,
-    color: "#94A3B8",
-    fontSize: 14,
   },
 };
