@@ -239,8 +239,15 @@ export default function AIAssistantPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  page: { maxWidth: 1100, margin: "50px auto", padding: 24 },
-  hero: { marginBottom: 22 },
+  page: {
+    maxWidth: 900,
+    margin: "0 auto",
+    padding: "24px 16px",
+    minHeight: "100dvh",
+    display: "flex",
+    flexDirection: "column",
+  },
+  hero: { marginBottom: 14, flexShrink: 0 },
   badge: {
     display: "inline-block",
     padding: "8px 14px",
@@ -252,7 +259,14 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: { fontSize: "2.5rem", fontWeight: 900, color: "#061A2F", margin: 0 },
   subtitle: { maxWidth: 780, color: "#475569", lineHeight: 1.8, marginTop: 12 },
-  suggestionBox: { display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 18 },
+  suggestionBox: {
+    display: "flex",
+    overflowX: "auto",
+    gap: 10,
+    marginBottom: 14,
+    paddingBottom: 6,
+    flexShrink: 0,
+  },
   suggestion: {
     border: "1px solid #CBD5E1",
     background: "#FFFFFF",
@@ -261,9 +275,13 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 999,
     fontWeight: 700,
     cursor: "pointer",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
   },
   chatBox: {
-    height: "min(560px, 52dvh)",
+    flex: 1,
+    minHeight: 360,
+    maxHeight: "none",
     overflowY: "auto",
     border: "1px solid #E2E8F0",
     borderRadius: 24,
@@ -276,7 +294,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   messageRow: { display: "flex" },
   message: {
-    maxWidth: "82%",
+    maxWidth: "78%",
     padding: "14px 16px",
     borderRadius: 18,
     lineHeight: 1.75,
@@ -303,9 +321,9 @@ const styles: Record<string, React.CSSProperties> = {
   dotThree: { animation: "aiDotBounce 1s infinite ease-in-out 0.3s" },
   inputArea: {
     display: "grid",
-    gridTemplateColumns: "minmax(0, 1fr) 118px",
+    gridTemplateColumns: "minmax(0, 1fr) 96px",
     gap: 12,
-    marginTop: 18,
+    marginTop: 12,
     alignItems: "stretch",
     width: "100%",
     position: "sticky",
