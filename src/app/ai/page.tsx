@@ -23,21 +23,25 @@ function renderMessage(text: string) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
 
   return text.split(urlRegex).map((part, index) => {
-    if (urlRegex.test(part)) {
+    const isUrl = /^https?:\/\/[^\s]+$/.test(part);
+
+    if (isUrl) {
+      const cleanUrl = part.replace(/[.,)]$/, "");
+
       return (
         <a
           key={index}
-          href={part}
+          href={cleanUrl}
           target="_blank"
           rel="noopener noreferrer"
           style={{
             color: "#2563eb",
-            fontWeight: 700,
+            fontWeight: 800,
             textDecoration: "underline",
             wordBreak: "break-all",
           }}
         >
-          {part}
+          {cleanUrl}
         </a>
       );
     }
