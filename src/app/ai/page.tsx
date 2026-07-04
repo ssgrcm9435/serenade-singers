@@ -17,6 +17,35 @@ const suggestions = [
   "Serenade Singers အကြောင်းပြောပြပါ",
 ];
 
+
+
+function renderMessage(text: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+  return text.split(urlRegex).map((part, index) => {
+    if (urlRegex.test(part)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: "#2563eb",
+            fontWeight: 700,
+            textDecoration: "underline",
+            wordBreak: "break-all",
+          }}
+        >
+          {part}
+        </a>
+      );
+    }
+
+    return <span key={index}>{part}</span>;
+  });
+}
+
 function nowTime() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
@@ -132,7 +161,7 @@ export default function AIAssistantPage() {
                 border: message.role === "user" ? "none" : "1px solid #E2E8F0",
               }}
             >
-              <div style={styles.messageContent}>{message.content}</div>
+              <div style={styles.messageContent}>{renderMessage(message.content)}</div>
               <div style={styles.messageFooter}>
                 <span>{message.time}</span>
               </div>
