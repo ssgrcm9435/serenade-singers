@@ -117,6 +117,29 @@ export default function AIAssistantPage() {
   return (
     <main style={styles.page}>
       <style jsx global>{`
+        @media (max-width: 640px) {
+          main {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+
+          textarea {
+            min-height: 58px !important;
+            font-size: 15px !important;
+          }
+
+          button {
+            font-size: 15px !important;
+          }
+        }
+
+        @media (max-width: 420px) {
+          textarea::placeholder {
+            font-size: 14px;
+          }
+        }
+      `}</style>
+      <style jsx global>{`
         @keyframes aiDotBounce {
           0%, 80%, 100% {
             transform: translateY(0);
@@ -240,7 +263,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   chatBox: {
-    height: 560,
+    height: "min(560px, 52dvh)",
     overflowY: "auto",
     border: "1px solid #E2E8F0",
     borderRadius: 24,
@@ -278,9 +301,23 @@ const styles: Record<string, React.CSSProperties> = {
   dotOne: { animation: "aiDotBounce 1s infinite ease-in-out" },
   dotTwo: { animation: "aiDotBounce 1s infinite ease-in-out 0.15s" },
   dotThree: { animation: "aiDotBounce 1s infinite ease-in-out 0.3s" },
-  inputArea: { display: "flex", gap: 12, marginTop: 18, alignItems: "stretch" },
+  inputArea: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) 118px",
+    gap: 12,
+    marginTop: 18,
+    alignItems: "stretch",
+    width: "100%",
+    position: "sticky",
+    bottom: 0,
+    background: "#faf9f6",
+    paddingTop: 12,
+    paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+  },
   textarea: {
-    flex: 1,
+    width: "100%",
+    minWidth: 0,
+    boxSizing: "border-box",
     minHeight: 64,
     resize: "vertical",
     padding: 16,
@@ -291,7 +328,8 @@ const styles: Record<string, React.CSSProperties> = {
     outline: "none",
   },
   sendButton: {
-    minWidth: 130,
+    width: "100%",
+    minWidth: 0,
     padding: "14px 24px",
     borderRadius: 16,
     border: "none",
