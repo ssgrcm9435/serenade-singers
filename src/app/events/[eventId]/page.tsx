@@ -372,7 +372,6 @@ const styles: Record<string, React.CSSProperties> = {
   fullImage: {
     maxWidth: "96vw",
     height: "calc(100dvh - 96px)",
-    maxWidth: "100%",
     maxHeight: "calc(100dvh - 90px)",
     objectFit: "contain",
     borderRadius: 18,
