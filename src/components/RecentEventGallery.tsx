@@ -1,100 +1,44 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
-type MediaItem = {
-  fileId: string;
-  fileName: string;
-  type: "image" | "video";
-  thumbnailUrl: string;
-  embedUrl: string;
-};
-
-type MediaEvent = {
-  eventId: string;
-  title: string;
-  folderId: string;
-  coverUrl: string;
-  photoCount: number;
-  videoCount: number;
-  media?: MediaItem[];
-};
-
-const LOCAL_COVERS: Record<string, string> = {
-  "EVT-2026-001-BLIND-SCHOOL": "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg",
-};
-
-function getLocalCover(event: MediaEvent) {
-  const key = String(event.eventId || event.title || "").toUpperCase();
-
-  if (key.includes("BLIND") || key.includes("EVT-2026-001")) {
-    return "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg";
-  }
-
-  return "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg";
-}
-
 export default function RecentEventGallery() {
-  const [event, setEvent] = useState<MediaEvent | null>(null);
-
-  useEffect(() => {
-    const url = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL;
-    if (!url) return;
-
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "getFeaturedMediaEvent" }),
-    })
-      .then((res) => res.json())
-      .then((data) => setEvent(data.event || null))
-      .catch(() => setEvent(null));
-  }, []);
-
-  if (!event) return null;
-
-  const cover = getLocalCover(event);
-
   return (
     <section style={styles.section}>
       <div style={styles.inner}>
         <div style={styles.header}>
           <div>
             <p style={styles.kicker}>Recent Activity</p>
-            <h2 style={styles.title}>{event.title}</h2>
+            <h2 style={styles.title}>Blind School Visit</h2>
             <p style={styles.description}>
-              View photos and videos from our latest Serenade Singers activity.
+              A community outreach activity by Serenade Singers, sharing music,
+              care, and future collaboration with Yangon Blind School.
             </p>
           </div>
 
-          <Link href={`/events/${event.folderId}`} style={styles.button}>
+          <Link
+            href="/events/EVT-2026-001-BLIND-SCHOOL"
+            style={styles.button}
+          >
             View Gallery
           </Link>
         </div>
 
-        <Link href={`/events/${event.folderId}`} style={styles.coverWrap}>
-          {cover && (
-            <img
-              src={cover}
-              alt={event.title}
-              style={styles.cover}
-              loading="eager"
-              decoding="async"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          )}
-
+        <Link
+          href="/events/EVT-2026-001-BLIND-SCHOOL"
+          style={styles.coverWrap}
+        >
+          <img
+            src="/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg"
+            alt="Blind School Visit"
+            style={styles.cover}
+          />
           <div style={styles.coverOverlay}>
             <span>Open Gallery</span>
           </div>
         </Link>
 
         <div style={styles.stats}>
-          <span>📷 {event.photoCount} Photos</span>
-          <span>🎥 {event.videoCount} Videos</span>
+          <span>📷 Photos</span>
+          <span>🎥 Videos</span>
         </div>
       </div>
     </section>
@@ -134,7 +78,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: "clamp(1.7rem, 4vw, 2.6rem)",
     fontWeight: 950,
   },
-  description: { margin: 0, color: "#64748b", lineHeight: 1.8 },
+  description: { margin: 0, color: "#64748b", lineHeight: 1.8, maxWidth: 720 },
   button: {
     background: "#061A2F",
     color: "#ffffff",
@@ -167,8 +111,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#ffffff",
     fontWeight: 950,
     fontSize: 18,
-    opacity: 0,
-    transition: "opacity .25s ease",
   },
   stats: {
     display: "flex",
