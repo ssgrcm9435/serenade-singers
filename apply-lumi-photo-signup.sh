@@ -1,3 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+mkdir -p src/app/api/lumi-signup
+cat > src/app/api/lumi-signup/route.ts <<'ROUTE'
+import { NextResponse } from "next/server";
+
+const ALLOWED_ACTIONS = new Set(["sendOtp", "verifyOtp", "member", "volunteer"]);
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const action = String(body?.action || "").trim();
+    const payload = body?.payload && typeof body.payload === "object" ? body.payload : {};
+
+    if (!ALLOWED_ACTIONS.has(action)) {
+      return NextResponse.json({ success: false, message: "Unsupported Lumi signup action." }, { status: 400 });
+    }
+
+    const appsScriptUrl = process.env.APPS_SCRIPT_URL || process.env.NEXT_PUBLIC_APPS_SCRIPT_URL;
+
+    if (!appsScriptUrl) {
+      return NextResponse.json({ success: false, message: "Google Apps Script URL is not configured." }, { status: 500 });
+    }
+
+    const upstream = await fetch(appsScriptUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action, ...payload }),
+      cache: "no-store",
+    });
+
+    const text = await upstream.text();
+    let data: unknown;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return NextResponse.json({ success: false, message: "Invalid response from Google Sheet backend.", detail: text }, { status: 502 });
+    }
+
+    return NextResponse.json(data, { status: upstream.ok ? 200 : upstream.status });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: error instanceof Error ? error.message : "Lumi signup request failed." },
+      { status: 500 }
+    );
+  }
+}
+ROUTE
+
+cat > src/app/ai/page.tsx <<'PAGE'
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
@@ -119,7 +170,7 @@ export default function LumiPage() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       pushLumi(
-        "Hello, I'm Lumi.\n\nMember / Volunteer signup ကို Lumi ကနေ step by step ဖြည့်ပေးနိုင်ပါတယ်။ Gmail verification code ပို့ပြီး Registration ထဲအထိ submit လုပ်ပေးနိုင်ပါတယ်။"
+        "Hello, I'm Lumi.\n\nMember / Volunteer signup ကို Lumi ကနေ step by step ဖြည့်ပေးနိုင်ပါတယ်။ Gmail verification code ပို့ပြီး Google Sheet ထဲအထိ submit လုပ်ပေးနိုင်ပါတယ်။"
       );
       setIsLumiTyping(false);
     }, 900);
@@ -179,7 +230,7 @@ Experience: ${current.experience}
 Program: ${current.program}
 Profile Photo: ${current.profilePhotoName ? "Uploaded" : "Missing"}
 
-Type Submit to save to Registration, or Cancel to stop.`;
+Type Submit to save to Google Sheet, or Cancel to stop.`;
     }
 
     return `Please confirm your Volunteer Application:
@@ -194,7 +245,7 @@ Availability: ${current.availability}
 Experience: ${current.experience}
 Portfolio: ${current.portfolio || "-"}
 
-Type Submit to save to Registration, or Cancel to stop.`;
+Type Submit to save to Google Sheet, or Cancel to stop.`;
   }
 
   async function handleSignupReply(text: string) {
@@ -379,7 +430,7 @@ Type Submit to save to Registration, or Cancel to stop.`;
         return true;
       }
 
-      setBusyLabel("Creating your account...");
+      setBusyLabel("Submitting to Google Sheet...");
       setIsLumiTyping(true);
 
       try {
@@ -388,8 +439,8 @@ Type Submit to save to Registration, or Cancel to stop.`;
         if (result.success) {
           pushLumi(
             draft.type === "member"
-              ? `Member registration successful ပါ။ Member ID: ${result.memberId || "Created"}\n\nRegistration ထဲ save လုပ်ပြီးပါပြီ။ Gmail ကိုလည်း စစ်ပေးပါ။`
-              : `Volunteer application successful ပါ။ Volunteer ID: ${result.volunteerId || "Created"}\n\nRegistration ထဲ save လုပ်ပြီးပါပြီ။ Gmail ကိုလည်း စစ်ပေးပါ။`
+              ? `Member registration successful ပါ။ Member ID: ${result.memberId || "Created"}\n\nGoogle Sheet ထဲ save လုပ်ပြီးပါပြီ။ Gmail ကိုလည်း စစ်ပေးပါ။`
+              : `Volunteer application successful ပါ။ Volunteer ID: ${result.volunteerId || "Created"}\n\nGoogle Sheet ထဲ save လုပ်ပြီးပါပြီ။ Gmail ကိုလည်း စစ်ပေးပါ။`
           );
           setSignupStep(null);
           setDraft(emptyDraft);
@@ -521,7 +572,7 @@ Type Submit to save to Registration, or Cancel to stop.`;
         <div style={styles.headerText}>
           <p style={styles.kicker}>Serenade Singers AI Assistant</p>
           <h1 style={styles.title}>Lumi</h1>
-          <p style={styles.subtitle}>Chat • Gmail OTP • Photo Upload • Registration Signup</p>
+          <p style={styles.subtitle}>Chat • Gmail OTP • Photo Upload • Google Sheet Signup</p>
         </div>
         <LumiHeaderMascot isTyping={isLumiTyping} />
       </header>
@@ -787,3 +838,6 @@ const styles: Record<string, React.CSSProperties> = {
     border: "1px solid rgba(255,255,255,.32)",
   },
 };
+PAGE
+
+npm run build
