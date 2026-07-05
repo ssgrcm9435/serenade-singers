@@ -26,14 +26,13 @@ const LOCAL_COVERS: Record<string, string> = {
 };
 
 function getLocalCover(event: MediaEvent) {
-  const key = event.eventId || event.title || "";
-  if (LOCAL_COVERS[key]) return LOCAL_COVERS[key];
+  const key = String(event.eventId || event.title || "").toUpperCase();
 
-  if (key.toUpperCase().includes("BLIND")) {
+  if (key.includes("BLIND") || key.includes("EVT-2026-001")) {
     return "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg";
   }
 
-  return event.coverUrl || "";
+  return "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg";
 }
 
 export default function RecentEventGallery() {
@@ -83,9 +82,7 @@ export default function RecentEventGallery() {
               loading="eager"
               decoding="async"
               onError={(e) => {
-                if (event.coverUrl) {
-                  e.currentTarget.src = event.coverUrl;
-                }
+                e.currentTarget.style.display = "none";
               }}
             />
           )}

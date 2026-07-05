@@ -24,10 +24,9 @@ const LOCAL_COVERS: Record<string, string> = {
 };
 
 function getLocalCover(event?: EventData | null) {
-  const key = event?.eventId || event?.title || "";
-  if (LOCAL_COVERS[key]) return LOCAL_COVERS[key];
+  const key = String(event?.eventId || event?.title || "").toUpperCase();
 
-  if (key.toUpperCase().includes("BLIND")) {
+  if (key.includes("BLIND") || key.includes("EVT-2026-001")) {
     return "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg";
   }
 
@@ -375,7 +374,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   fullImage: {
     width: "100%",
-    height: "calc(100dvh - 90px)",
+    height: "calc(100dvh - 96px)",
     maxWidth: "100%",
     maxHeight: "calc(100dvh - 90px)",
     objectFit: "contain",
