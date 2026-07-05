@@ -1,46 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-export default function LumiHeaderMascot() {
-  const [typing, setTyping] = useState(false);
-
-  useEffect(() => {
-    let timer: number | undefined;
-
-    function startTyping() {
-      setTyping(true);
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => setTyping(false), 2200);
-    }
-
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Enter") startTyping();
-    }
-
-    function onClick(e: MouseEvent) {
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-
-      const text = target.textContent?.toLowerCase() || "";
-      if (text.includes("send") || text.includes("chat") || text.includes("ask")) {
-        startTyping();
-      }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("click", onClick);
-
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("click", onClick);
-    };
-  }, []);
-
+export default function LumiHeaderMascot({ isTyping = false }: { isTyping?: boolean }) {
   return (
     <div className="lumiHeaderMascot">
-      <div className={`lumiBird ${typing ? "typing" : ""}`}>
+      <div className={`lumiBird ${isTyping ? "typing" : ""}`}>
         <div className="wing leftWing" />
         <div className="wing rightWing" />
         <div className="face">
@@ -53,27 +16,27 @@ export default function LumiHeaderMascot() {
 
       <div className="laptop">
         <div className="screen">
-          <span className={typing ? "cursor typingCursor" : "cursor"} />
+          <span className={isTyping ? "cursor typingCursor" : "cursor"} />
         </div>
         <div className="base" />
       </div>
 
       <div className="status">
         <strong>Lumi</strong>
-        <span>{typing ? "typing..." : "Your Serenade Guide"}</span>
+        <span>{isTyping ? "typing..." : "Your Serenade Guide"}</span>
       </div>
 
       <style jsx>{`
         .lumiHeaderMascot {
           margin: 18px 0 22px;
-          padding: 18px;
+          padding: 16px;
           border-radius: 28px;
-          background: rgba(255,255,255,.92);
+          background: rgba(255,255,255,.94);
           border: 1px solid rgba(201,162,74,.28);
           box-shadow: 0 18px 45px rgba(6,26,47,.08);
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 14px;
           width: fit-content;
           max-width: 100%;
         }
@@ -104,15 +67,8 @@ export default function LumiHeaderMascot() {
           background: linear-gradient(180deg, #f8d77a, #c9a24a);
         }
 
-        .leftWing {
-          left: -8px;
-          transform-origin: top right;
-        }
-
-        .rightWing {
-          right: -8px;
-          transform-origin: top left;
-        }
+        .leftWing { left: -8px; transform-origin: top right; }
+        .rightWing { right: -8px; transform-origin: top left; }
 
         .typing .wing {
           animation: wingTap .32s ease-in-out infinite;
@@ -153,9 +109,7 @@ export default function LumiHeaderMascot() {
           font-size: 24px;
         }
 
-        .laptop {
-          width: 76px;
-        }
+        .laptop { width: 76px; }
 
         .screen {
           height: 46px;
@@ -226,21 +180,12 @@ export default function LumiHeaderMascot() {
         @media (max-width: 720px) {
           .lumiHeaderMascot {
             width: 100%;
-            justify-content: flex-start;
             padding: 14px;
           }
 
-          .laptop {
-            width: 64px;
-          }
-
-          .screen {
-            height: 40px;
-          }
-
-          .base {
-            width: 74px;
-          }
+          .laptop { width: 64px; }
+          .screen { height: 40px; }
+          .base { width: 74px; }
         }
       `}</style>
     </div>

@@ -1,341 +1,379 @@
 "use client";
 
+import { FormEvent, useEffect, useRef, useState } from "react";
 import LumiHeaderMascot from "@/components/LumiHeaderMascot";
-import { useEffect, useRef, useState } from "react";
 
-type ChatMessage = {
-  role: "user" | "Lumi";
-  content: string;
+type Message = {
+  id: number;
+  role: "user" | "lumi";
+  text: string;
   time: string;
+  status?: "delivered" | "seen";
 };
 
-const suggestions = [
+const quickQuestions = [
   "Member ဘယ်လိုလျှောက်ရမလဲ?",
   "Volunteer ဘယ်လိုလျှောက်ရမလဲ?",
-  "Voice Range Test ဘယ်လိုလုပ်ရမလဲ?",
-  "12-Key Voice Practice ဆိုတာဘာလဲ?",
-  "Meeting ဘယ်လိုဝင်ရမလဲ?",
-  "Serenade Singers အကြောင်းပြောပြပါ",
+  "Voice Range Test ဘယ်လိုလုပ်မလဲ?",
 ];
 
-function nowTime() {
+function getTime() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-function renderMessage(text: string) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+function getLumiReply(input: string) {
+  const q = input.toLowerCase();
 
-  return text.split(urlRegex).map((part, index) => {
-    const isUrl = /^https?:\/\/[^\s]+$/.test(part);
-    if (!isUrl) return <span key={index}>{part}</span>;
+  if (q.includes("member")) {
+    return "Member လျှောက်ချင်ရင် Join Us page မှတစ်ဆင့် registration form ဖြည့်နိုင်ပါတယ်။ Choir activities, events, rehearsals နဲ့ community programs တွေမှာ ပါဝင်နိုင်ပါတယ်။";
+  }
 
-    const cleanUrl = part.replace(/[.,)]$/, "");
-    return (
-      <a
-        key={index}
-        href={cleanUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ color: "#2563eb", fontWeight: 800, textDecoration: "underline", wordBreak: "break-all" }}
-      >
-        {cleanUrl}
-      </a>
-    );
-  });
+  if (q.includes("volunteer")) {
+    return "Volunteer အဖြစ်ပါဝင်ချင်ရင် administration team ကို contact လုပ်နိုင်ပါတယ်။ Event support, media, teaching support, logistics, outreach စတဲ့ role တွေရှိနိုင်ပါတယ်။";
+  }
+
+  if (q.includes("voice") || q.includes("range")) {
+    return "Voice Range Test အတွက် သင့် vocal range, current comfortable key, target key, and practice notes တွေကို စစ်ဆေးပြီး member profile ထဲမှာ သိမ်းထားနိုင်ပါတယ်။";
+  }
+
+  if (q.includes("event") || q.includes("rehearsal")) {
+    return "Events နဲ့ rehearsals တွေကို Events page နဲ့ Members Hub မှာ ကြည့်နိုင်ပါတယ်။ Event gallery မှာ photos/videos တွေလည်း ကြည့်နိုင်ပါတယ်။";
+  }
+
+  return "မင်္ဂလာပါ။ ကျွန်မက Lumi ပါ။ Serenade Singers အကြောင်း၊ membership, volunteers, events, rehearsals, classes နဲ့ voice assessment တွေကို မေးနိုင်ပါတယ်။";
 }
 
-export default function AILumiPage() {
-  const [lumiIntroReady, setLumiIntroReady] = useState(false);
+export default function AIPage() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLumiTyping, setIsLumiTyping] = useState(true);
+  const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setLumiIntroReady(true), 1400);
+    const timer = window.setTimeout(() => {
+      setMessages([
+        {
+          id: Date.now(),
+          role: "lumi",
+          text: "မင်္ဂလာပါ။ ကျွန်မက Lumi ပါ။ Serenade Singers အကြောင်း၊ member, volunteer, events, rehearsals, classes နဲ့ voice assessment မေးနိုင်ပါတယ်။",
+          time: getTime(),
+        },
+      ]);
+      setIsLumiTyping(false);
+    }, 1300);
+
     return () => window.clearTimeout(timer);
   }, []);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: "Lumi",
-      content: "မင်္ဂလာပါ။ Serenade Singers Lumi မှ ကြိုဆိုပါတယ်။ လိုအပ်သောအချက်အလက်များကို မေးမြန်းနိုင်ပါသည်။",
-      time: nowTime(),
-    },
-  ]);
-  const [messageStatus, setMessageStatus] = useState<"delivered" | "seen">("seen");
-
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, loading]);
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLumiTyping]);
 
-  async function sendMessage(customText?: string) {
-    const text = (customText || input).trim();
-    if (!text || loading) return;
+  function sendMessage(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed || isLumiTyping) return;
 
-    setMessages((prev) => [...prev, { role: "user", content: text, time: nowTime() }]);
+    const userId = Date.now();
+
+    setMessages((current) => [
+      ...current,
+      {
+        id: userId,
+        role: "user",
+        text: trimmed,
+        time: getTime(),
+        status: "delivered",
+      },
+    ]);
+
     setInput("");
-    setLoading(true);
 
-    try {
-      const res = await fetch("/api/ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
-      });
+    window.setTimeout(() => {
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === userId ? { ...message, status: "seen" } : message
+        )
+      );
+      setIsLumiTyping(true);
+    }, 800);
 
-      const data = await res.json();
-
-      setMessages((prev) => [
-        ...prev,
+    window.setTimeout(() => {
+      setMessages((current) => [
+        ...current,
         {
-          role: "Lumi",
-          content: data.answer || data.error || "Lumi cannot answer this question right now.",
-          time: nowTime(),
+          id: Date.now() + 1,
+          role: "lumi",
+          text: getLumiReply(trimmed),
+          time: getTime(),
         },
       ]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "Lumi", content: "Connection error. Please try again later.", time: nowTime() },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+      setIsLumiTyping(false);
+    }, 2200);
+  }
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    sendMessage(input);
   }
 
   return (
-    <main style={styles.shell}>
-      <style jsx global>{`
-        html,
-        body {
-          margin: 0;
-          height: 100%;
-          overflow: hidden;
-          overscroll-behavior: none;
-        }
+    <main style={styles.page}>
+      <section style={styles.header}>
+        <p style={styles.kicker}>SERENADE SINGERS</p>
+        <h1 style={styles.title}>Lumi</h1>
+        <LumiHeaderMascot isTyping={isLumiTyping} />
+      </section>
 
-        @keyframes aiDotBounce {
-          0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
-          40% { transform: translateY(-5px); opacity: 1; }
-        }
-      `}</style>
-
-      <header style={styles.chatHeader}>
-        <div>
-          <p style={styles.kicker}>Serenade Singers</p>
-          <h1 style={styles.title}>Lumi</h1>
-<LumiHeaderMascot />
-        </div>
-      </header>
-
-      <div style={styles.faqRow}>
-        {suggestions.map((item) => (
-          <button key={item} onClick={() => sendMessage(item)} style={styles.faqChip}>
-            {item}
+      <div style={styles.quickRow}>
+        {quickQuestions.map((question) => (
+          <button
+            key={question}
+            type="button"
+            style={styles.quickButton}
+            onClick={() => sendMessage(question)}
+            disabled={isLumiTyping}
+          >
+            {question}
           </button>
         ))}
       </div>
 
-      <section style={styles.messages}>
-        {messages.map((message, index) => (
+      <section style={styles.chatBox}>
+        {messages.map((message) => (
           <div
-            key={index}
+            key={message.id}
             style={{
               ...styles.messageRow,
               justifyContent: message.role === "user" ? "flex-end" : "flex-start",
             }}
           >
+            {message.role === "lumi" && <div style={styles.avatar}>♪</div>}
+
             <div
               style={{
                 ...styles.bubble,
-                background: message.role === "user" ? "#061A2F" : "#FFFFFF",
-                color: message.role === "user" ? "#FFFFFF" : "#0F172A",
-                border: message.role === "user" ? "none" : "1px solid #E2E8F0",
+                ...(message.role === "user" ? styles.userBubble : styles.lumiBubble),
               }}
             >
-              <div>{renderMessage(message.content)}</div>
-              <small style={styles.time}>{message.time}</small>
+              <p style={styles.messageText}>{message.text}</p>
+              <div style={styles.metaRow}>
+                <span>{message.time}</span>
+                {message.role === "user" && (
+                  <span style={styles.status}>
+                    {message.status === "seen" ? "Seen" : "Delivered"}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ))}
 
-        {loading && (
+        {isLumiTyping && (
           <div style={{ ...styles.messageRow, justifyContent: "flex-start" }}>
-            <div style={{ ...styles.bubble, ...styles.typingBubble }}>
-              <span>Typing</span>
-              <span style={styles.dots}>
-                <span style={styles.dotOne}>•</span>
-                <span style={styles.dotTwo}>•</span>
-                <span style={styles.dotThree}>•</span>
-              </span>
+            <div style={styles.avatar}>♪</div>
+            <div style={{ ...styles.bubble, ...styles.lumiBubble }}>
+              <div style={styles.typingLine} className="lumiTypingDots">
+                <span>Lumi is typing</span>
+                <i />
+                <i />
+                <i />
+              </div>
             </div>
           </div>
         )}
 
-        <div ref={bottomRef} />
+        <div ref={endRef} />
       </section>
 
-      <section style={styles.inputBar}>
+      <form onSubmit={handleSubmit} style={styles.form}>
         <textarea
           value={input}
-          onChange={(event) => setInput(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              sendMessage();
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type your question..."
+          style={styles.input}
+          rows={3}
+          disabled={isLumiTyping}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage(input);
             }
           }}
-          placeholder="Type your question..."
-          style={styles.textarea}
         />
-
-        <button
-          onClick={() => sendMessage()}
-          disabled={loading || !input.trim()}
-          style={{ ...styles.sendButton, opacity: loading || !input.trim() ? 0.6 : 1 }}
-        >
+        <button type="submit" style={styles.sendButton} disabled={isLumiTyping || !input.trim()}>
           Send
         </button>
-      </section>
+      </form>
+    <style jsx>{`
+        .lumiTypingDots i {
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background: #c9a24a;
+          display: inline-block;
+          animation: lumiDot 1s ease-in-out infinite;
+        }
+
+        .lumiTypingDots i:nth-child(3) {
+          animation-delay: .15s;
+        }
+
+        .lumiTypingDots i:nth-child(4) {
+          animation-delay: .3s;
+        }
+
+        @keyframes lumiDot {
+          0%, 100% { opacity: .35; transform: translateY(0); }
+          50% { opacity: 1; transform: translateY(-4px); }
+        }
+      `}</style>
     </main>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  shell: {
-    height: "calc(100dvh - 96px)",
-    minHeight: 0,
-    width: "100%",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-    background: "#F8FAFC",
+  page: {
+    minHeight: "100dvh",
+    padding: "28px 18px 110px",
+    background: "#f8fafc",
+    color: "#061a2f",
   },
-  chatHeader: {
-    flexShrink: 0,
-    padding: "10px 16px",
-    borderBottom: "1px solid #E2E8F0",
-    background: "#FFFFFF",
+  header: {
+    maxWidth: 960,
+    margin: "0 auto",
   },
   kicker: {
     margin: 0,
-    color: "#64748B",
-    fontSize: 12,
-    fontWeight: 800,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase",
+    color: "#64748b",
+    fontWeight: 950,
+    letterSpacing: "0.14em",
+    fontSize: 14,
   },
   title: {
-    margin: "2px 0 0",
-    color: "#061A2F",
-    fontSize: 20,
+    margin: "8px 0 0",
+    fontSize: "clamp(2.4rem, 8vw, 4.2rem)",
     fontWeight: 950,
+    letterSpacing: "-0.05em",
   },
-  faqRow: {
-    flexShrink: 0,
+  quickRow: {
+    maxWidth: 960,
+    margin: "10px auto 18px",
     display: "flex",
-    gap: 8,
+    gap: 12,
     overflowX: "auto",
-    padding: "10px 12px",
-    background: "#F8FAFC",
+    paddingBottom: 8,
   },
-  faqChip: {
-    flexShrink: 0,
-    border: "1px solid #CBD5E1",
-    background: "#FFFFFF",
-    color: "#0F172A",
-    padding: "8px 12px",
-    borderRadius: 999,
-    fontSize: 14,
-    fontWeight: 800,
+  quickButton: {
     whiteSpace: "nowrap",
+    border: "1px solid #cbd5e1",
+    background: "#ffffff",
+    color: "#061a2f",
+    borderRadius: 999,
+    padding: "14px 18px",
+    fontWeight: 900,
+    fontSize: 15,
     cursor: "pointer",
   },
-  messages: {
-    flex: 1,
-    minHeight: 0,
-    overflowY: "auto",
-    padding: "12px",
+  chatBox: {
+    maxWidth: 960,
+    minHeight: "46dvh",
+    margin: "0 auto",
+    display: "grid",
+    gap: 14,
+    alignContent: "start",
+  },
+  messageRow: {
     display: "flex",
-    flexDirection: "column",
-    gap: 12,
-    overscrollBehavior: "contain",
+    alignItems: "flex-end",
+    gap: 10,
   },
-  messageRow: { display: "flex", width: "100%" },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: "50%",
+    display: "grid",
+    placeItems: "center",
+    background: "linear-gradient(135deg, #061a2f, #12355b)",
+    border: "2px solid rgba(201,162,74,.75)",
+    color: "#f8d77a",
+    fontSize: 22,
+    fontWeight: 950,
+    flex: "0 0 auto",
+  },
   bubble: {
-    maxWidth: "84%",
-    padding: "12px 14px",
-    borderRadius: 18,
-    lineHeight: 1.7,
-    whiteSpace: "pre-wrap",
-    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.06)",
-    fontSize: 15,
+    maxWidth: "min(720px, 82vw)",
+    borderRadius: 24,
+    padding: "16px 18px",
+    boxShadow: "0 16px 38px rgba(6,26,47,.08)",
   },
-  time: { display: "block", marginTop: 7, opacity: 0.65, fontSize: 11 },
-  typingBubble: {
-    background: "#FFFFFF",
-    border: "1px solid #E2E8F0",
-    color: "#64748B",
+  lumiBubble: {
+    background: "#ffffff",
+    border: "1px solid #e2e8f0",
+    borderBottomLeftRadius: 8,
+  },
+  userBubble: {
+    background: "#061a2f",
+    color: "#ffffff",
+    borderBottomRightRadius: 8,
+  },
+  messageText: {
+    margin: 0,
+    fontSize: 16,
+    lineHeight: 1.75,
+    fontWeight: 650,
+  },
+  metaRow: {
+    marginTop: 8,
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 16,
+    color: "#94a3b8",
+    fontSize: 12,
     fontWeight: 800,
   },
-  dots: { marginLeft: 8, display: "inline-flex", gap: 3 },
-  dotOne: { animation: "aiDotBounce 1s infinite ease-in-out" },
-  dotTwo: { animation: "aiDotBounce 1s infinite ease-in-out 0.15s" },
-  dotThree: { animation: "aiDotBounce 1s infinite ease-in-out 0.3s" },
-  inputBar: {
-    flexShrink: 0,
-    display: "grid",
-    gridTemplateColumns: "minmax(0, 1fr) 82px",
-    gap: 10,
-    padding: "10px 12px max(10px, env(safe-area-inset-bottom))",
-    borderTop: "1px solid #E2E8F0",
-    background: "#FFFFFF",
+  status: {
+    color: "#c9a24a",
   },
-  textarea: {
-    width: "100%",
-    minWidth: 0,
-    minHeight: 44,
-    maxHeight: 96,
-    resize: "none",
-    boxSizing: "border-box",
-    padding: "10px 12px",
-    borderRadius: 14,
-    border: "1px solid #CBD5E1",
+  typingLine: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    color: "#64748b",
+    fontWeight: 900,
+  },
+  form: {
+    position: "fixed",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: "12px 18px 18px",
+    background: "rgba(248,250,252,.94)",
+    backdropFilter: "blur(12px)",
+    borderTop: "1px solid #e2e8f0",
+  },
+  input: {
+    display: "block",
+    width: "min(960px, 100%)",
+    margin: "0 auto 10px",
+    border: "1px solid #cbd5e1",
+    borderRadius: 18,
+    padding: 16,
+    fontSize: 16,
     outline: "none",
-    fontSize: 15,
-    lineHeight: 1.45,
+    resize: "none",
+    background: "#ffffff",
   },
   sendButton: {
-    border: "none",
-    borderRadius: 14,
-    background: "#061A2F",
-    color: "#FFFFFF",
+    display: "block",
+    width: "min(960px, 100%)",
+    margin: "0 auto",
+    border: 0,
+    borderRadius: 999,
+    padding: "12px 18px",
+    background: "#061a2f",
+    color: "#ffffff",
     fontWeight: 950,
+    fontSize: 16,
     cursor: "pointer",
-    fontSize: 15,
   },
-};
-
-
-const lumiAvatarStyle: React.CSSProperties = {
-  width: 42,
-  height: 42,
-  borderRadius: "50%",
-  display: "grid",
-  placeItems: "center",
-  background: "linear-gradient(135deg, #061a2f, #12355b)",
-  border: "2px solid rgba(201,162,74,.75)",
-  boxShadow: "0 12px 28px rgba(6,26,47,.18)",
-  color: "#f8d77a",
-  fontSize: 22,
-  fontWeight: 900,
-};
-
-const lumiTypingStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-  color: "#64748b",
-  fontWeight: 800,
 };
