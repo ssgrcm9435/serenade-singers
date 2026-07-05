@@ -4921,3 +4921,89 @@ select:focus {
     font-size: 13px !important;
   }
 }
+
+/* Final Lumi Mobile Floating Fix */
+@media (max-width: 768px) {
+  [data-lumi-floating],
+  .floating-ai-mascot,
+  .lumi-floating-mascot {
+    position: fixed !important;
+    right: 12px !important;
+    left: auto !important;
+    bottom: 18px !important;
+    width: 76px !important;
+    height: 76px !important;
+    max-width: 76px !important;
+    max-height: 76px !important;
+    z-index: 40 !important;
+    transform: none !important;
+  }
+
+  [data-lumi-floating] img,
+  .floating-ai-mascot img,
+  .lumi-floating-mascot img {
+    width: 76px !important;
+    height: 76px !important;
+    object-fit: contain !important;
+  }
+
+  .lumiTapBubble {
+    right: 0 !important;
+    left: auto !important;
+    bottom: 82px !important;
+    width: 190px !important;
+    min-width: 0 !important;
+    max-width: calc(100vw - 32px) !important;
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+    text-align: left !important;
+    border-radius: 18px !important;
+    z-index: 41 !important;
+  }
+
+  .lumiTapReaction {
+    font-size: 18px !important;
+  }
+
+  body {
+    overflow-x: hidden !important;
+  }
+}
+
+@media (max-width: 420px) {
+  [data-lumi-floating],
+  .floating-ai-mascot,
+  .lumi-floating-mascot {
+    width: 64px !important;
+    height: 64px !important;
+    max-width: 64px !important;
+    max-height: 64px !important;
+    right: 10px !important;
+    bottom: 14px !important;
+  }
+
+  [data-lumi-floating] img,
+  .floating-ai-mascot img,
+  .lumi-floating-mascot img {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .lumiTapBubble {
+    bottom: 70px !important;
+    width: 170px !important;
+    font-size: 11.5px !important;
+  }
+}
+
+/* Prevent floating Lumi from covering footer text too much */
+footer {
+  padding-bottom: 120px !important;
+}
+
+@media (min-width: 769px) {
+  footer {
+    padding-bottom: initial;
+  }
+}
