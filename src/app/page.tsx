@@ -1,3 +1,4 @@
+import FloatingAIAnimal from "@/components/FloatingAIAnimal";
 import Image from "next/image";
 import { site } from "@/data/site";
 import RecentEventGallery from "@/components/RecentEventGallery";
@@ -146,6 +147,7 @@ export default function Home() {
 
           <RecentEventGallery />
     
+  <FloatingAIAnimal />
 </main>
   );
 }
