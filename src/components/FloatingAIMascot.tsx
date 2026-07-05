@@ -70,7 +70,7 @@ export default function FloatingAIMascot() {
         </div>
 
         <div className={`centerBubble ${showCenterContent ? "visible" : ""}`}>
-          <strong>Hello!</strong>
+          <strong>Hello, I'm Lumi!</strong>
           <span>I can help you explore Serenade Singers.</span>
         </div>
 
