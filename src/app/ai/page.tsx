@@ -565,7 +565,7 @@ Type Submit to save to Registration, or Cancel to stop.`;
   }
 
   return (
-    <main style={styles.shell}>
+    <main data-lumi-page="true" style={styles.shell}>
       <style jsx global>{`
         html,
         body {
@@ -587,7 +587,8 @@ Type Submit to save to Registration, or Cancel to stop.`;
             opacity: 1;
           }
         }
-      `}</style>
+      `}
+      </style>
 
       <header style={styles.chatHeader}>
         <LumiHeaderMascot isTyping={isLumiTyping} />
@@ -680,7 +681,7 @@ Type Submit to save to Registration, or Cancel to stop.`;
 
 const styles: Record<string, React.CSSProperties> = {
   shell: {
-    height: "calc(100dvh - 96px)",
+    height: "calc(100dvh - 88px)",
     minHeight: 0,
     width: "100%",
     overflow: "hidden",
@@ -724,7 +725,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     gap: 8,
     overflowX: "auto",
-    padding: "10px 12px",
+    padding: "10px 16px",
     background: "#F8FAFC",
   },
   faqChip: {
@@ -766,7 +767,7 @@ const styles: Record<string, React.CSSProperties> = {
     flex: "0 0 auto",
   },
   bubble: {
-    maxWidth: "min(760px, 82vw)",
+    maxWidth: "min(720px, 78vw)",
     borderRadius: 24,
     padding: "13px 15px",
     boxShadow: "0 14px 34px rgba(15,23,42,.08)",

@@ -4715,3 +4715,48 @@ select:focus {
     width: 100%;
   }
 }
+
+/* Lumi Mobile UI Fix */
+@media (max-width: 768px) {
+  .lumi-floating-mascot,
+  [data-lumi-floating],
+  .floating-ai-mascot {
+    width: 86px !important;
+    height: 86px !important;
+    left: 10px !important;
+    bottom: 78px !important;
+    transform: none !important;
+    opacity: 0.92 !important;
+    z-index: 30 !important;
+  }
+
+  .lumi-floating-mascot img,
+  [data-lumi-floating] img,
+  .floating-ai-mascot img {
+    width: 86px !important;
+    height: 86px !important;
+    object-fit: contain !important;
+  }
+
+  body:has([data-lumi-page]) {
+    overflow: hidden !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .lumi-floating-mascot,
+  [data-lumi-floating],
+  .floating-ai-mascot {
+    width: 72px !important;
+    height: 72px !important;
+    left: 8px !important;
+    bottom: 72px !important;
+  }
+
+  .lumi-floating-mascot img,
+  [data-lumi-floating] img,
+  .floating-ai-mascot img {
+    width: 72px !important;
+    height: 72px !important;
+  }
+}
