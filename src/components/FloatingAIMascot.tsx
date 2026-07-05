@@ -38,17 +38,34 @@ export default function FloatingAIMascot() {
       </div>
 
       <style jsx>{`
-        .aiMascot {
-          position: fixed;
-          right: 24px;
-          bottom: 96px;
-          z-index: 80;
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          text-decoration: none;
-          animation: floatMascot 4.2s ease-in-out infinite;
-        }
+        
+.aiMascot {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  left: auto;
+  top: auto;
+
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+
+  z-index: 99999;
+
+  text-decoration: none;
+
+  pointer-events: auto;
+
+  animation: floatMascot 4s ease-in-out infinite;
+}
+
+@media (max-width:768px){
+  .aiMascot{
+    right:16px;
+    bottom:16px;
+  }
+}
+
 
         .speechBubble {
           width: min(250px, 58vw);
