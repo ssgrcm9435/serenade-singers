@@ -1,5 +1,6 @@
 "use client";
 
+import LumiHeaderMascot from "@/components/LumiHeaderMascot";
 import { useEffect, useRef, useState } from "react";
 
 type ChatMessage = {
@@ -124,6 +125,7 @@ export default function AILumiPage() {
         <div>
           <p style={styles.kicker}>Serenade Singers</p>
           <h1 style={styles.title}>Lumi</h1>
+<LumiHeaderMascot />
         </div>
       </header>
 
