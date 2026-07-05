@@ -15,7 +15,7 @@ export default function RecentEventGallery() {
           </div>
 
           <Link
-            href="/events/EVT-2026-001-BLIND-SCHOOL"
+            href="/events/EVT-2026-001"
             style={styles.button}
           >
             View Gallery
@@ -23,11 +23,11 @@ export default function RecentEventGallery() {
         </div>
 
         <Link
-          href="/events/EVT-2026-001-BLIND-SCHOOL"
+          href="/events/EVT-2026-001"
           style={styles.coverWrap}
         >
           <img
-            src="/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg"
+            src="/events/EVT-2026-001/cover.jpg"
             alt="Blind School Visit"
             style={styles.cover}
           />

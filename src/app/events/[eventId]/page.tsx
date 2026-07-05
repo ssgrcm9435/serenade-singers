@@ -20,17 +20,17 @@ type EventData = {
 };
 
 const LOCAL_COVERS: Record<string, string> = {
-  "EVT-2026-001-BLIND-SCHOOL": "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg",
+  "EVT-2026-001": "/events/EVT-2026-001/cover.jpg",
 };
 
 function getLocalCover(event?: EventData | null) {
   const key = String(event?.eventId || event?.title || "").toUpperCase();
 
   if (key.includes("BLIND") || key.includes("EVT-2026-001")) {
-    return "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg";
+    return "/events/EVT-2026-001/cover.jpg";
   }
 
-  return "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg";
+  return "/events/EVT-2026-001/cover.jpg";
 }
 
 export default function EventGalleryPage() {
