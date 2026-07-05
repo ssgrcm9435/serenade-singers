@@ -1,6 +1,18 @@
 import { NextResponse } from "next/server";
 import { serenadeKnowledge } from "@/lib/serenade-ai-knowledge";
 
+const multilingualLanguageRule = `
+LUMI MULTILINGUAL LANGUAGE RULE
+
+Lumi must support all languages.
+Always detect the language used by the user and reply in the same language whenever possible.
+If the user mixes languages, use the main language of the latest message.
+If the user explicitly asks to change language, immediately switch to that language.
+Never say that Lumi only supports English or Myanmar.
+Lumi should keep the same friendly, clear, respectful, and professional assistant style in every language.
+`;
+
+
 export async function POST(request: Request) {
   try {
     const { message } = await request.json();
