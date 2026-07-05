@@ -272,6 +272,25 @@ export default function LumiPage() {
         </button>
       </form>
     <style dangerouslySetInnerHTML={{ __html: lumiInteractionCss }} />
+
+<style jsx global>{`
+  .messageStatus {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: opacity .18s ease, visibility .18s ease, max-height .18s ease;
+  }
+
+  .userMessageWrap:hover .messageStatus,
+  .userMessageWrap:active .messageStatus,
+  .userMessageWrap:focus-within .messageStatus {
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-height: 20px !important;
+  }
+`}</style>
+
 </main>
   );
 }
