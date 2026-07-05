@@ -119,7 +119,7 @@ export default function LumiPage() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       pushLumi(
-        "Hello, I'm Lumi.\n\nMember / Volunteer signup ကို Lumi ကနေ step by step ဖြည့်ပေးနိုင်ပါတယ်။ Gmail verification code ပို့ပြီး Registration ထဲအထိ submit လုပ်ပေးနိုင်ပါတယ်။"
+        "Hello, I'm Lumi.\n\nကျွန်မက Serenade Singers အတွက် အောက်ပါအရာတွေကို ကူညီပေးနိုင်ပါတယ်။\n\n• Member signup ကို step by step ဖြည့်ပေးနိုင်ပါတယ်\n• Volunteer application ဖြည့်ပေးနိုင်ပါတယ်\n• Gmail verification code ပို့ပြီး verify လုပ်ပေးနိုင်ပါတယ်\n• Profile photo upload လုပ်ခိုင်းပြီး registration ပြီးဆုံးအောင် ကူညီပေးနိုင်ပါတယ်\n• Events, meetings, choir information နဲ့ member guidance တွေ မေးလို့ရပါတယ်။\n\nစချင်ရင် “Member signup with Lumi” သို့မဟုတ် “Volunteer signup with Lumi” ကို နှိပ်ပါ။"
       );
       setIsLumiTyping(false);
     }, 900);
@@ -341,7 +341,7 @@ Type Submit to save to Registration, or Cancel to stop.`;
     }
 
     if (signupStep === "program") {
-      updateAndAsk("program", "profilePhoto", "Profile photo upload လုပ်ပေးပါ။ အောက်က Upload Photo ခလုတ်ကိုနှိပ်ပါ။");
+      updateAndAsk("program", "profilePhoto", "Profile photo upload လုပ်ပေးပါ။ Lumi message ထဲက Upload Profile Photo button ကိုနှိပ်ပါ။");
       return true;
     }
 
@@ -379,7 +379,7 @@ Type Submit to save to Registration, or Cancel to stop.`;
         return true;
       }
 
-      setBusyLabel("Creating your account...");
+      setBusyLabel("Finalizing your registration...");
       setIsLumiTyping(true);
 
       try {
@@ -518,11 +518,6 @@ Type Submit to save to Registration, or Cancel to stop.`;
       `}</style>
 
       <header style={styles.chatHeader}>
-        <div style={styles.headerText}>
-          <p style={styles.kicker}>Serenade Singers AI Assistant</p>
-          <h1 style={styles.title}>Lumi</h1>
-          <p style={styles.subtitle}>Chat • Gmail OTP • Photo Upload • Registration Signup</p>
-        </div>
         <LumiHeaderMascot isTyping={isLumiTyping} />
       </header>
 
@@ -549,6 +544,24 @@ Type Submit to save to Registration, or Cancel to stop.`;
           </div>
         ))}
 
+        {signupStep === "profilePhoto" && !isLumiTyping && (
+          <div style={{ ...styles.messageRow, justifyContent: "flex-start" }}>
+            <div style={styles.avatar}>♪</div>
+            <div style={{ ...styles.bubble, ...styles.lumiBubble }}>
+              <div style={styles.messageText}>
+                Profile photo ကို upload လုပ်ပေးပါ။ အောက်က button ကိုနှိပ်ပြီး photo ရွေးပါ။
+              </div>
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                style={styles.inlineUploadButton}
+              >
+                Upload Profile Photo
+              </button>
+            </div>
+          </div>
+        )}
+
         {isLumiTyping && (
           <div style={{ ...styles.messageRow, justifyContent: "flex-start" }}>
             <div style={styles.avatar}>♪</div>
@@ -570,15 +583,6 @@ Type Submit to save to Registration, or Cancel to stop.`;
 
       <form onSubmit={handleSubmit} style={styles.inputBar}>
         <input ref={photoInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handlePhotoUpload} style={{ display: "none" }} />
-
-        <button
-          type="button"
-          onClick={() => photoInputRef.current?.click()}
-          disabled={isLumiTyping || signupStep !== "profilePhoto"}
-          style={{ ...styles.uploadButton, opacity: signupStep === "profilePhoto" && !isLumiTyping ? 1 : 0.48 }}
-        >
-          Upload Photo
-        </button>
 
         <textarea
           value={input}
@@ -614,7 +618,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   chatHeader: {
     flexShrink: 0,
-    padding: "12px 16px",
+    padding: "14px 16px",
     borderBottom: "1px solid #E2E8F0",
     background: "#FFFFFF",
     display: "flex",
