@@ -4,27 +4,36 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const messages = [
-  "Need help joining Serenade Singers?",
+  "Welcome to Serenade Singers.",
   "Ask about events, classes, or rehearsals.",
-  "I can guide members and volunteers.",
-  "Voice assessment and practice info available.",
-  "Tap me for a little welcome performance.",
+  "Need help joining as a member?",
+  "Voice assessment and practice guidance available.",
+  "Tap me to continue with AI Assistant.",
 ];
+
+type IntroState = "flight-in" | "center-show" | "fly-corner" | "idle";
 
 export default function FloatingAIMascot() {
   const pathname = usePathname();
   const router = useRouter();
   const isAIPage = pathname === "/ai" || pathname?.startsWith("/ai/");
 
+  const [introState, setIntroState] = useState<IntroState>("flight-in");
   const [messageIndex, setMessageIndex] = useState(0);
-  const [hatched, setHatched] = useState(false);
   const [stageOpen, setStageOpen] = useState(false);
 
   useEffect(() => {
     if (isAIPage) return;
 
-    const hatchTimer = window.setTimeout(() => setHatched(true), 1200);
-    return () => window.clearTimeout(hatchTimer);
+    const t1 = window.setTimeout(() => setIntroState("center-show"), 1100);
+    const t2 = window.setTimeout(() => setIntroState("fly-corner"), 5200);
+    const t3 = window.setTimeout(() => setIntroState("idle"), 6500);
+
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+    };
   }, [isAIPage]);
 
   useEffect(() => {
@@ -39,19 +48,39 @@ export default function FloatingAIMascot() {
 
   if (isAIPage) return null;
 
+  const isCenter = introState === "flight-in" || introState === "center-show" || introState === "fly-corner";
+  const showCenterContent = introState === "center-show";
+  const showCornerBubble = introState === "idle";
+
   return (
     <>
       <button
         type="button"
-        className="aiMascot"
-        aria-label="Open AI Mascot Performance"
-        onClick={() => setStageOpen(true)}
+        className={`mascotButton ${isCenter ? "centerMode" : "cornerMode"} ${introState}`}
+        aria-label="Open AI Assistant Mascot"
+        onClick={() => {
+          if (introState === "idle") setStageOpen(true);
+        }}
       >
-        <div className={`speechBubble ${hatched ? "showBubble" : ""}`}>
+        <div className={`speechBubble cornerBubble ${showCornerBubble ? "visible" : ""}`}>
           {messages[messageIndex]}
         </div>
 
-        <MascotBody hatched={hatched} small />
+        <div className={`centerBubble ${showCenterContent ? "visible" : ""}`}>
+          <strong>Hello!</strong>
+          <span>I can help you explore Serenade Singers.</span>
+        </div>
+
+        <div className={`noteField ${showCenterContent ? "visible" : ""}`} aria-hidden="true">
+          <span>♪</span>
+          <span>♫</span>
+          <span>♬</span>
+          <span>♩</span>
+          <span>𝄞</span>
+          <span>♪</span>
+        </div>
+
+        <MascotBody large={isCenter} dancing={showCenterContent} />
       </button>
 
       {stageOpen && (
@@ -60,14 +89,13 @@ export default function FloatingAIMascot() {
             <button
               type="button"
               className="closeButton"
-              aria-label="Close mascot performance"
+              aria-label="Close mascot dialog"
               onClick={() => setStageOpen(false)}
             >
               ×
             </button>
 
-            <div className="stageLights" />
-            <div className="musicNotes">
+            <div className="stageNotes" aria-hidden="true">
               <span>♪</span>
               <span>♫</span>
               <span>♬</span>
@@ -75,13 +103,14 @@ export default function FloatingAIMascot() {
               <span>𝄞</span>
             </div>
 
-            <div className="centerMascot">
-              <MascotBody hatched small={false} />
+            <div className="stageMascot">
+              <MascotBody large dancing />
             </div>
 
-            <h2 className="stageTitle">Welcome to Serenade Singers</h2>
-            <p className="stageText">
-              I can help you with events, classes, membership, volunteers, rehearsals, and voice assessment.
+            <h2>How can I help?</h2>
+            <p>
+              I can guide you about Serenade Singers events, membership, classes, rehearsals,
+              volunteers, and voice assessment.
             </p>
 
             <div className="stageActions">
@@ -97,25 +126,46 @@ export default function FloatingAIMascot() {
       )}
 
       <style jsx>{`
-        .aiMascot {
+        .mascotButton {
           position: fixed !important;
+          z-index: 2147483647 !important;
+          border: 0;
+          padding: 0;
+          background: transparent;
+          cursor: pointer;
+          pointer-events: auto;
+        }
+
+        .centerMode {
+          left: 50% !important;
+          top: 50% !important;
+          right: auto !important;
+          bottom: auto !important;
+          transform: translate(-50%, -50%);
+        }
+
+        .cornerMode {
           right: 24px !important;
           bottom: 24px !important;
           left: auto !important;
           top: auto !important;
-          z-index: 2147483647 !important;
           display: flex;
           align-items: flex-end;
           justify-content: flex-end;
           gap: 14px;
-          width: auto;
-          height: auto;
-          max-width: calc(100vw - 32px);
-          border: 0;
-          background: transparent;
-          padding: 0;
-          cursor: pointer;
-          animation: enterMascot 0.45s ease-out both, floatMascot 4s ease-in-out 1.4s infinite;
+          animation: cornerFloat 4s ease-in-out infinite;
+        }
+
+        .flight-in {
+          animation: flyInToCenter 1.1s cubic-bezier(.2,.9,.25,1) both;
+        }
+
+        .center-show {
+          animation: centerDance 1.2s ease-in-out infinite;
+        }
+
+        .fly-corner {
+          animation: flyBackToCorner 1.3s cubic-bezier(.25,.9,.25,1) both;
         }
 
         .speechBubble {
@@ -135,10 +185,74 @@ export default function FloatingAIMascot() {
           transition: opacity 0.35s ease, transform 0.35s ease;
         }
 
-        .showBubble {
+        .cornerBubble.visible {
           opacity: 1;
           transform: translateX(0) scale(1);
         }
+
+        .centerBubble {
+          position: absolute;
+          left: 50%;
+          bottom: calc(100% + 22px);
+          width: min(340px, 78vw);
+          transform: translateX(-50%) translateY(10px) scale(.96);
+          padding: 16px 18px;
+          border-radius: 26px;
+          background: rgba(255, 255, 255, 0.98);
+          border: 1px solid rgba(201, 162, 74, 0.45);
+          box-shadow: 0 22px 58px rgba(6, 26, 47, 0.20);
+          color: #061a2f;
+          opacity: 0;
+          transition: opacity .35s ease, transform .35s ease;
+        }
+
+        .centerBubble strong {
+          display: block;
+          font-size: 22px;
+          font-weight: 950;
+          margin-bottom: 4px;
+        }
+
+        .centerBubble span {
+          display: block;
+          font-size: 14px;
+          font-weight: 750;
+          line-height: 1.55;
+          color: #475569;
+        }
+
+        .centerBubble.visible {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0) scale(1);
+        }
+
+        .noteField {
+          position: absolute;
+          inset: -150px;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity .35s ease;
+        }
+
+        .noteField.visible {
+          opacity: 1;
+        }
+
+        .noteField span {
+          position: absolute;
+          color: #c9a24a;
+          font-size: 34px;
+          font-weight: 950;
+          opacity: 0;
+          animation: noteFloat 2.8s ease-in-out infinite;
+        }
+
+        .noteField span:nth-child(1) { left: 12%; top: 48%; animation-delay: 0s; }
+        .noteField span:nth-child(2) { right: 12%; top: 42%; animation-delay: .25s; }
+        .noteField span:nth-child(3) { left: 26%; top: 18%; animation-delay: .5s; }
+        .noteField span:nth-child(4) { right: 26%; top: 16%; animation-delay: .75s; }
+        .noteField span:nth-child(5) { left: 46%; top: 4%; animation-delay: 1s; }
+        .noteField span:nth-child(6) { right: 42%; top: 64%; animation-delay: 1.25s; }
 
         .stageOverlay {
           position: fixed;
@@ -149,23 +263,23 @@ export default function FloatingAIMascot() {
           padding: 20px;
           background: rgba(6, 26, 47, 0.58);
           backdrop-filter: blur(10px);
-          animation: fadeIn 0.25s ease both;
+          animation: fadeIn .25s ease both;
         }
 
         .stageCard {
           position: relative;
           width: min(520px, 94vw);
-          min-height: 520px;
+          min-height: 500px;
           overflow: hidden;
           border-radius: 34px;
-          padding: 44px 28px 30px;
+          padding: 42px 28px 30px;
           text-align: center;
           background:
             radial-gradient(circle at 50% 18%, rgba(248, 215, 122, 0.34), transparent 34%),
             linear-gradient(180deg, #ffffff, #f8f6f2);
           border: 1px solid rgba(248, 215, 122, 0.5);
           box-shadow: 0 34px 90px rgba(0, 0, 0, 0.34);
-          animation: stagePop 0.38s cubic-bezier(.2,1.2,.35,1) both;
+          animation: stagePop .38s cubic-bezier(.2,1.2,.35,1) both;
         }
 
         .closeButton {
@@ -184,59 +298,46 @@ export default function FloatingAIMascot() {
           z-index: 3;
         }
 
-        .stageLights {
-          position: absolute;
-          left: 50%;
-          top: -130px;
-          width: 320px;
-          height: 320px;
-          transform: translateX(-50%);
-          border-radius: 999px;
-          background: radial-gradient(circle, rgba(248, 215, 122, 0.52), transparent 62%);
-          animation: pulseLight 2.4s ease-in-out infinite;
-        }
-
-        .musicNotes {
+        .stageNotes {
           position: absolute;
           inset: 0;
           pointer-events: none;
         }
 
-        .musicNotes span {
+        .stageNotes span {
           position: absolute;
           color: #c9a24a;
           font-size: 32px;
           font-weight: 950;
           opacity: 0;
-          animation: floatNote 3s ease-in-out infinite;
+          animation: noteFloat 3s ease-in-out infinite;
         }
 
-        .musicNotes span:nth-child(1) { left: 18%; top: 28%; animation-delay: 0s; }
-        .musicNotes span:nth-child(2) { right: 18%; top: 26%; animation-delay: .35s; }
-        .musicNotes span:nth-child(3) { left: 24%; top: 52%; animation-delay: .7s; }
-        .musicNotes span:nth-child(4) { right: 24%; top: 54%; animation-delay: 1.05s; }
-        .musicNotes span:nth-child(5) { left: 48%; top: 18%; animation-delay: 1.4s; }
+        .stageNotes span:nth-child(1) { left: 18%; top: 28%; animation-delay: 0s; }
+        .stageNotes span:nth-child(2) { right: 18%; top: 26%; animation-delay: .35s; }
+        .stageNotes span:nth-child(3) { left: 24%; top: 52%; animation-delay: .7s; }
+        .stageNotes span:nth-child(4) { right: 24%; top: 54%; animation-delay: 1.05s; }
+        .stageNotes span:nth-child(5) { left: 48%; top: 18%; animation-delay: 1.4s; }
 
-        .centerMascot {
+        .stageMascot {
           position: relative;
           z-index: 2;
           display: inline-flex;
-          justify-content: center;
           margin-top: 28px;
-          animation: danceMascot 1.15s ease-in-out infinite;
+          animation: centerDance 1.15s ease-in-out infinite;
         }
 
-        .stageTitle {
+        .stageCard h2 {
           position: relative;
           z-index: 2;
-          margin: 28px 0 10px;
+          margin: 26px 0 10px;
           color: #061a2f;
           font-size: clamp(1.6rem, 5vw, 2.2rem);
           font-weight: 950;
           letter-spacing: -0.03em;
         }
 
-        .stageText {
+        .stageCard p {
           position: relative;
           z-index: 2;
           max-width: 410px;
@@ -277,14 +378,56 @@ export default function FloatingAIMascot() {
           color: #061a2f;
         }
 
-        @keyframes enterMascot {
-          from { opacity: 0; transform: translateY(18px) scale(.92); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
+        @keyframes flyInToCenter {
+          0% {
+            left: calc(100vw + 120px);
+            top: calc(100vh + 80px);
+            transform: translate(-50%, -50%) scale(.55) rotate(18deg);
+            opacity: 0;
+          }
+          45% {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(.85) rotate(-8deg);
+          }
+          100% {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(1.15) rotate(0deg);
+            opacity: 1;
+          }
         }
 
-        @keyframes floatMascot {
+        @keyframes flyBackToCorner {
+          0% {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(1.15) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            left: calc(100vw - 62px);
+            top: calc(100vh - 62px);
+            transform: translate(-50%, -50%) scale(.72) rotate(8deg);
+            opacity: 1;
+          }
+        }
+
+        @keyframes cornerFloat {
           0%, 100% { translate: 0 0; }
           50% { translate: 0 -11px; }
+        }
+
+        @keyframes centerDance {
+          0%, 100% { transform: translate(-50%, -50%) scale(1.15) rotate(-2deg); }
+          25% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); }
+          50% { transform: translate(-50%, -50%) scale(1.15) rotate(0deg); }
+          75% { transform: translate(-50%, -50%) scale(1.2) rotate(-5deg); }
+        }
+
+        @keyframes noteFloat {
+          0% { opacity: 0; transform: translateY(18px) scale(.8) rotate(0deg); }
+          35% { opacity: 1; }
+          100% { opacity: 0; transform: translateY(-72px) scale(1.18) rotate(18deg); }
         }
 
         @keyframes fadeIn {
@@ -297,26 +440,8 @@ export default function FloatingAIMascot() {
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        @keyframes pulseLight {
-          0%, 100% { opacity: .55; transform: translateX(-50%) scale(.95); }
-          50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
-        }
-
-        @keyframes danceMascot {
-          0%, 100% { transform: translateY(0) rotate(-2deg) scale(1.35); }
-          25% { transform: translateY(-10px) rotate(5deg) scale(1.4); }
-          50% { transform: translateY(0) rotate(0deg) scale(1.35); }
-          75% { transform: translateY(-8px) rotate(-5deg) scale(1.4); }
-        }
-
-        @keyframes floatNote {
-          0% { opacity: 0; transform: translateY(18px) scale(.8) rotate(0deg); }
-          35% { opacity: 1; }
-          100% { opacity: 0; transform: translateY(-72px) scale(1.18) rotate(18deg); }
-        }
-
         @media (max-width: 720px) {
-          .aiMascot {
+          .cornerMode {
             right: 14px !important;
             bottom: 14px !important;
             gap: 9px;
@@ -326,6 +451,10 @@ export default function FloatingAIMascot() {
             width: min(185px, 52vw);
             padding: 11px 13px;
             font-size: 12px;
+          }
+
+          .centerBubble {
+            width: min(300px, 82vw);
           }
 
           .stageCard {
@@ -338,93 +467,22 @@ export default function FloatingAIMascot() {
   );
 }
 
-function MascotBody({ hatched, small }: { hatched: boolean; small: boolean }) {
+function MascotBody({ large, dancing }: { large: boolean; dancing: boolean }) {
   return (
-    <div className={`hatchStage ${hatched ? "hatched" : ""} ${small ? "small" : "large"}`}>
-      <div className="egg">
-        <div className="crack crackOne" />
-        <div className="crack crackTwo" />
-        <div className="crack crackThree" />
+    <div className={`mascotBody ${large ? "large" : "small"} ${dancing ? "dancing" : ""}`}>
+      <div className="wing leftWing" />
+      <div className="wing rightWing" />
+      <div className="birdFace">
+        <span className="eye" />
+        <span className="eye" />
+        <span className="beak" />
       </div>
-
-      <div className="birdBody" aria-hidden="true">
-        <div className="wing leftWing" />
-        <div className="wing rightWing" />
-        <div className="birdFace">
-          <span className="eye" />
-          <span className="eye" />
-          <span className="beak" />
-        </div>
-        <span className="musicNote">♪</span>
-      </div>
+      <span className="musicNote">♪</span>
 
       <style jsx>{`
-        .hatchStage {
+        .mascotBody {
           position: relative;
           flex: 0 0 auto;
-        }
-
-        .small {
-          width: 76px;
-          height: 76px;
-        }
-
-        .large {
-          width: 128px;
-          height: 128px;
-        }
-
-        .egg {
-          position: absolute;
-          inset: 4px 8px;
-          border-radius: 50% 50% 46% 46%;
-          background:
-            radial-gradient(circle at 35% 24%, rgba(255,255,255,.95) 0 12%, transparent 13%),
-            linear-gradient(145deg, #fff8dc, #f1d98b);
-          border: 2px solid rgba(201, 162, 74, 0.72);
-          box-shadow: 0 18px 44px rgba(6, 26, 47, 0.20);
-          animation: eggWiggle 1.2s ease-in-out both;
-        }
-
-        .crack {
-          position: absolute;
-          background: #8b6f22;
-          opacity: 0;
-          transform-origin: left center;
-          animation: showCrack 0.4s ease forwards;
-        }
-
-        .crackOne {
-          width: 18px;
-          height: 2px;
-          top: 27px;
-          left: 20px;
-          transform: rotate(28deg);
-          animation-delay: 0.45s;
-        }
-
-        .crackTwo {
-          width: 16px;
-          height: 2px;
-          top: 36px;
-          left: 32px;
-          transform: rotate(-34deg);
-          animation-delay: 0.65s;
-        }
-
-        .crackThree {
-          width: 20px;
-          height: 2px;
-          top: 45px;
-          left: 18px;
-          transform: rotate(18deg);
-          animation-delay: 0.85s;
-        }
-
-        .birdBody {
-          position: absolute;
-          right: 5px;
-          bottom: 5px;
           border-radius: 999px;
           display: grid;
           place-items: center;
@@ -433,30 +491,16 @@ function MascotBody({ hatched, small }: { hatched: boolean; small: boolean }) {
             linear-gradient(135deg, #061a2f, #12355b);
           border: 2px solid rgba(248, 215, 122, 0.82);
           box-shadow: 0 18px 44px rgba(6, 26, 47, 0.28);
-          opacity: 0;
-          transform: scale(0.35) translateY(18px);
-          transition: transform 0.42s cubic-bezier(.2,1.35,.45,1), opacity 0.28s ease;
         }
 
-        .small .birdBody {
+        .small {
           width: 66px;
           height: 66px;
         }
 
-        .large .birdBody {
+        .large {
           width: 118px;
           height: 118px;
-        }
-
-        .hatched .egg {
-          opacity: 0;
-          transform: scale(0.75) translateY(10px);
-          transition: opacity 0.28s ease, transform 0.28s ease;
-        }
-
-        .hatched .birdBody {
-          opacity: 1;
-          transform: scale(1) translateY(0);
         }
 
         .birdFace {
@@ -518,7 +562,7 @@ function MascotBody({ hatched, small }: { hatched: boolean; small: boolean }) {
         .rightWing {
           right: -8px;
           transform-origin: top left;
-          animation-delay: 0.12s;
+          animation-delay: .12s;
         }
 
         .musicNote {
@@ -537,30 +581,19 @@ function MascotBody({ hatched, small }: { hatched: boolean; small: boolean }) {
           top: -24px;
         }
 
-        @keyframes eggWiggle {
-          0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(-7deg); }
-          50% { transform: rotate(7deg); }
-          75% { transform: rotate(-5deg); }
-        }
-
-        @keyframes showCrack {
-          to { opacity: 1; }
-        }
-
         @keyframes wingFlap {
           0%, 100% { transform: rotate(12deg); }
           50% { transform: rotate(-18deg); }
         }
 
         @keyframes noteRise {
-          0%, 100% { transform: translateY(0); opacity: 0.75; }
+          0%, 100% { transform: translateY(0); opacity: .75; }
           50% { transform: translateY(-7px); opacity: 1; }
         }
 
         @keyframes blink {
           0%, 92%, 100% { transform: scaleY(1); }
-          95% { transform: scaleY(0.12); }
+          95% { transform: scaleY(.12); }
         }
       `}</style>
     </div>
