@@ -175,9 +175,9 @@ export default function LumiPage() {
 
       <header style={styles.chatHeader}>
         <div>
-          <p style={styles.kicker}>Serenade Singers</p>
-          <h1 style={styles.title}></h1>
-          <p style={styles.subtitle}></p>
+          
+          
+          
         </div>
         <LumiHeaderMascot isTyping={isLumiTyping} />
       </header>
@@ -293,7 +293,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#FFFFFF",
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     gap: 14,
   },
   kicker: {
@@ -389,7 +389,7 @@ const styles: Record<string, React.CSSProperties> = {
   metaRow: {
     marginTop: 8,
     display: "flex",
-    justifyContent: "space-between",
+    justifyContent: "center",
     gap: 16,
     color: "#94A3B8",
     fontSize: 11.5,
