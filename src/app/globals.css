@@ -4876,3 +4876,48 @@ select:focus {
     font-size: 19px;
   }
 }
+
+/* Lumi mobile input bar hard fix */
+@media (max-width: 640px) {
+  [data-lumi-page] form {
+    display: grid !important;
+    grid-template-columns: 1fr 92px !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px !important;
+  }
+
+  [data-lumi-page] textarea {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 96px !important;
+    writing-mode: horizontal-tb !important;
+    white-space: normal !important;
+    overflow-wrap: normal !important;
+    word-break: normal !important;
+  }
+
+  [data-lumi-page] form button[type="submit"] {
+    width: 92px !important;
+    height: 52px !important;
+    padding: 0 !important;
+    border-radius: 16px !important;
+  }
+
+  [data-lumi-page] section {
+    padding-bottom: 18px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  [data-lumi-page] form {
+    grid-template-columns: 1fr 78px !important;
+  }
+
+  [data-lumi-page] form button[type="submit"] {
+    width: 78px !important;
+    font-size: 13px !important;
+  }
+}
