@@ -271,10 +271,35 @@ Type Submit to save to Registration, or Cancel to stop.`;
     const value = text.trim();
     const lower = value.toLowerCase();
 
-    if (["cancel", "stop", "မလုပ်တော့ဘူး"].includes(lower)) {
+    if (
+      [
+        "cancel",
+        "stop",
+        "quit",
+        "exit",
+        "restart",
+        "reset",
+        "မလုပ်တော့ဘူး",
+        "ရပ်မယ်",
+        "မဖြည့်တော့ဘူး",
+        "အစကပြန်စမယ်",
+        "ဖျက်မယ်",
+      ].some((word) => lower.includes(word))
+    ) {
       setSignupStep(null);
       setDraft(emptyDraft);
-      pushLumi("Okay, signup process ကို cancel လုပ်ထားပါတယ်။ လိုအပ်ရင် Lumi နဲ့ ပြန်စနိုင်ပါတယ်။");
+
+      try {
+        localStorage.removeItem(LUMI_DRAFT_KEY);
+        localStorage.removeItem(LUMI_STEP_KEY);
+      } catch {
+        // Ignore browser storage errors.
+      }
+
+      pushLumi(
+        "Okay, signup process ကို cancel လုပ်ထားပါတယ်။\n\nသိမ်းထားတဲ့ incomplete signup draft ကိုလည်း ဖျက်ပြီးပါပြီ။ ပြန်စချင်ရင် “Member signup with Lumi” သို့မဟုတ် “Volunteer signup with Lumi” ကိုနှိပ်ပါ။"
+      );
+
       return true;
     }
 
