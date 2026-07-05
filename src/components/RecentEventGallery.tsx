@@ -82,6 +82,11 @@ export default function RecentEventGallery() {
               style={styles.cover}
               loading="eager"
               decoding="async"
+              onError={(e) => {
+                if (event.coverUrl) {
+                  e.currentTarget.src = event.coverUrl;
+                }
+              }}
             />
           )}
 

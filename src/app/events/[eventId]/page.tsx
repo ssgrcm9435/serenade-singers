@@ -53,6 +53,18 @@ export default function EventGalleryPage() {
   const media = useMemo(() => event?.media || [], [event]);
   const cover = getLocalCover(event);
 
+  useEffect(() => {
+    if (active !== null) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [active]);
+
   function next() {
     if (active === null || media.length === 0) return;
     setActive((active + 1) % media.length);
@@ -337,28 +349,42 @@ const styles: Record<string, React.CSSProperties> = {
   lightbox: {
     position: "fixed",
     inset: 0,
-    background: "rgba(2,6,23,.94)",
+    width: "100vw",
+    height: "100dvh",
+    background: "rgba(2,6,23,.96)",
     zIndex: 9999,
     display: "grid",
-    gridTemplateColumns: "64px minmax(0,1fr) 64px",
+    gridTemplateColumns: "56px minmax(0,1fr) 56px",
     alignItems: "center",
+    justifyItems: "center",
     padding: 12,
+    boxSizing: "border-box",
+    overflow: "hidden",
   },
   lightboxContent: {
-    maxWidth: 1100,
     width: "100%",
-    margin: "0 auto",
+    height: "100%",
+    maxWidth: "none",
+    margin: 0,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
     textAlign: "center",
+    overflow: "hidden",
   },
   fullImage: {
+    width: "100%",
+    height: "calc(100dvh - 90px)",
     maxWidth: "100%",
-    maxHeight: "82vh",
+    maxHeight: "calc(100dvh - 90px)",
     objectFit: "contain",
     borderRadius: 18,
+    display: "block",
   },
   fullVideo: {
     width: "100%",
-    height: "78vh",
+    height: "calc(100dvh - 90px)",
     border: 0,
     borderRadius: 18,
     background: "#000",
