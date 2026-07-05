@@ -144,7 +144,7 @@ export default function LumiPage() {
 
     const timer = window.setTimeout(() => {
       pushLumi(
-        "Hello, I'm Lumi.\n\nI can help you with:\n\n• Create Member Account\n• Create Volunteer Account\n• Explore Serenade Singers\n\nHow can I help you today?"
+        "Hello, I'm Lumi.\n\nI can help you with:\n\n• Member Account ဖွင့်မယ်\n• Volunteer Account ဖွင့်မယ်\n• Serenade Singers အကြောင်း လေ့လာမယ်\n\nဒီနေ့ ဘာကူညီပေးရမလဲ?"
       );
       setIsLumiTyping(false);
     }, 900);
@@ -275,7 +275,7 @@ Type Submit to save to Registration, or Cancel to stop.`;
 
       const next = { ...draft, gmail: value };
       setDraft(next);
-      setBusyLabel("Sending Gmail verification code...");
+      setBusyLabel("Sending Gmail verification code စစ်ပေးခြင်း code...");
       setIsLumiTyping(true);
 
       try {
@@ -374,7 +374,7 @@ Type Submit to save to Registration, or Cancel to stop.`;
     }
 
     if (signupStep === "program") {
-      updateAndAsk("program", "profilePhoto", "Profile photo upload လုပ်ပေးပါ။ Lumi message ထဲက Upload Profile Photo button ကိုနှိပ်ပါ။");
+      updateAndAsk("program", "profilePhoto", "Profile photo upload လုပ်ပေးခြင်း လုပ်ပေးပါ။ Lumi message ထဲက Upload Profile Photo button ကိုနှိပ်ပါ။");
       return true;
     }
 
@@ -513,7 +513,7 @@ Type Submit to save to Registration, or Cancel to stop.`;
       const base64 = await fileToBase64(file);
       const next = { ...draft, profilePhoto: base64, profilePhotoName: file.name };
       setDraft(next);
-      pushUser(`Profile photo uploaded: ${file.name}`, base64);
+      pushUser(`Profile photo upload လုပ်ပေးခြင်းed: ${file.name}`, base64);
       setSignupStep("confirm");
       pushLumi(summaryText(next));
     } catch {

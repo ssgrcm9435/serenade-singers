@@ -53,29 +53,29 @@ Member Registration
 
 I can help you in two ways.
 
-✨ Option 1 — Register with Lumi (Recommended)
+✨ Option 1 — Lumi နဲ့ Register လုပ်မယ် (Recommended)
 
-I'll guide you step by step.
-• Gmail verification
-• Profile information
-• Profile photo upload
-• Complete your registration
+Lumi က step by step မေးပြီး ကူညီဖြည့်ပေးပါမယ်။
+• Gmail verification code စစ်ပေးခြင်း
+• Profile information ဖြည့်ပေးခြင်း
+• Profile photo upload လုပ်ပေးခြင်း
+• Registration အပြီးထိ ကူညီပေးခြင်း
 
 Simply reply:
-Register with Lumi
+Lumi နဲ့ Register လုပ်မယ်
 
 ━━━━━━━━━━━━━━━━━━━━
 
-🌐 Option 2 — Register Yourself
+🌐 Option 2 — ကိုယ်တိုင် Register လုပ်မယ်
 
-If you prefer, you can complete the registration form yourself.
+ကိုယ်တိုင် form ဖြည့်ချင်ရင် အောက်က link ကနေ ဖြည့်နိုင်ပါတယ်။
 
 👉 Member Registration
 https://serenade-singers.onrender.com/signup
 
 ━━━━━━━━━━━━━━━━━━━━
 
-Which option would you like?
+ဘယ် option ကို ရွေးချင်ပါသလဲ?
 
 https://serenade-singers.onrender.com/signup
 
