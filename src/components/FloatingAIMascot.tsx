@@ -11,25 +11,27 @@ const messages = [
   "Tap me to continue with AI Assistant.",
 ];
 
-type IntroState = "flight-in" | "center-show" | "fly-corner" | "idle";
+type IntroState = "waiting" | "flight-in" | "center-show" | "fly-corner" | "idle";
 
 export default function FloatingAIMascot() {
   const pathname = usePathname();
   const router = useRouter();
   const isAIPage = pathname === "/ai" || pathname?.startsWith("/ai/");
 
-  const [introState, setIntroState] = useState<IntroState>("flight-in");
+  const [introState, setIntroState] = useState<IntroState>("waiting");
   const [messageIndex, setMessageIndex] = useState(0);
   const [stageOpen, setStageOpen] = useState(false);
 
   useEffect(() => {
     if (isAIPage) return;
 
-    const t1 = window.setTimeout(() => setIntroState("center-show"), 1100);
-    const t2 = window.setTimeout(() => setIntroState("fly-corner"), 5200);
-    const t3 = window.setTimeout(() => setIntroState("idle"), 6500);
+    const t0 = window.setTimeout(() => setIntroState("flight-in"), 2200);
+    const t1 = window.setTimeout(() => setIntroState("center-show"), 3300);
+    const t2 = window.setTimeout(() => setIntroState("fly-corner"), 7400);
+    const t3 = window.setTimeout(() => setIntroState("idle"), 8700);
 
     return () => {
+      window.clearTimeout(t0);
       window.clearTimeout(t1);
       window.clearTimeout(t2);
       window.clearTimeout(t3);
@@ -48,6 +50,7 @@ export default function FloatingAIMascot() {
 
   if (isAIPage) return null;
 
+  const isWaiting = introState === "waiting";
   const isCenter = introState === "flight-in" || introState === "center-show" || introState === "fly-corner";
   const showCenterContent = introState === "center-show";
   const showCornerBubble = introState === "idle";
@@ -56,7 +59,7 @@ export default function FloatingAIMascot() {
     <>
       <button
         type="button"
-        className={`mascotButton ${stageOpen ? "hiddenMascot" : ""} ${isCenter ? "centerMode" : "cornerMode"} ${introState}`}
+        className={`mascotButton ${stageOpen || isWaiting ? "hiddenMascot" : ""} ${isCenter ? "centerMode" : "cornerMode"} ${introState}`}
         aria-label="Open AI Assistant Mascot"
         onClick={() => {
           if (introState === "idle") setStageOpen(true);
