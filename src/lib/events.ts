@@ -12,8 +12,21 @@ async function call(action: string, body = {}) {
   return res.json();
 }
 
-export const getFeaturedMediaEvent = () =>
-  call("getFeaturedMediaEvent");
+export const getFeaturedMediaEvent = () => call("getFeaturedMediaEvent");
 
-export const getEventMedia = (folderId: string) =>
-  call("getEventMedia", { folderId });
+export async function getEventMedia(routeId: string) {
+  let folderId = routeId;
+
+  if (/^EVT-/i.test(routeId)) {
+    const data = await getFeaturedMediaEvent();
+    const event = data?.events?.find(
+      (item: any) => String(item.eventId).toLowerCase() === routeId.toLowerCase()
+    );
+
+    if (event?.folderId) {
+      folderId = event.folderId;
+    }
+  }
+
+  return call("getEventMedia", { folderId });
+}
