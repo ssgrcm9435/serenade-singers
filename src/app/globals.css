@@ -5007,3 +5007,74 @@ footer {
     padding-bottom: initial;
   }
 }
+
+/* FINAL MOBILE SAFETY FIX FOR LUMI */
+@media (max-width: 768px) {
+  html,
+  body {
+    overflow-x: hidden !important;
+  }
+
+  [data-lumi-floating],
+  .floating-ai-mascot,
+  .lumi-floating-mascot {
+    position: fixed !important;
+    right: 14px !important;
+    bottom: 18px !important;
+    left: auto !important;
+    top: auto !important;
+    width: 58px !important;
+    height: 58px !important;
+    max-width: 58px !important;
+    max-height: 58px !important;
+    transform: none !important;
+    z-index: 60 !important;
+  }
+
+  [data-lumi-floating] *,
+  .floating-ai-mascot *,
+  .lumi-floating-mascot * {
+    max-width: 58px !important;
+    max-height: 58px !important;
+  }
+
+  .lumiTapBubble,
+  .lumiTapReaction,
+  .floating-ai-message,
+  .lumi-floating-message {
+    display: none !important;
+  }
+
+  .lumi-modal,
+  [data-lumi-modal] {
+    width: calc(100vw - 28px) !important;
+    max-width: calc(100vw - 28px) !important;
+    max-height: calc(100dvh - 120px) !important;
+    overflow-y: auto !important;
+    border-radius: 28px !important;
+  }
+
+  footer {
+    padding-bottom: 96px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  [data-lumi-floating],
+  .floating-ai-mascot,
+  .lumi-floating-mascot {
+    width: 52px !important;
+    height: 52px !important;
+    max-width: 52px !important;
+    max-height: 52px !important;
+    right: 12px !important;
+    bottom: 14px !important;
+  }
+
+  [data-lumi-floating] *,
+  .floating-ai-mascot *,
+  .lumi-floating-mascot * {
+    max-width: 52px !important;
+    max-height: 52px !important;
+  }
+}
