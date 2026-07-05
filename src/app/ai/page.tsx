@@ -44,10 +44,17 @@ function renderMessage(text: string) {
 }
 
 export default function AILumiPage() {
+  const [lumiIntroReady, setLumiIntroReady] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setLumiIntroReady(true), 1400);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "Lumi",
-      content: "မင်္ဂလာပါ။ Serenade Singers Serenade Guide မှ ကြိုဆိုပါတယ်။ လိုအပ်သောအချက်အလက်များကို မေးမြန်းနိုင်ပါသည်။",
+      content: "မင်္ဂလာပါ။ Serenade Singers Lumi မှ ကြိုဆိုပါတယ်။ လိုအပ်သောအချက်အလက်များကို မေးမြန်းနိုင်ပါသည်။",
       time: nowTime(),
     },
   ]);
@@ -81,7 +88,7 @@ export default function AILumiPage() {
         ...prev,
         {
           role: "Lumi",
-          content: data.answer || data.error || "Serenade Guide cannot answer this question right now.",
+          content: data.answer || data.error || "Lumi cannot answer this question right now.",
           time: nowTime(),
         },
       ]);
@@ -115,7 +122,7 @@ export default function AILumiPage() {
       <header style={styles.chatHeader}>
         <div>
           <p style={styles.kicker}>Serenade Singers</p>
-          <h1 style={styles.title}>Serenade Guide</h1>
+          <h1 style={styles.title}>Lumi</h1>
         </div>
       </header>
 
@@ -305,4 +312,27 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     fontSize: 15,
   },
+};
+
+
+const lumiAvatarStyle: React.CSSProperties = {
+  width: 42,
+  height: 42,
+  borderRadius: "50%",
+  display: "grid",
+  placeItems: "center",
+  background: "linear-gradient(135deg, #061a2f, #12355b)",
+  border: "2px solid rgba(201,162,74,.75)",
+  boxShadow: "0 12px 28px rgba(6,26,47,.18)",
+  color: "#f8d77a",
+  fontSize: 22,
+  fontWeight: 900,
+};
+
+const lumiTypingStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+  color: "#64748b",
+  fontWeight: 800,
 };
