@@ -1,5 +1,6 @@
 "use client";
 
+
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -14,6 +15,13 @@ const messages = [
 type IntroState = "waiting" | "flight-in" | "center-show" | "fly-corner" | "idle";
 
 export default function FloatingAIMascot() {
+  const [isReacting, setIsReacting] = useState(false);
+
+  const triggerLumiReaction = () => {
+    setIsReacting(true);
+    window.setTimeout(() => setIsReacting(false), 1400);
+  };
+
   const pathname = usePathname();
   const router = useRouter();
   const isAIPage = pathname === "/ai" || pathname?.startsWith("/ai/");
@@ -67,7 +75,16 @@ export default function FloatingAIMascot() {
       >
         <div className={`speechBubble cornerBubble ${showCornerBubble ? "visible" : ""}`}>
           {messages[messageIndex]}
-        </div>
+        {isReacting && (
+        <>
+          <span className="lumiTapBubble">Hi! Need help?</span>
+          <span className="lumiTapReaction note1">♪</span>
+          <span className="lumiTapReaction note2">♫</span>
+          <span className="lumiTapReaction note3">✦</span>
+          <span className="lumiTapReaction note4">♬</span>
+        </>
+      )}
+    </div>
 
         <div className={`centerBubble ${showCenterContent ? "visible" : ""}`}>
           <strong>Hello, I'm Lumi!</strong>
@@ -492,8 +509,15 @@ export default function FloatingAIMascot() {
 }
 
 function MascotBody({ large, dancing }: { large: boolean; dancing: boolean }) {
+  const [isReacting, setIsReacting] = useState(false);
+
+  const triggerLumiReaction = () => {
+    setIsReacting(true);
+    window.setTimeout(() => setIsReacting(false), 1400);
+  };
+
   return (
-    <div className={`mascotBody ${large ? "large" : "small"} ${dancing ? "dancing" : ""}`}>
+    <div data-lumi-floating="true" onClick={triggerLumiReaction} className={`mascotBody ${large ? "large" : "small"} ${dancing ? "dancing" : ""}`}>
       <div className="wing leftWing" />
       <div className="wing rightWing" />
       <div className="birdFace">

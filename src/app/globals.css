@@ -4760,3 +4760,119 @@ select:focus {
     height: 72px !important;
   }
 }
+
+/* Lumi tap reaction */
+[data-lumi-floating] {
+  position: fixed;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+[data-lumi-floating]:active {
+  transform: scale(0.94) rotate(-3deg) !important;
+  filter: drop-shadow(0 14px 22px rgba(201, 162, 74, 0.35));
+}
+
+.lumiTapBubble {
+  position: absolute;
+  left: 70%;
+  bottom: 80%;
+  min-width: 118px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid rgba(201, 162, 74, 0.45);
+  color: #061a2f;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+  animation: lumiBubblePop 1.4s ease forwards;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.lumiTapReaction {
+  position: absolute;
+  left: 50%;
+  top: 35%;
+  color: #c9a24a;
+  font-size: 22px;
+  font-weight: 950;
+  pointer-events: none;
+  z-index: 9999;
+  text-shadow: 0 8px 20px rgba(201, 162, 74, 0.35);
+  animation: lumiNoteFloat 1.35s ease-out forwards;
+}
+
+.lumiTapReaction.note1 {
+  --x: -42px;
+  --y: -92px;
+  animation-delay: 0ms;
+}
+
+.lumiTapReaction.note2 {
+  --x: 34px;
+  --y: -112px;
+  animation-delay: 80ms;
+}
+
+.lumiTapReaction.note3 {
+  --x: -10px;
+  --y: -126px;
+  animation-delay: 140ms;
+}
+
+.lumiTapReaction.note4 {
+  --x: 58px;
+  --y: -82px;
+  animation-delay: 210ms;
+}
+
+@keyframes lumiNoteFloat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.65) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.35) rotate(18deg);
+  }
+}
+
+@keyframes lumiBubblePop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+  }
+}
+
+@media (max-width: 640px) {
+  .lumiTapBubble {
+    left: 58%;
+    bottom: 86%;
+    min-width: 106px;
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .lumiTapReaction {
+    font-size: 19px;
+  }
+}
