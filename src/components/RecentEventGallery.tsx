@@ -1,34 +1,57 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
+type MediaEvent = {
+  eventId: string;
+  title: string;
+  folderId: string;
+  coverUrl?: string;
+  photoCount?: number;
+  videoCount?: number;
+};
+
 export default function RecentEventGallery() {
+  const [event, setEvent] = useState<MediaEvent | null>(null);
+
+  useEffect(() => {
+    const url = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL;
+    if (!url) return;
+
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "getFeaturedMediaEvent" }),
+    })
+      .then((res) => res.json())
+      .then((data) => setEvent(data.event || null))
+      .catch(() => setEvent(null));
+  }, []);
+
+  if (!event?.folderId) return null;
+
   return (
     <section style={styles.section}>
       <div style={styles.inner}>
         <div style={styles.header}>
           <div>
             <p style={styles.kicker}>Recent Activity</p>
-            <h2 style={styles.title}>Blind School Visit</h2>
+            <h2 style={styles.title}>{event.title}</h2>
             <p style={styles.description}>
-              A community outreach activity by Serenade Singers, sharing music,
-              care, and future collaboration with Yangon Blind School.
+              View photos and videos from our latest Serenade Singers activity.
             </p>
           </div>
 
-          <Link
-            href="/events/EVT-2026-001"
-            style={styles.button}
-          >
+          <Link href={`/events/${event.folderId}`} style={styles.button}>
             View Gallery
           </Link>
         </div>
 
-        <Link
-          href="/events/EVT-2026-001"
-          style={styles.coverWrap}
-        >
+        <Link href={`/events/${event.folderId}`} style={styles.coverWrap}>
           <img
             src="/events/EVT-2026-001/cover.jpg"
-            alt="Blind School Visit"
+            alt={event.title}
             style={styles.cover}
           />
           <div style={styles.coverOverlay}>
@@ -37,8 +60,8 @@ export default function RecentEventGallery() {
         </Link>
 
         <div style={styles.stats}>
-          <span>📷 Photos</span>
-          <span>🎥 Videos</span>
+          <span>📷 {event.photoCount || 0} Photos</span>
+          <span>🎥 {event.videoCount || 0} Videos</span>
         </div>
       </div>
     </section>
