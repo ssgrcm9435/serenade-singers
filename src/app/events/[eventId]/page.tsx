@@ -361,7 +361,6 @@ const styles: Record<string, React.CSSProperties> = {
   lightboxContent: {
     maxWidth: "96vw",
     maxHeight: "78vh",
-    maxWidth: "none",
     margin: 0,
     display: "flex",
     flexDirection: "column",
