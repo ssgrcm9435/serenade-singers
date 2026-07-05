@@ -38,34 +38,29 @@ export default function FloatingAIMascot() {
       </div>
 
       <style jsx>{`
-        
-.aiMascot {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  left: auto;
-  top: auto;
+        .aiMascot {
+          position: fixed !important;
+          right: 24px !important;
+          bottom: 24px !important;
+          left: auto !important;
+          top: auto !important;
+          z-index: 2147483647 !important;
 
-  display: flex;
-  align-items: flex-end;
-  gap: 14px;
+          display: flex;
+          flex-direction: row;
+          align-items: flex-end;
+          justify-content: flex-end;
+          gap: 14px;
 
-  z-index: 99999;
+          width: auto;
+          height: auto;
+          max-width: calc(100vw - 32px);
 
-  text-decoration: none;
-
-  pointer-events: auto;
-
-  animation: floatMascot 4s ease-in-out infinite;
-}
-
-@media (max-width:768px){
-  .aiMascot{
-    right:16px;
-    bottom:16px;
-  }
-}
-
+          text-decoration: none;
+          pointer-events: auto;
+          transform: translateZ(0);
+          animation: floatMascot 4s ease-in-out infinite;
+        }
 
         .speechBubble {
           width: min(250px, 58vw);
@@ -83,6 +78,7 @@ export default function FloatingAIMascot() {
 
         .birdBody {
           position: relative;
+          flex: 0 0 auto;
           width: 66px;
           height: 66px;
           border-radius: 999px;
@@ -168,8 +164,8 @@ export default function FloatingAIMascot() {
         }
 
         @keyframes floatMascot {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-11px); }
+          0%, 100% { translate: 0 0; }
+          50% { translate: 0 -11px; }
         }
 
         @keyframes wingFlap {
@@ -184,8 +180,8 @@ export default function FloatingAIMascot() {
 
         @media (max-width: 720px) {
           .aiMascot {
-            right: 14px;
-            bottom: 84px;
+            right: 14px !important;
+            bottom: 14px !important;
             gap: 9px;
           }
 
