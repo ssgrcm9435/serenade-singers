@@ -176,8 +176,8 @@ export default function LumiPage() {
       <header style={styles.chatHeader}>
         <div>
           <p style={styles.kicker}>Serenade Singers</p>
-          <h1 style={styles.title}>Lumi</h1>
-          <p style={styles.subtitle}>Your Serenade Guide</p>
+          <h1 style={styles.title}></h1>
+          <p style={styles.subtitle}></p>
         </div>
         <LumiHeaderMascot isTyping={isLumiTyping} />
       </header>
@@ -271,7 +271,8 @@ export default function LumiPage() {
           Send
         </button>
       </form>
-    </main>
+    <style dangerouslySetInnerHTML={{ __html: lumiInteractionCss }} />
+</main>
   );
 }
 
@@ -447,3 +448,13 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
 };
+
+
+const lumiInteractionCss = `
+.userMessageWrap:hover .messageStatus,
+.userMessageWrap:focus-within .messageStatus,
+.userMessageWrap:active .messageStatus {
+  opacity: 1 !important;
+  max-height: 20px !important;
+}
+`;
