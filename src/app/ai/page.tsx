@@ -55,6 +55,7 @@ function renderMessage(text: string) {
 export default function LumiPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [visibleStatusIndex, setVisibleStatusIndex] = useState<number | null>(null);
   const [isLumiTyping, setIsLumiTyping] = useState(true);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -218,7 +219,7 @@ export default function LumiPage() {
                 <span>{message.time}</span>
                 {message.role === "user" && (
                   <span style={styles.status}>
-                    {message.status === "seen" ? "Seen" : "Delivered"}
+                    {message.status === "seen" ? "" : ""}
                   </span>
                 )}
               </div>
@@ -288,6 +289,40 @@ export default function LumiPage() {
     opacity: 1 !important;
     visibility: visible !important;
     max-height: 20px !important;
+  }
+`}</style>
+
+
+<style jsx global>{`
+  .userMessageBubble {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .premiumMessageMeta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(226, 232, 240, 0.72);
+  }
+
+  .premiumSeenStatus {
+    opacity: 0;
+    visibility: hidden;
+    color: #c9a24a;
+    transition: opacity .18s ease, visibility .18s ease;
+  }
+
+  .userMessageBubble:hover .premiumSeenStatus,
+  .userMessageBubble:active .premiumSeenStatus,
+  .userMessageBubble:focus-within .premiumSeenStatus,
+  .userMessageBubble.showStatus .premiumSeenStatus {
+    opacity: 1;
+    visibility: visible;
   }
 `}</style>
 
