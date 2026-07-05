@@ -19,18 +19,8 @@ type EventData = {
   media: MediaItem[];
 };
 
-const LOCAL_COVERS: Record<string, string> = {
-  "EVT-2026-001": "/events/EVT-2026-001/cover.jpg",
-};
-
-function getLocalCover(event?: EventData | null) {
-  const key = String(event?.eventId || event?.title || "").toUpperCase();
-
-  if (key.includes("BLIND") || key.includes("EVT-2026-001")) {
-    return "/events/EVT-2026-001/cover.jpg";
-  }
-
-  return "/events/EVT-2026-001/cover.jpg";
+function getLocalCover(folderId: string) {
+  return `/events/${folderId}/cover-1.jpg`;
 }
 
 export default function EventGalleryPage() {
@@ -50,7 +40,8 @@ export default function EventGalleryPage() {
   }, [params.eventId]);
 
   const media = useMemo(() => event?.media || [], [event]);
-  const cover = getLocalCover(event);
+  const folderId = params.eventId as string;
+  const cover = getLocalCover(folderId);
 
   useEffect(() => {
     if (active !== null) {
@@ -88,11 +79,18 @@ export default function EventGalleryPage() {
         }
       `}</style>
       <section style={styles.hero}>
-        <img src={cover} alt={event?.title || "Event cover"} style={styles.cover} />
+        <img
+          src={cover}
+          alt={event?.title || folderId}
+          style={styles.cover}
+          onError={(e) => {
+            e.currentTarget.src = `/events/${folderId}/cover.jpg`;
+          }}
+        />
 
         <div style={styles.heroOverlay}>
           <p style={styles.kicker}>Serenade Singers Gallery</p>
-          <h1 style={styles.title}>{event?.title || "Event Gallery"}</h1>
+          <h1 style={styles.title}>{event?.title || folderId}</h1>
           <p style={styles.description}>
             Photos and videos will appear below. Tap any item to view full screen and slide.
           </p>
