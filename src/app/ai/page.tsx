@@ -58,6 +58,7 @@ export default function AILumiPage() {
       time: nowTime(),
     },
   ]);
+  const [messageStatus, setMessageStatus] = useState<"delivered" | "seen">("seen");
 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
