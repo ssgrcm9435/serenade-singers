@@ -56,7 +56,7 @@ export default function FloatingAIMascot() {
     <>
       <button
         type="button"
-        className={`mascotButton ${isCenter ? "centerMode" : "cornerMode"} ${introState}`}
+        className={`mascotButton ${stageOpen ? "hiddenMascot" : ""} ${isCenter ? "centerMode" : "cornerMode"} ${introState}`}
         aria-label="Open AI Assistant Mascot"
         onClick={() => {
           if (introState === "idle") setStageOpen(true);
@@ -126,6 +126,12 @@ export default function FloatingAIMascot() {
       )}
 
       <style jsx>{`
+        .hiddenMascot {
+          opacity: 0 !important;
+          pointer-events: none !important;
+          visibility: hidden !important;
+        }
+
         .mascotButton {
           position: fixed !important;
           z-index: 2147483647 !important;
@@ -268,14 +274,14 @@ export default function FloatingAIMascot() {
 
         .stageCard {
           position: relative;
-          width: min(520px, 94vw);
-          min-height: 500px;
+          width: min(620px, 94vw);
+          min-height: 560px;
           overflow: hidden;
-          border-radius: 34px;
-          padding: 42px 28px 30px;
+          border-radius: 36px;
+          padding: 64px 36px 36px;
           text-align: center;
           background:
-            radial-gradient(circle at 50% 18%, rgba(248, 215, 122, 0.34), transparent 34%),
+            radial-gradient(circle at 50% 20%, rgba(248, 215, 122, 0.30), transparent 36%),
             linear-gradient(180deg, #ffffff, #f8f6f2);
           border: 1px solid rgba(248, 215, 122, 0.5);
           box-shadow: 0 34px 90px rgba(0, 0, 0, 0.34);
@@ -313,26 +319,28 @@ export default function FloatingAIMascot() {
           animation: noteFloat 3s ease-in-out infinite;
         }
 
-        .stageNotes span:nth-child(1) { left: 18%; top: 28%; animation-delay: 0s; }
-        .stageNotes span:nth-child(2) { right: 18%; top: 26%; animation-delay: .35s; }
-        .stageNotes span:nth-child(3) { left: 24%; top: 52%; animation-delay: .7s; }
-        .stageNotes span:nth-child(4) { right: 24%; top: 54%; animation-delay: 1.05s; }
-        .stageNotes span:nth-child(5) { left: 48%; top: 18%; animation-delay: 1.4s; }
+        .stageNotes span:nth-child(1) { left: 25%; top: 28%; animation-delay: 0s; }
+        .stageNotes span:nth-child(2) { right: 25%; top: 28%; animation-delay: .35s; }
+        .stageNotes span:nth-child(3) { left: 28%; top: 48%; animation-delay: .7s; }
+        .stageNotes span:nth-child(4) { right: 28%; top: 48%; animation-delay: 1.05s; }
+        .stageNotes span:nth-child(5) { left: 48%; top: 22%; animation-delay: 1.4s; }
 
         .stageMascot {
           position: relative;
           z-index: 2;
           display: inline-flex;
-          margin-top: 28px;
-          animation: centerDance 1.15s ease-in-out infinite;
+          margin-top: 18px;
+          margin-bottom: 26px;
+          transform-origin: center;
+          animation: stageMascotDance 1.25s ease-in-out infinite;
         }
 
         .stageCard h2 {
           position: relative;
           z-index: 2;
-          margin: 26px 0 10px;
+          margin: 0 0 14px;
           color: #061a2f;
-          font-size: clamp(1.6rem, 5vw, 2.2rem);
+          font-size: clamp(1.7rem, 5vw, 2.35rem);
           font-weight: 950;
           letter-spacing: -0.03em;
         }
@@ -340,8 +348,8 @@ export default function FloatingAIMascot() {
         .stageCard p {
           position: relative;
           z-index: 2;
-          max-width: 410px;
-          margin: 0 auto 24px;
+          max-width: 440px;
+          margin: 0 auto 28px;
           color: #64748b;
           font-weight: 650;
           line-height: 1.75;
@@ -417,6 +425,13 @@ export default function FloatingAIMascot() {
           50% { translate: 0 -11px; }
         }
 
+        @keyframes stageMascotDance {
+          0%, 100% { transform: translateY(0) rotate(-2deg) scale(1); }
+          25% { transform: translateY(-8px) rotate(4deg) scale(1.03); }
+          50% { transform: translateY(0) rotate(0deg) scale(1); }
+          75% { transform: translateY(-7px) rotate(-4deg) scale(1.03); }
+        }
+
         @keyframes centerDance {
           0%, 100% { transform: translate(-50%, -50%) scale(1.15) rotate(-2deg); }
           25% { transform: translate(-50%, -50%) scale(1.2) rotate(5deg); }
@@ -458,8 +473,14 @@ export default function FloatingAIMascot() {
           }
 
           .stageCard {
+            width: min(430px, 94vw);
             min-height: 500px;
-            padding: 42px 20px 26px;
+            padding: 54px 22px 28px;
+          }
+
+          .stageMascot {
+            margin-top: 12px;
+            margin-bottom: 22px;
           }
         }
       `}</style>
