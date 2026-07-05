@@ -8,7 +8,7 @@ const messages = [
   "Ask about events, classes, or rehearsals.",
   "Need help joining as a member?",
   "Voice assessment and practice guidance available.",
-  "Tap me to continue with AI Assistant.",
+  "Tap me to continue with Lumi.",
 ];
 
 type IntroState = "waiting" | "flight-in" | "center-show" | "fly-corner" | "idle";
@@ -60,7 +60,7 @@ export default function FloatingAIMascot() {
       <button
         type="button"
         className={`mascotButton ${stageOpen || isWaiting ? "hiddenMascot" : ""} ${isCenter ? "centerMode" : "cornerMode"} ${introState}`}
-        aria-label="Open AI Assistant Mascot"
+        aria-label="Open Lumi Mascot"
         onClick={() => {
           if (introState === "idle") setStageOpen(true);
         }}
@@ -118,7 +118,7 @@ export default function FloatingAIMascot() {
 
             <div className="stageActions">
               <button type="button" className="primaryAction" onClick={() => router.push("/ai")}>
-                Chat with AI Assistant
+                Chat with Lumi
               </button>
               <button type="button" className="secondaryAction" onClick={() => setStageOpen(false)}>
                 Continue Browsing

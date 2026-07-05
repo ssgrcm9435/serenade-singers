@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 type ChatMessage = {
-  role: "user" | "assistant";
+  role: "user" | "Lumi";
   content: string;
   time: string;
 };
@@ -43,11 +43,11 @@ function renderMessage(text: string) {
   });
 }
 
-export default function AIAssistantPage() {
+export default function AILumiPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      role: "assistant",
-      content: "မင်္ဂလာပါ။ Serenade Singers Virtual Assistant မှ ကြိုဆိုပါတယ်။ လိုအပ်သောအချက်အလက်များကို မေးမြန်းနိုင်ပါသည်။",
+      role: "Lumi",
+      content: "မင်္ဂလာပါ။ Serenade Singers Serenade Guide မှ ကြိုဆိုပါတယ်။ လိုအပ်သောအချက်အလက်များကို မေးမြန်းနိုင်ပါသည်။",
       time: nowTime(),
     },
   ]);
@@ -80,15 +80,15 @@ export default function AIAssistantPage() {
       setMessages((prev) => [
         ...prev,
         {
-          role: "assistant",
-          content: data.answer || data.error || "Virtual Assistant cannot answer this question right now.",
+          role: "Lumi",
+          content: data.answer || data.error || "Serenade Guide cannot answer this question right now.",
           time: nowTime(),
         },
       ]);
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Connection error. Please try again later.", time: nowTime() },
+        { role: "Lumi", content: "Connection error. Please try again later.", time: nowTime() },
       ]);
     } finally {
       setLoading(false);
@@ -115,7 +115,7 @@ export default function AIAssistantPage() {
       <header style={styles.chatHeader}>
         <div>
           <p style={styles.kicker}>Serenade Singers</p>
-          <h1 style={styles.title}>Virtual Assistant</h1>
+          <h1 style={styles.title}>Serenade Guide</h1>
         </div>
       </header>
 

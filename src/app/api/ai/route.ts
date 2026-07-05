@@ -27,14 +27,14 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "HTTP-Referer": "https://serenade-singers.org",
-        "X-Title": "Serenade Singers AI Assistant",
+        "X-Title": "Serenade Singers Lumi",
       },
       body: JSON.stringify({
         model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: `You are Serenade Singers AI Assistant.
+            content: `You are Serenade Singers Lumi.
 
 Reply in the same language as the user. If the user asks in Burmese, reply in natural professional Burmese.
 
@@ -74,9 +74,9 @@ Member Hub
 👉 Open Member Hub:
 https://serenade-singers.onrender.com/member-hub
 
-AI Assistant
+Lumi
 
-👉 Open AI Assistant:
+👉 Open Lumi:
 https://serenade-singers.onrender.com/ai
 
 Never output a raw URL by itself.
@@ -136,7 +136,7 @@ ${serenadeKnowledge}`,
             userMessage: message,
             aiResponse: answer,
             intent: "General",
-            category: "AI Assistant",
+            category: "Lumi",
             confidence: "",
             model: process.env.OPENROUTER_MODEL || "openai/gpt-4o-mini",
             status: "Open",
@@ -145,7 +145,7 @@ ${serenadeKnowledge}`,
               answer.includes("Admin")
                 ? "Yes"
                 : "No",
-            remarks: "Auto saved from AI Assistant",
+            remarks: "Auto saved from Lumi",
           }),
         });
       } catch {
@@ -156,7 +156,7 @@ ${serenadeKnowledge}`,
     return NextResponse.json({ answer });
   } catch (error) {
     return NextResponse.json(
-      { error: "AI assistant failed." },
+      { error: "Lumi failed." },
       { status: 500 }
     );
   }
