@@ -1,3 +1,4 @@
+import FloatingAIMascot from "@/components/FloatingAIMascot";
 import FloatingAIAnimal from "@/components/FloatingAIAnimal";
 import Image from "next/image";
 import { site } from "@/data/site";
@@ -148,6 +149,7 @@ export default function Home() {
           <RecentEventGallery />
     
   <FloatingAIAnimal />
+  <FloatingAIMascot />
 </main>
   );
 }
