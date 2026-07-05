@@ -126,6 +126,15 @@ function doPost(e) {
       return json_(saveAIConversation_(body));
     }
 
+    if (action === "getFeaturedMediaEvent") {
+      return json_(getFeaturedMediaEvent_());
+    }
+
+    if (action === "getEventMedia") {
+      return json_(getEventMedia_(body));
+    }
+
+
 
 
 
@@ -2405,3 +2414,113 @@ function saveAIConversation_(body) {
   };
 }
 
+
+
+/*******************************************************
+ * DRIVE EVENT MEDIA GALLERY
+ *******************************************************/
+
+const SERENADE_MEDIA_ROOT_FOLDER_ID = "1cG6p5SOY3911IDboMKaZGFBqFg_-yYCS";
+
+function getFeaturedMediaEvent_() {
+  const root = DriveApp.getFolderById(SERENADE_MEDIA_ROOT_FOLDER_ID);
+  const folders = root.getFolders();
+
+  const events = [];
+
+  while (folders.hasNext()) {
+    const folder = folders.next();
+    const name = folder.getName();
+
+    if (!/^EVT-/i.test(name)) continue;
+
+    const media = readEventFolderMedia_(folder);
+    const cover = media.find(function(item) {
+      return item.fileName.toLowerCase().indexOf("cover") !== -1 && item.type === "image";
+    }) || media.find(function(item) {
+      return item.type === "image";
+    }) || null;
+
+    events.push({
+      eventId: name,
+      title: formatEventTitle_(name),
+      folderId: folder.getId(),
+      folderUrl: folder.getUrl(),
+      coverUrl: cover ? cover.thumbnailUrl : "",
+      photoCount: media.filter(function(item) { return item.type === "image"; }).length,
+      videoCount: media.filter(function(item) { return item.type === "video"; }).length,
+      media: media,
+    });
+  }
+
+  events.sort(function(a, b) {
+    return b.eventId.localeCompare(a.eventId);
+  });
+
+  return {
+    success: true,
+    event: events[0] || null,
+    events: events,
+  };
+}
+
+function getEventMedia_(body) {
+  const folderId = body.folderId || "";
+  if (!folderId) {
+    return { success: false, message: "folderId is required." };
+  }
+
+  const folder = DriveApp.getFolderById(folderId);
+  const media = readEventFolderMedia_(folder);
+
+  return {
+    success: true,
+    eventId: folder.getName(),
+    title: formatEventTitle_(folder.getName()),
+    folderId: folder.getId(),
+    folderUrl: folder.getUrl(),
+    media: media,
+  };
+}
+
+function readEventFolderMedia_(folder) {
+  const files = folder.getFiles();
+  const media = [];
+
+  while (files.hasNext()) {
+    const file = files.next();
+    const mime = file.getMimeType();
+    const name = file.getName();
+
+    let type = "file";
+    if (mime.indexOf("image/") === 0) type = "image";
+    if (mime.indexOf("video/") === 0) type = "video";
+
+    if (type === "file") continue;
+
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    media.push({
+      fileId: file.getId(),
+      fileName: name,
+      type: type,
+      mimeType: mime,
+      viewUrl: file.getUrl(),
+      thumbnailUrl: "https://drive.google.com/thumbnail?id=" + file.getId() + "&sz=w1200",
+      embedUrl: "https://drive.google.com/file/d/" + file.getId() + "/preview",
+    });
+  }
+
+  media.sort(function(a, b) {
+    return a.fileName.localeCompare(b.fileName);
+  });
+
+  return media;
+}
+
+function formatEventTitle_(folderName) {
+  return String(folderName || "")
+    .replace(/^EVT-[0-9]{4}-[0-9]{3}[_ -]*/i, "")
+    .replace(/[_-]+/g, " ")
+    .trim() || folderName;
+}

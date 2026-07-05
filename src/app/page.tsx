@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { site } from "@/data/site";
+import RecentEventGallery from "@/components/RecentEventGallery";
 
 export default function Home() {
   return (
@@ -143,6 +144,7 @@ export default function Home() {
       </section>
 
 
+          <RecentEventGallery />
     </main>
   );
 }
