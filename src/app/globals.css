@@ -4908,3 +4908,42 @@ footer {
     padding: 54px 22px 28px !important;
   }
 }
+
+/* Lumi AI page input fix only — no mascot animation changes */
+@media (max-width: 768px) {
+  [data-lumi-page] form {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  [data-lumi-page] textarea {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 90px !important;
+    writing-mode: horizontal-tb !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    line-height: 1.35 !important;
+  }
+
+  [data-lumi-page] form button[type="submit"] {
+    flex: 0 0 88px !important;
+    width: 88px !important;
+    height: 52px !important;
+    padding: 0 !important;
+  }
+}
+
+@media (max-width: 390px) {
+  [data-lumi-page] form button[type="submit"] {
+    flex-basis: 76px !important;
+    width: 76px !important;
+  }
+}
