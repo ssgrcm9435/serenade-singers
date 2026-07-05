@@ -21,6 +21,21 @@ type MediaEvent = {
   media?: MediaItem[];
 };
 
+const LOCAL_COVERS: Record<string, string> = {
+  "EVT-2026-001-BLIND-SCHOOL": "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg",
+};
+
+function getLocalCover(event: MediaEvent) {
+  const key = event.eventId || event.title || "";
+  if (LOCAL_COVERS[key]) return LOCAL_COVERS[key];
+
+  if (key.toUpperCase().includes("BLIND")) {
+    return "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg";
+  }
+
+  return event.coverUrl || "";
+}
+
 export default function RecentEventGallery() {
   const [event, setEvent] = useState<MediaEvent | null>(null);
 
@@ -40,7 +55,7 @@ export default function RecentEventGallery() {
 
   if (!event) return null;
 
-  const preview = (event.media || []).filter((m) => m.type === "image").slice(0, 6);
+  const cover = getLocalCover(event);
 
   return (
     <section style={styles.section}>
@@ -50,7 +65,7 @@ export default function RecentEventGallery() {
             <p style={styles.kicker}>Recent Activity</p>
             <h2 style={styles.title}>{event.title}</h2>
             <p style={styles.description}>
-              Photos and videos from our latest Serenade Singers activity.
+              View photos and videos from our latest Serenade Singers activity.
             </p>
           </div>
 
@@ -59,20 +74,20 @@ export default function RecentEventGallery() {
           </Link>
         </div>
 
-        <Link href={`/events/${event.folderId}`} style={styles.previewGrid}>
-          {preview.length > 0 ? (
-            preview.map((item, index) => (
-              <div key={item.fileId} style={index === 0 ? styles.largeTile : styles.tile}>
-                <img src={item.thumbnailUrl} alt={item.fileName} style={styles.image} />
-              </div>
-            ))
-          ) : (
-            event.coverUrl && (
-              <div style={styles.largeTile}>
-                <img src={event.coverUrl} alt={event.title} style={styles.image} />
-              </div>
-            )
+        <Link href={`/events/${event.folderId}`} style={styles.coverWrap}>
+          {cover && (
+            <img
+              src={cover}
+              alt={event.title}
+              style={styles.cover}
+              loading="eager"
+              decoding="async"
+            />
           )}
+
+          <div style={styles.coverOverlay}>
+            <span>Open Gallery</span>
+          </div>
         </Link>
 
         <div style={styles.stats}>
@@ -126,30 +141,32 @@ const styles: Record<string, React.CSSProperties> = {
     textDecoration: "none",
     fontWeight: 900,
   },
-  previewGrid: {
-    display: "grid",
-    gridTemplateColumns: "2fr 1fr 1fr",
-    gridAutoRows: 170,
-    gap: 10,
-    textDecoration: "none",
-  },
-  largeTile: {
-    gridRow: "span 2",
+  coverWrap: {
+    position: "relative",
+    display: "block",
     overflow: "hidden",
     borderRadius: 22,
+    border: "1px solid #e2e8f0",
     background: "#e2e8f0",
+    textDecoration: "none",
   },
-  tile: {
-    overflow: "hidden",
-    borderRadius: 18,
-    background: "#e2e8f0",
-  },
-  image: {
+  cover: {
     width: "100%",
-    height: "100%",
+    aspectRatio: "16 / 9",
     objectFit: "cover",
     display: "block",
-    transition: "transform .35s ease",
+  },
+  coverOverlay: {
+    position: "absolute",
+    inset: 0,
+    display: "grid",
+    placeItems: "center",
+    background: "linear-gradient(to top, rgba(6,26,47,.55), rgba(6,26,47,.05))",
+    color: "#ffffff",
+    fontWeight: 950,
+    fontSize: 18,
+    opacity: 0,
+    transition: "opacity .25s ease",
   },
   stats: {
     display: "flex",

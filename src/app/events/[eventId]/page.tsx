@@ -15,20 +15,43 @@ type MediaItem = {
 type EventData = {
   title: string;
   eventId: string;
+  folderId?: string;
   media: MediaItem[];
 };
+
+const LOCAL_COVERS: Record<string, string> = {
+  "EVT-2026-001-BLIND-SCHOOL": "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg",
+};
+
+function getLocalCover(event?: EventData | null) {
+  const key = event?.eventId || event?.title || "";
+  if (LOCAL_COVERS[key]) return LOCAL_COVERS[key];
+
+  if (key.toUpperCase().includes("BLIND")) {
+    return "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg";
+  }
+
+  return "/events/EVT-2026-001-BLIND-SCHOOL/cover.jpg";
+}
 
 export default function EventGalleryPage() {
   const params = useParams();
   const [event, setEvent] = useState<EventData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<number | null>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
 
   useEffect(() => {
-    getEventMedia(params.eventId as string).then(setEvent).catch(() => setEvent(null));
+    setLoading(true);
+
+    getEventMedia(params.eventId as string)
+      .then((data) => setEvent(data))
+      .catch(() => setEvent(null))
+      .finally(() => setLoading(false));
   }, [params.eventId]);
 
   const media = useMemo(() => event?.media || [], [event]);
+  const cover = getLocalCover(event);
 
   function next() {
     if (active === null || media.length === 0) return;
@@ -40,44 +63,90 @@ export default function EventGalleryPage() {
     setActive((active - 1 + media.length) % media.length);
   }
 
-  if (!event) {
-    return (
-      <main style={styles.loading}>
-        <p>Loading gallery...</p>
-      </main>
-    );
-  }
-
   return (
     <main style={styles.page}>
-      <header style={styles.header}>
-        <p style={styles.kicker}>Serenade Singers Gallery</p>
-        <h1 style={styles.title}>{event.title}</h1>
-        <p style={styles.description}>Tap any photo or video to view it in full screen.</p>
-      </header>
+      <style jsx global>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
 
-      <section style={styles.masonry}>
-        {media.map((item, index) => (
-          <button
-            key={item.fileId}
-            onClick={() => setActive(index)}
-            style={{
-              ...styles.card,
-              ...(index % 7 === 0 ? styles.tallCard : {}),
-              ...(index % 5 === 0 ? styles.wideCard : {}),
-            }}
-          >
-            {item.type === "image" ? (
-              <img src={item.thumbnailUrl} alt={item.fileName} style={styles.media} />
-            ) : (
-              <div style={styles.videoThumb}>
-                <iframe src={item.embedUrl} style={styles.iframe} allow="autoplay" />
-                <span style={styles.playBadge}>▶</span>
-              </div>
-            )}
-          </button>
-        ))}
+        @media (max-width: 680px) {
+          button[style] {
+            -webkit-tap-highlight-color: transparent;
+          }
+        }
+      `}</style>
+      <section style={styles.hero}>
+        <img src={cover} alt={event?.title || "Event cover"} style={styles.cover} />
+
+        <div style={styles.heroOverlay}>
+          <p style={styles.kicker}>Serenade Singers Gallery</p>
+          <h1 style={styles.title}>{event?.title || "Event Gallery"}</h1>
+          <p style={styles.description}>
+            Photos and videos will appear below. Tap any item to view full screen and slide.
+          </p>
+        </div>
       </section>
+
+      {loading && (
+        <section style={styles.loadingArea}>
+          <div style={styles.spinner} />
+          <p style={styles.loadingText}>Loading photos and videos...</p>
+
+          <div style={styles.skeletonGrid}>
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} style={styles.skeleton} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!loading && media.length === 0 && (
+        <section style={styles.empty}>
+          <p>No gallery media found yet.</p>
+        </section>
+      )}
+
+      {!loading && media.length > 0 && (
+        <section style={styles.gallery}>
+          {media.map((item, index) => (
+            <button
+              key={item.fileId}
+              onClick={() => setActive(index)}
+              style={{
+                ...styles.card,
+                ...(index % 7 === 0 ? styles.tallCard : {}),
+                ...(index % 5 === 0 ? styles.wideCard : {}),
+              }}
+            >
+              {item.type === "image" ? (
+                <img
+                  src={item.thumbnailUrl}
+                  alt={item.fileName}
+                  style={styles.media}
+                  loading="lazy"
+                  decoding="async"
+                />
+              ) : (
+                <div style={styles.videoThumb}>
+                  <img
+                    src={item.thumbnailUrl}
+                    alt={item.fileName}
+                    style={styles.media}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span style={styles.playBadge}>▶</span>
+                </div>
+              )}
+
+              <div style={styles.hoverOverlay}>
+                <span>View</span>
+              </div>
+            </button>
+          ))}
+        </section>
+      )}
 
       {active !== null && media[active] && (
         <div
@@ -96,9 +165,18 @@ export default function EventGalleryPage() {
 
           <div style={styles.lightboxContent}>
             {media[active].type === "image" ? (
-              <img src={media[active].thumbnailUrl} alt={media[active].fileName} style={styles.fullImage} />
+              <img
+                src={media[active].thumbnailUrl}
+                alt={media[active].fileName}
+                style={styles.fullImage}
+              />
             ) : (
-              <iframe src={media[active].embedUrl} style={styles.fullVideo} allow="autoplay" allowFullScreen />
+              <iframe
+                src={media[active].embedUrl}
+                style={styles.fullVideo}
+                allow="autoplay"
+                allowFullScreen
+              />
             )}
 
             <p style={styles.caption}>
@@ -114,49 +192,102 @@ export default function EventGalleryPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  loading: {
-    minHeight: "70vh",
-    display: "grid",
-    placeItems: "center",
-    color: "#64748b",
-    fontWeight: 800,
-  },
   page: {
-    background: "#f8f6f2",
     minHeight: "100vh",
-    padding: "46px 18px 80px",
+    background: "#f8f6f2",
+    paddingBottom: 80,
   },
-  header: {
-    maxWidth: 1180,
-    margin: "0 auto 28px",
+  hero: {
+    position: "relative",
+    minHeight: "min(62vh, 620px)",
+    overflow: "hidden",
+    background: "#061A2F",
+  },
+  cover: {
+    width: "100%",
+    height: "min(62vh, 620px)",
+    objectFit: "cover",
+    display: "block",
+  },
+  heroOverlay: {
+    position: "absolute",
+    inset: 0,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "flex-end",
+    padding: "clamp(24px, 6vw, 72px)",
+    background: "linear-gradient(to top, rgba(6,26,47,.88), rgba(6,26,47,.1))",
+    color: "#ffffff",
   },
   kicker: {
     margin: 0,
-    color: "#C9A24A",
+    color: "#F8D77A",
     fontWeight: 900,
     letterSpacing: "0.12em",
     textTransform: "uppercase",
     fontSize: 13,
   },
   title: {
-    margin: "8px 0",
-    color: "#061A2F",
-    fontSize: "clamp(2rem, 5vw, 4rem)",
+    margin: "10px 0",
+    fontSize: "clamp(2rem, 6vw, 4.8rem)",
     fontWeight: 950,
+    lineHeight: 1.05,
   },
   description: {
-    color: "#64748b",
+    maxWidth: 760,
+    margin: 0,
     lineHeight: 1.8,
+    color: "#E2E8F0",
   },
-  masonry: {
+  loadingArea: {
     maxWidth: 1180,
-    margin: "0 auto",
+    margin: "34px auto 0",
+    padding: "0 18px",
+    textAlign: "center",
+  },
+  spinner: {
+    width: 42,
+    height: 42,
+    margin: "0 auto 12px",
+    borderRadius: "50%",
+    border: "4px solid #e2e8f0",
+    borderTopColor: "#061A2F",
+    animation: "spin 1s linear infinite",
+  },
+  loadingText: {
+    color: "#64748b",
+    fontWeight: 900,
+  },
+  skeletonGrid: {
+    marginTop: 22,
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-    gridAutoRows: 190,
+    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+    gap: 12,
+  },
+  skeleton: {
+    height: 190,
+    borderRadius: 20,
+    background: "linear-gradient(90deg, #e2e8f0, #f8fafc, #e2e8f0)",
+  },
+  empty: {
+    maxWidth: 1180,
+    margin: "50px auto",
+    padding: 24,
+    color: "#64748b",
+    fontWeight: 900,
+    textAlign: "center",
+  },
+  gallery: {
+    maxWidth: 1180,
+    margin: "34px auto 0",
+    padding: "0 18px",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+    gridAutoRows: 180,
     gap: 12,
   },
   card: {
+    position: "relative",
     padding: 0,
     border: "none",
     overflow: "hidden",
@@ -179,12 +310,6 @@ const styles: Record<string, React.CSSProperties> = {
     height: "100%",
     background: "#0f172a",
   },
-  iframe: {
-    width: "100%",
-    height: "100%",
-    border: 0,
-    pointerEvents: "none",
-  },
   playBadge: {
     position: "absolute",
     inset: 0,
@@ -199,15 +324,25 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 900,
     fontSize: 22,
   },
+  hoverOverlay: {
+    position: "absolute",
+    inset: 0,
+    display: "grid",
+    placeItems: "center",
+    background: "rgba(6,26,47,.28)",
+    color: "#ffffff",
+    fontWeight: 950,
+    opacity: 0,
+  },
   lightbox: {
     position: "fixed",
     inset: 0,
-    background: "rgba(2,6,23,.92)",
+    background: "rgba(2,6,23,.94)",
     zIndex: 9999,
     display: "grid",
-    gridTemplateColumns: "70px minmax(0,1fr) 70px",
+    gridTemplateColumns: "64px minmax(0,1fr) 64px",
     alignItems: "center",
-    padding: 16,
+    padding: 12,
   },
   lightboxContent: {
     maxWidth: 1100,
@@ -251,14 +386,14 @@ const styles: Record<string, React.CSSProperties> = {
     border: "none",
     background: "transparent",
     color: "#ffffff",
-    fontSize: 64,
+    fontSize: 58,
     cursor: "pointer",
   },
   next: {
     border: "none",
     background: "transparent",
     color: "#ffffff",
-    fontSize: 64,
+    fontSize: 58,
     cursor: "pointer",
   },
 };
