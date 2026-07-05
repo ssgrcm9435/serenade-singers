@@ -213,9 +213,9 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#061A2F",
   },
   cover: {
-    width: "100%",
+    maxWidth: "96vw",
     height: "min(62vh, 620px)",
-    objectFit: "cover",
+    objectFit: "contain",
     display: "block",
   },
   heroOverlay: {
@@ -308,15 +308,15 @@ const styles: Record<string, React.CSSProperties> = {
   tallCard: { gridRow: "span 2" },
   wideCard: { gridColumn: "span 2" },
   media: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
+    maxWidth: "96vw",
+    maxHeight: "78vh",
+    objectFit: "contain",
     display: "block",
   },
   videoThumb: {
     position: "relative",
-    width: "100%",
-    height: "100%",
+    maxWidth: "96vw",
+    maxHeight: "78vh",
     background: "#0f172a",
   },
   playBadge: {
@@ -359,8 +359,8 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "hidden",
   },
   lightboxContent: {
-    width: "100%",
-    height: "100%",
+    maxWidth: "96vw",
+    maxHeight: "78vh",
     maxWidth: "none",
     margin: 0,
     display: "flex",
@@ -371,7 +371,7 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "hidden",
   },
   fullImage: {
-    width: "100%",
+    maxWidth: "96vw",
     height: "calc(100dvh - 96px)",
     maxWidth: "100%",
     maxHeight: "calc(100dvh - 90px)",
@@ -380,7 +380,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "block",
   },
   fullVideo: {
-    width: "100%",
+    maxWidth: "96vw",
     height: "calc(100dvh - 90px)",
     border: 0,
     borderRadius: 18,
