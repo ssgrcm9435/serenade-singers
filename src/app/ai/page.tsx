@@ -80,6 +80,10 @@ const emptyDraft: SignupDraft = {
   portfolio: "",
 };
 
+const LUMI_HISTORY_KEY = "serenade_lumi_chat_history_v1";
+const LUMI_DRAFT_KEY = "serenade_lumi_signup_draft_v1";
+const LUMI_STEP_KEY = "serenade_lumi_signup_step_v1";
+
 const suggestions = [
   "Member signup with Lumi",
   "Volunteer signup with Lumi",
@@ -117,9 +121,30 @@ export default function LumiPage() {
   const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    try {
+      const savedMessages = localStorage.getItem(LUMI_HISTORY_KEY);
+      const savedDraft = localStorage.getItem(LUMI_DRAFT_KEY);
+      const savedStep = localStorage.getItem(LUMI_STEP_KEY);
+
+      if (savedMessages) {
+        const parsedMessages = JSON.parse(savedMessages);
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          setMessages(parsedMessages);
+          if (savedDraft) setDraft(JSON.parse(savedDraft));
+          if (savedStep && savedStep !== "null") setSignupStep(savedStep as SignupStep);
+          setIsLumiTyping(false);
+          return;
+        }
+      }
+    } catch {
+      localStorage.removeItem(LUMI_HISTORY_KEY);
+      localStorage.removeItem(LUMI_DRAFT_KEY);
+      localStorage.removeItem(LUMI_STEP_KEY);
+    }
+
     const timer = window.setTimeout(() => {
       pushLumi(
-        "Hello, I'm Lumi.\n\nကျွန်မက Serenade Singers အတွက် အောက်ပါအရာတွေကို ကူညီပေးနိုင်ပါတယ်။\n\n• Member signup ကို step by step ဖြည့်ပေးနိုင်ပါတယ်\n• Volunteer application ဖြည့်ပေးနိုင်ပါတယ်\n• Gmail verification code ပို့ပြီး verify လုပ်ပေးနိုင်ပါတယ်\n• Profile photo upload လုပ်ခိုင်းပြီး registration ပြီးဆုံးအောင် ကူညီပေးနိုင်ပါတယ်\n• Events, meetings, choir information နဲ့ member guidance တွေ မေးလို့ရပါတယ်။\n\nစချင်ရင် “Member signup with Lumi” သို့မဟုတ် “Volunteer signup with Lumi” ကို နှိပ်ပါ။"
+        "Hello, I'm Lumi.\n\nI can help you with:\n\n• Create Member Account\n• Create Volunteer Account\n• Explore Serenade Singers\n\nHow can I help you today?"
       );
       setIsLumiTyping(false);
     }, 900);
@@ -128,7 +153,15 @@ export default function LumiPage() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, isLumiTyping]);
+
+    try {
+      localStorage.setItem(LUMI_HISTORY_KEY, JSON.stringify(messages.slice(-80)));
+      localStorage.setItem(LUMI_DRAFT_KEY, JSON.stringify(draft));
+      localStorage.setItem(LUMI_STEP_KEY, JSON.stringify(signupStep));
+    } catch {
+      // Ignore localStorage quota or privacy-mode errors.
+    }
+  }, [messages, draft, signupStep, isLumiTyping]);
 
   function pushUser(content: string, photoPreview?: string) {
     const id = Date.now();
@@ -393,6 +426,10 @@ Type Submit to save to Registration, or Cancel to stop.`;
           );
           setSignupStep(null);
           setDraft(emptyDraft);
+          localStorage.removeItem(LUMI_DRAFT_KEY);
+          localStorage.removeItem(LUMI_STEP_KEY);
+          localStorage.removeItem(LUMI_DRAFT_KEY);
+          localStorage.removeItem(LUMI_STEP_KEY);
         } else {
           pushLumi(result.message || "Submission failed. Please check your information and try again.");
         }
