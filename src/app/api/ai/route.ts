@@ -51,7 +51,32 @@ Examples:
 
 Member Registration
 
-👉 Click here to register:
+I can help you in two ways.
+
+✨ Option 1 — Register with Lumi (Recommended)
+
+I'll guide you step by step.
+• Gmail verification
+• Profile information
+• Profile photo upload
+• Complete your registration
+
+Simply reply:
+Register with Lumi
+
+━━━━━━━━━━━━━━━━━━━━
+
+🌐 Option 2 — Register Yourself
+
+If you prefer, you can complete the registration form yourself.
+
+👉 Member Registration
+https://serenade-singers.onrender.com/signup
+
+━━━━━━━━━━━━━━━━━━━━
+
+Which option would you like?
+
 https://serenade-singers.onrender.com/signup
 
 About Serenade Singers
