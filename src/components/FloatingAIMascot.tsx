@@ -67,20 +67,15 @@ export default function FloatingAIMascot() {
           left: auto !important;
           top: auto !important;
           z-index: 2147483647 !important;
-
           display: flex;
-          flex-direction: row;
           align-items: flex-end;
           justify-content: flex-end;
           gap: 14px;
-
           width: auto;
+          height: auto;
           max-width: calc(100vw - 32px);
           text-decoration: none;
           pointer-events: auto;
-
-          opacity: 1;
-          visibility: visible;
           animation: enterMascot 0.45s ease-out both, floatMascot 4s ease-in-out 1.7s infinite;
         }
 

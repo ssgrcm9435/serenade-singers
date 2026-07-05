@@ -1,3 +1,4 @@
+import FloatingAIMascot from "@/components/FloatingAIMascot";
 import Analytics from "@/components/Analytics";
 import type { Metadata } from "next";
 import "./globals.css";
@@ -25,7 +26,8 @@ export default function RootLayout({
         {children}
         <Footer />
         <CookieBanner />
-</body>
+        <FloatingAIMascot />
+      </body>
     </html>
   );
 }
