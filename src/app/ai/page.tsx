@@ -110,6 +110,41 @@ function fileToBase64(file: File) {
   });
 }
 
+
+function MessageContent({ text }: { text: string }) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        const isUrl = /^https?:\/\/[^\s]+$/.test(part);
+
+        if (isUrl) {
+          return (
+            <a
+              key={index}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "#2563EB",
+                fontWeight: 950,
+                textDecoration: "underline",
+                wordBreak: "break-word",
+              }}
+            >
+              {part}
+            </a>
+          );
+        }
+
+        return <span key={index}>{part}</span>;
+      })}
+    </>
+  );
+}
+
 export default function LumiPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -572,7 +607,7 @@ Type Submit to save to Registration, or Cancel to stop.`;
             {message.role === "lumi" && <div style={styles.avatar}>♪</div>}
             <div style={{ ...styles.bubble, ...(message.role === "user" ? styles.userBubble : styles.lumiBubble) }}>
               {message.photoPreview && <img src={message.photoPreview} alt="Uploaded preview" style={styles.photoPreview} />}
-              <div style={styles.messageText}>{message.content}</div>
+              <div style={styles.messageText}><MessageContent text={message.content} /></div>
               <div style={styles.metaRow}>
                 <span>{message.time}</span>
                 {message.role === "user" && <span style={styles.status}>{message.status === "seen" ? "Seen" : "Delivered"}</span>}
