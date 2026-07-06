@@ -365,20 +365,33 @@ Type Submit to save to Registration, or Cancel to stop.`;
   }
 
   async function sendWorkflowOtp(gmail: string, nextStep: LumiWorkflowStep) {
-    setBusyLabel("Sending Gmail verification code...");
+    setBusyLabel("Checking registered Gmail...");
     setIsLumiTyping(true);
 
     try {
+      const registered = await callSignup("checkMemberOrVolunteer", { gmail });
+
+      if (!registered?.success || !registered?.verified) {
+        pushLumi(
+          registered?.message ||
+            "ဒီ Gmail က Serenade Singers Member / Volunteer အဖြစ် registered မလုပ်ထားသေးပါ။ Registered Gmail နဲ့ပြန်စမ်းပေးပါ။"
+        );
+        return;
+      }
+
+      setBusyLabel("Sending Gmail verification code...");
+
       const result = await callSignup("sendOtp", { gmail });
+
       if (result.success) {
         setWorkflowDraft((prev) => ({ ...prev, gmail }));
         setWorkflowStep(nextStep);
-        pushLumi("Verification code ကို Gmail ထဲပို့ပြီးပါပြီ။ OTP code ကို ဒီမှာရေးပေးပါ။");
+        pushLumi("Verification code ကို registered Gmail ထဲပို့ပြီးပါပြီ။ OTP code ကို ဒီမှာရေးပေးပါ။");
       } else {
-        pushLumi(result.message || "OTP ပို့လို့မရပါ။ ပြန်စမ်းပါ။");
+        pushLumi(result.message || "OTP ပို့လို့မရပါ။ Registered Gmail နဲ့ပြန်စမ်းပါ။");
       }
     } catch {
-      pushLumi("OTP sending failed. Please try again.");
+      pushLumi("ဒီ Gmail ကို member / volunteer record ထဲမှာ မတွေ့ပါ။ Registered Gmail နဲ့ပြန်စမ်းပေးပါ။");
     } finally {
       setBusyLabel("");
       setIsLumiTyping(false);
