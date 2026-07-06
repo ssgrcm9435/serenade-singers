@@ -2597,3 +2597,44 @@ function submitSuggestion_(body) {
     status: "Pending Review"
   };
 }
+
+
+function isRegisteredGmailForLumi_(gmail) {
+  const checked = checkMemberOrVolunteer_(gmail);
+
+  if (!checked || !checked.verified) {
+    return {
+      success: false,
+      registered: false,
+      message: "This Gmail is not registered as a Serenade Singers Member or Volunteer.",
+    };
+  }
+
+  return {
+    success: true,
+    registered: true,
+    memberId: checked.memberId || "",
+    fullName: checked.fullName || "",
+    type: checked.type || "",
+    gmail: normalizeEmail_(gmail),
+  };
+}
+
+function sendOtpToRegisteredGmailOnly_(body) {
+  const gmail = normalizeEmail_(body.gmail || "");
+
+  if (!gmail) {
+    return {
+      success: false,
+      message: "Registered Gmail is required.",
+    };
+  }
+
+  const registered = isRegisteredGmailForLumi_(gmail);
+
+  if (!registered.registered) {
+    return registered;
+  }
+
+  return sendOtp_(body);
+}
