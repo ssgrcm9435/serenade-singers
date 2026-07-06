@@ -70,35 +70,19 @@ export const lumiWorkflowIntents = {
 };
 
 export const lumiWorkflowRules = `
-Lumi Workflow Rules:
+If the user wants to order an official shirt, T-shirt, uniform, အကျီ, or တီရှပ်, start the T-Shirt Order workflow.
+Ask for registered Gmail first, send OTP, verify OTP, then collect size, quantity, and remark.
+Submit using submitShirtOrder.
 
-1. If the user wants to order an official shirt, T-shirt, uniform, အကျီ, or တီရှပ်:
-   Start the T-Shirt Order workflow.
-   Ask for registered Gmail first.
-   Send OTP.
-   Verify OTP.
-   Ask for size, quantity, and remark.
-   Submit the order using submitShirtOrder.
+If the user wants to submit payment, receipt, screenshot, ငွေလွှဲ, or ငွေချေ, start the T-Shirt Payment workflow.
+Ask for registered Gmail first, send OTP, verify OTP, then collect order ID, payment method, amount, transaction reference, and screenshot URL.
+Submit using submitTshirtPayment.
 
-2. If the user wants to submit payment, receipt, screenshot, ငွေလွှဲ, or ငွေချေ:
-   Start the T-Shirt Payment workflow.
-   Ask for registered Gmail first.
-   Send OTP.
-   Verify OTP.
-   Ask for order ID, payment method, amount, transaction reference, and screenshot URL.
-   Submit payment using submitTshirtPayment.
+If the user wants to send feedback, suggestion, complaint, အကြံပြုစာ, or အကြံပေးချင်တယ်, start the Suggestion workflow.
+Ask for registered Gmail first, send OTP, verify OTP, then collect category and message.
+Submit using submitSuggestion.
 
-3. If the user wants to send feedback, suggestion, complaint, အကြံပြုစာ, or အကြံပေးချင်တယ်:
-   Start the Suggestion workflow.
-   Ask for registered Gmail first.
-   Send OTP.
-   Verify OTP.
-   Ask for category and message.
-   Submit using submitSuggestion.
-
-4. Reply in Myanmar if the user writes in Myanmar.
-   Reply in English if the user writes in English.
-   If the user mixes Myanmar and English, continue naturally in the same mixed style.
-
-5. Never submit order, payment, or suggestion without registered Gmail verification.
+Reply in Myanmar if the user writes in Myanmar.
+Reply in English if the user writes in English.
+Never submit order, payment, or suggestion without registered Gmail verification.
 `;
