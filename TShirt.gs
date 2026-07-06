@@ -54,6 +54,10 @@ function doPost(e) {
       return json_(submitTshirtPayment_(body));
     }
 
+    if (action === "submitSuggestion") {
+      return json_(submitSuggestion_(body));
+    }
+
     if (action === "getLearningVideos") {
       return json_(getLearningVideos_(body.audience));
     }
@@ -2523,4 +2527,73 @@ function formatEventTitle_(folderName) {
     .replace(/^EVT-[0-9]{4}-[0-9]{3}[_ -]*/i, "")
     .replace(/[_-]+/g, " ")
     .trim() || folderName;
+}
+
+/*******************************************************
+ * LUMI — SUGGESTION / FEEDBACK SUBMISSION
+ *******************************************************/
+
+function submitSuggestion_(body) {
+  const required = ["gmail", "message"];
+  const missing = required.filter(function(key) {
+    return !body[key];
+  });
+
+  if (missing.length) {
+    return {
+      success: false,
+      message: "Missing required fields: " + missing.join(", "),
+    };
+  }
+
+  const verified = checkMemberOrVolunteer_(body.gmail);
+
+  if (!verified.verified) {
+    return {
+      success: false,
+      message: "Registered Gmail verification failed.",
+    };
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  const sheet = getOrCreateSheet_(ss, "Suggestions");
+
+  setupHeaders_(sheet, [
+    "Created At",
+    "Suggestion ID",
+    "Member ID",
+    "Full Name",
+    "Gmail",
+    "Type",
+    "Category",
+    "Message",
+    "Status",
+    "Admin Remark"
+  ]);
+
+  const suggestionId = "SG-" + Utilities.formatDate(
+    new Date(),
+    Session.getScriptTimeZone(),
+    "yyyyMMdd-HHmmss"
+  );
+
+  sheet.appendRow([
+    new Date(),
+    suggestionId,
+    verified.memberId || "",
+    verified.fullName || "",
+    normalizeEmail_(body.gmail),
+    verified.type || "",
+    body.category || "General",
+    body.message,
+    "Pending Review",
+    ""
+  ]);
+
+  return {
+    success: true,
+    message: "Your suggestion has been submitted successfully.",
+    suggestionId: suggestionId,
+    status: "Pending Review"
+  };
 }

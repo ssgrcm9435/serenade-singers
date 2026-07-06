@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 
-const ALLOWED_ACTIONS = new Set(["sendOtp", "verifyOtp", "member", "volunteer"]);
+const ALLOWED_ACTIONS = new Set([
+  "sendOtp",
+  "verifyOtp",
+  "member",
+  "volunteer",
+  "checkMemberOrVolunteer",
+  "submitShirtOrder",
+  "submitTshirtPayment",
+  "submitSuggestion",
+]);
 
 export async function POST(request: Request) {
   try {
