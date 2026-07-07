@@ -1,3 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Adding real SVG world map style without react-simple-maps..."
+
+npm install d3-geo topojson-client
+npm install -D @types/d3-geo @types/topojson-client
+
+cat > src/app/classical-music-map/page.tsx <<'TSX'
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -347,3 +356,12 @@ export default function ClassicalMusicMapPage() {
     </main>
   );
 }
+TSX
+
+npm run build
+
+git add .
+git commit -m "Add real interactive classical music world map"
+git push origin main
+
+echo "Done. Real world map page added at /classical-music-map"
