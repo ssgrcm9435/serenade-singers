@@ -145,7 +145,7 @@ export default function FloatingAIMascot() {
         </div>
       )}
 
-      <style jsx>{`
+                  <style jsx>{`
         .hiddenMascot {
           opacity: 0 !important;
           pointer-events: none !important;
@@ -527,7 +527,7 @@ function MascotBody({ large, dancing }: { large: boolean; dancing: boolean }) {
       </div>
       <span className="musicNote">♪</span>
 
-      <style jsx>{`
+                  <style jsx>{`
         .mascotBody {
           position: relative;
           flex: 0 0 auto;
