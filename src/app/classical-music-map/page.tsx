@@ -197,6 +197,9 @@ export default function ClassicalMusicMapPage() {
     y: number;
   } | null>(null);
 
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+
   const width = 1000;
   const height = 560;
 
@@ -219,11 +222,46 @@ export default function ClassicalMusicMapPage() {
       const geo = feature(topology, topology.objects.countries) as unknown as {
         features: MapCountry[];
       };
+
       setCountries(geo.features);
     }
 
     loadMap();
   }, []);
+
+  function updateTooltip(
+    event: React.MouseEvent<SVGPathElement, MouseEvent>,
+    name: string,
+    info?: CountryInfo
+  ) {
+    const container = event.currentTarget.closest(".classical-map-frame");
+    const rect = container?.getBoundingClientRect();
+
+    if (!rect) {
+      setHovered({ name, info, x: event.clientX, y: event.clientY });
+      return;
+    }
+
+    setHovered({
+      name,
+      info,
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    });
+  }
+
+  function zoomIn() {
+    setZoom((value) => Math.min(value + 0.25, 3));
+  }
+
+  function zoomOut() {
+    setZoom((value) => Math.max(value - 0.25, 0.75));
+  }
+
+  function resetZoom() {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }
 
   return (
     <main className="min-h-screen bg-[#f8f5ee] px-5 py-10 text-[#061a2f]">
@@ -246,7 +284,35 @@ export default function ClassicalMusicMapPage() {
             classical music through a real interactive world map.
           </p>
 
-          <div className="relative mt-8 overflow-hidden rounded-[30px] border border-[#e8dfcc] bg-[#fbfaf6] p-3">
+          <div className="mt-8 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={zoomOut}
+              className="rounded-full border border-[#e8dfcc] bg-white px-5 py-2 text-sm font-black text-[#061a2f] shadow-sm"
+            >
+              − Zoom Out
+            </button>
+            <button
+              type="button"
+              onClick={resetZoom}
+              className="rounded-full border border-[#e8dfcc] bg-white px-5 py-2 text-sm font-black text-[#061a2f] shadow-sm"
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              onClick={zoomIn}
+              className="rounded-full bg-[#061a2f] px-5 py-2 text-sm font-black text-white shadow-sm"
+            >
+              + Zoom In
+            </button>
+
+            <span className="rounded-full bg-[#f4ead3] px-5 py-2 text-sm font-black text-[#061a2f]">
+              Zoom: {Math.round(zoom * 100)}%
+            </span>
+          </div>
+
+          <div className="classical-map-frame relative mt-5 overflow-hidden rounded-[30px] border border-[#e8dfcc] bg-[#fbfaf6] p-3">
             <svg
               viewBox={`0 0 ${width} ${height}`}
               className="h-auto w-full"
@@ -255,49 +321,40 @@ export default function ClassicalMusicMapPage() {
             >
               <rect width={width} height={height} fill="#fbfaf6" />
 
-              {countries.map((country, index) => {
-                const name = country.properties.name || "Unknown";
-                const info = scores[name];
-                const path = pathGenerator(country as never);
+              <g
+                transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}
+                style={{ transformOrigin: "center" }}
+              >
+                {countries.map((country, index) => {
+                  const name = country.properties.name || "Unknown";
+                  const info = scores[name];
+                  const path = pathGenerator(country as never);
 
-                if (!path) return null;
+                  if (!path) return null;
 
-                return (
-                  <path
-                    key={`${name}-${index}`}
-                    d={path}
-                    fill={getColor(info?.score)}
-                    stroke="#ffffff"
-                    strokeWidth={0.7}
-                    className="transition duration-200 hover:fill-[#061a2f]"
-                    onMouseEnter={(event) =>
-                      setHovered({
-                        name,
-                        info,
-                        x: event.clientX,
-                        y: event.clientY,
-                      })
-                    }
-                    onMouseMove={(event) =>
-                      setHovered({
-                        name,
-                        info,
-                        x: event.clientX,
-                        y: event.clientY,
-                      })
-                    }
-                    onMouseLeave={() => setHovered(null)}
-                  />
-                );
-              })}
+                  return (
+                    <path
+                      key={`${name}-${index}`}
+                      d={path}
+                      fill={getColor(info?.score)}
+                      stroke="#ffffff"
+                      strokeWidth={0.7 / zoom}
+                      className="transition duration-200 hover:fill-[#061a2f]"
+                      onMouseEnter={(event) => updateTooltip(event, name, info)}
+                      onMouseMove={(event) => updateTooltip(event, name, info)}
+                      onMouseLeave={() => setHovered(null)}
+                    />
+                  );
+                })}
+              </g>
             </svg>
 
             {hovered && (
               <div
-                className="pointer-events-none fixed z-50 max-w-xs rounded-2xl border border-[#e8dfcc] bg-white px-4 py-3 text-sm shadow-2xl"
+                className="pointer-events-none absolute z-50 max-w-xs rounded-2xl border border-[#e8dfcc] bg-white px-4 py-3 text-sm shadow-2xl"
                 style={{
-                  left: hovered.x + 14,
-                  top: hovered.y + 14,
+                  left: Math.min(hovered.x + 14, 760),
+                  top: Math.max(hovered.y + 14, 12),
                 }}
               >
                 <p className="font-black text-[#061a2f]">{hovered.name}</p>
