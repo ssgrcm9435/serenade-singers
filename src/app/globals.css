@@ -5619,3 +5619,8 @@ footer {
     margin-left: 0;
   }
 }
+
+
+.classical-map-hint{
+    display:none !important;
+}

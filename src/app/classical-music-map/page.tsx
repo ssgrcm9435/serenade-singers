@@ -170,7 +170,7 @@ export default function ClassicalMusicMapPage() {
             onMouseLeave={() => setHovered(null)}
           >
             <div className="classical-map-hint">
-              Hover countries for details
+              
             </div>
 
             <svg
