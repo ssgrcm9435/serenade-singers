@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { geoMercator, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
@@ -20,162 +20,32 @@ type MapCountry = {
 };
 
 const scores: Record<string, CountryInfo> = {
-  Italy: {
-    score: 100,
-    level: "Very High",
-    detail:
-      "Opera, sacred music, violin making, and major composers such as Vivaldi, Verdi, Puccini, and Monteverdi.",
-  },
-  Germany: {
-    score: 98,
-    level: "Very High",
-    detail:
-      "Major center of Bach, Beethoven, Brahms, Wagner, Schumann, Mendelssohn, and orchestral tradition.",
-  },
-  Austria: {
-    score: 96,
-    level: "Very High",
-    detail:
-      "Vienna classical tradition, Mozart, Haydn, Schubert, Mahler, and world-famous concert culture.",
-  },
-  France: {
-    score: 92,
-    level: "Very High",
-    detail:
-      "Opera, ballet, impressionism, conservatories, Debussy, Ravel, and major European concert tradition.",
-  },
-  Russia: {
-    score: 90,
-    level: "Very High",
-    detail:
-      "Strong orchestral, ballet, piano, and conservatory tradition with Tchaikovsky, Rachmaninoff, Stravinsky, and Prokofiev.",
-  },
-  "United Kingdom": {
-    score: 88,
-    level: "High",
-    detail:
-      "Strong choral, cathedral, orchestral, and festival traditions with Purcell, Elgar, Britten, and Vaughan Williams.",
-  },
-  Czechia: {
-    score: 84,
-    level: "High",
-    detail:
-      "Rich Central European tradition with Dvořák, Smetana, Janáček, opera, chamber music, and conservatories.",
-  },
-  Poland: {
-    score: 80,
-    level: "High",
-    detail:
-      "Known for Chopin, major piano tradition, competitions, and strong national classical music identity.",
-  },
-  Hungary: {
-    score: 78,
-    level: "High",
-    detail:
-      "Important contribution through Liszt, Bartók, Kodály, folk influence, and music education methods.",
-  },
-  Spain: {
-    score: 74,
-    level: "Medium High",
-    detail:
-      "Distinct national color in classical guitar, opera, zarzuela, and composers such as Albéniz, Granados, and Falla.",
-  },
-  Netherlands: {
-    score: 72,
-    level: "Medium High",
-    detail:
-      "Strong early music, orchestral, choir, and conservatory culture.",
-  },
-  Belgium: {
-    score: 70,
-    level: "Medium High",
-    detail:
-      "Important violin, opera, conservatory, and European classical performance tradition.",
-  },
-  "United States of America": {
-    score: 68,
-    level: "Medium High",
-    detail:
-      "Major orchestras, universities, opera companies, film music, and contemporary classical scene.",
-  },
-  Finland: {
-    score: 66,
-    level: "Medium",
-    detail:
-      "Strong Nordic orchestral, education, festival, and contemporary music tradition.",
-  },
-  Norway: {
-    score: 64,
-    level: "Medium",
-    detail:
-      "Known for Grieg, Nordic orchestral culture, music education, and festivals.",
-  },
-  Sweden: {
-    score: 64,
-    level: "Medium",
-    detail:
-      "Strong choir, orchestral, music education, and Nordic classical tradition.",
-  },
-  Denmark: {
-    score: 62,
-    level: "Medium",
-    detail:
-      "Important Nordic classical music tradition with orchestras, choirs, and conservatories.",
-  },
-  Switzerland: {
-    score: 62,
-    level: "Medium",
-    detail:
-      "Strong concert culture, festivals, conservatories, and European classical performance scene.",
-  },
-  Japan: {
-    score: 58,
-    level: "Medium",
-    detail:
-      "Strong classical music education, piano culture, orchestras, competitions, and audience base.",
-  },
-  China: {
-    score: 50,
-    level: "Developing Influence",
-    detail:
-      "Rapidly growing conservatories, piano education, orchestras, competitions, and classical music audiences.",
-  },
-  "South Korea": {
-    score: 48,
-    level: "Developing Influence",
-    detail:
-      "Strong classical training culture, international competitions, opera, piano, strings, and vocal performance.",
-  },
-  Canada: {
-    score: 46,
-    level: "Developing Influence",
-    detail:
-      "Strong orchestras, universities, festivals, and classical performance culture.",
-  },
-  Australia: {
-    score: 44,
-    level: "Developing Influence",
-    detail:
-      "Growing classical music ecosystem with orchestras, conservatories, festivals, and choirs.",
-  },
-  Brazil: {
-    score: 36,
-    level: "Emerging",
-    detail:
-      "Developing classical music scene with orchestras, conservatories, and national composers.",
-  },
-  Argentina: {
-    score: 34,
-    level: "Emerging",
-    detail:
-      "Important Latin American classical tradition with opera, orchestras, and music education.",
-  },
-  Myanmar: {
-    score: 18,
-    level: "Early Developing",
-    detail:
-      "Western classical music is still developing through private education, choirs, music schools, and cultural initiatives.",
-  },
+  Italy: { score: 100, level: "Very High", detail: "Opera, sacred music, violin making, Vivaldi, Verdi, Puccini, and Monteverdi." },
+  Germany: { score: 98, level: "Very High", detail: "Bach, Beethoven, Brahms, Wagner, Schumann, Mendelssohn, and orchestral tradition." },
+  Austria: { score: 96, level: "Very High", detail: "Vienna classical tradition, Mozart, Haydn, Schubert, Mahler, and concert culture." },
+  France: { score: 92, level: "Very High", detail: "Opera, ballet, impressionism, conservatories, Debussy, Ravel, and European concert tradition." },
+  Russia: { score: 90, level: "Very High", detail: "Orchestral, ballet, piano, conservatory tradition, Tchaikovsky, Rachmaninoff, Stravinsky, and Prokofiev." },
+  "United Kingdom": { score: 88, level: "High", detail: "Choral, cathedral, orchestral, and festival traditions with Purcell, Elgar, Britten, and Vaughan Williams." },
+  Czechia: { score: 84, level: "High", detail: "Dvořák, Smetana, Janáček, opera, chamber music, and conservatories." },
+  Poland: { score: 80, level: "High", detail: "Chopin, piano tradition, competitions, and national classical music identity." },
+  Hungary: { score: 78, level: "High", detail: "Liszt, Bartók, Kodály, folk influence, and music education methods." },
+  Spain: { score: 74, level: "Medium High", detail: "Classical guitar, opera, zarzuela, Albéniz, Granados, and Falla." },
+  Netherlands: { score: 72, level: "Medium High", detail: "Early music, orchestral, choir, and conservatory culture." },
+  Belgium: { score: 70, level: "Medium High", detail: "Violin, opera, conservatory, and European classical performance tradition." },
+  "United States of America": { score: 68, level: "Medium High", detail: "Major orchestras, universities, opera companies, film music, and contemporary classical scene." },
+  Finland: { score: 66, level: "Medium", detail: "Nordic orchestral, education, festival, and contemporary music tradition." },
+  Norway: { score: 64, level: "Medium", detail: "Grieg, Nordic orchestral culture, music education, and festivals." },
+  Sweden: { score: 64, level: "Medium", detail: "Choir, orchestral, music education, and Nordic classical tradition." },
+  Denmark: { score: 62, level: "Medium", detail: "Nordic classical music tradition with orchestras, choirs, and conservatories." },
+  Switzerland: { score: 62, level: "Medium", detail: "Concert culture, festivals, conservatories, and European performance scene." },
+  Japan: { score: 58, level: "Medium", detail: "Classical music education, piano culture, orchestras, competitions, and audience base." },
+  China: { score: 50, level: "Developing Influence", detail: "Growing conservatories, piano education, orchestras, competitions, and audiences." },
+  "South Korea": { score: 48, level: "Developing Influence", detail: "Classical training culture, competitions, opera, piano, strings, and vocal performance." },
+  Canada: { score: 46, level: "Developing Influence", detail: "Orchestras, universities, festivals, and classical performance culture." },
+  Australia: { score: 44, level: "Developing Influence", detail: "Orchestras, conservatories, festivals, and choirs." },
+  Brazil: { score: 36, level: "Emerging", detail: "Developing classical music scene with orchestras, conservatories, and national composers." },
+  Argentina: { score: 34, level: "Emerging", detail: "Latin American classical tradition with opera, orchestras, and music education." },
+  Myanmar: { score: 18, level: "Early Developing", detail: "Developing through private education, choirs, music schools, and cultural initiatives." },
 };
 
 function getColor(score?: number) {
@@ -189,7 +59,9 @@ function getColor(score?: number) {
 }
 
 export default function ClassicalMusicMapPage() {
+  const frameRef = useRef<HTMLDivElement | null>(null);
   const [countries, setCountries] = useState<MapCountry[]>([]);
+  const [zoom, setZoom] = useState(1);
   const [hovered, setHovered] = useState<{
     name: string;
     info?: CountryInfo;
@@ -197,17 +69,11 @@ export default function ClassicalMusicMapPage() {
     y: number;
   } | null>(null);
 
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-
   const width = 1000;
   const height = 560;
 
   const projection = useMemo(
-    () =>
-      geoMercator()
-        .scale(155)
-        .translate([width / 2, height / 1.48]),
+    () => geoMercator().scale(155).translate([width / 2, height / 1.48]),
     []
   );
 
@@ -215,32 +81,30 @@ export default function ClassicalMusicMapPage() {
 
   useEffect(() => {
     async function loadMap() {
-      const res = await fetch(
-        "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"
-      );
+      const res = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json");
       const topology = await res.json();
       const geo = feature(topology, topology.objects.countries) as unknown as {
         features: MapCountry[];
       };
-
       setCountries(geo.features);
     }
 
     loadMap();
   }, []);
 
+  function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const direction = event.deltaY > 0 ? -0.12 : 0.12;
+    setZoom((value) => Math.max(0.75, Math.min(3, Number((value + direction).toFixed(2)))));
+  }
+
   function updateTooltip(
     event: React.MouseEvent<SVGPathElement, MouseEvent>,
     name: string,
     info?: CountryInfo
   ) {
-    const container = event.currentTarget.closest(".classical-map-frame");
-    const rect = container?.getBoundingClientRect();
-
-    if (!rect) {
-      setHovered({ name, info, x: event.clientX, y: event.clientY });
-      return;
-    }
+    const rect = frameRef.current?.getBoundingClientRect();
+    if (!rect) return;
 
     setHovered({
       name,
@@ -250,86 +114,49 @@ export default function ClassicalMusicMapPage() {
     });
   }
 
-  function zoomIn() {
-    setZoom((value) => Math.min(value + 0.25, 3));
-  }
-
-  function zoomOut() {
-    setZoom((value) => Math.max(value - 0.25, 0.75));
-  }
-
-  function resetZoom() {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  }
-
   return (
-    <main className="min-h-screen bg-[#f8f5ee] px-5 py-10 text-[#061a2f]">
-      <div className="mx-auto max-w-7xl">
-        <Link href="/" className="text-sm font-black text-[#c9a24a]">
+    <main className="classical-map-page">
+      <div className="classical-map-shell">
+        <Link href="/" className="classical-map-back">
           ← Back to Home
         </Link>
 
-        <section className="mt-8 rounded-[34px] border border-[#e8dfcc] bg-white/90 p-6 shadow-xl md:p-10">
-          <p className="text-xs font-black uppercase tracking-[0.35em] text-[#c9a24a]">
-            Serenade Singers Knowledge
-          </p>
+        <section className="classical-map-card">
+          <p className="classical-map-eyebrow">Serenade Singers Knowledge</p>
 
-          <h1 className="mt-4 text-4xl font-black tracking-tight md:text-6xl">
-            Western Classical Music Around the World
-          </h1>
+          <h1>Western Classical Music Around the World</h1>
 
-          <p className="mt-4 max-w-3xl text-base leading-8 text-[#405064]">
+          <p className="classical-map-intro">
             Explore the historical development and global influence of Western
-            classical music through a real interactive world map.
+            classical music through an interactive world map. Hover over a
+            country to view details. Use your mouse wheel to zoom.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={zoomOut}
-              className="rounded-full border border-[#e8dfcc] bg-white px-5 py-2 text-sm font-black text-[#061a2f] shadow-sm"
-            >
-              − Zoom Out
-            </button>
-            <button
-              type="button"
-              onClick={resetZoom}
-              className="rounded-full border border-[#e8dfcc] bg-white px-5 py-2 text-sm font-black text-[#061a2f] shadow-sm"
-            >
-              Reset
-            </button>
-            <button
-              type="button"
-              onClick={zoomIn}
-              className="rounded-full bg-[#061a2f] px-5 py-2 text-sm font-black text-white shadow-sm"
-            >
-              + Zoom In
-            </button>
+          <div
+            ref={frameRef}
+            className="classical-map-frame"
+            onWheel={handleWheel}
+            onMouseLeave={() => setHovered(null)}
+          >
+            <div className="classical-map-hint">
+              Mouse wheel zoom • Hover countries
+            </div>
 
-            <span className="rounded-full bg-[#f4ead3] px-5 py-2 text-sm font-black text-[#061a2f]">
-              Zoom: {Math.round(zoom * 100)}%
-            </span>
-          </div>
-
-          <div className="classical-map-frame relative mt-5 overflow-hidden rounded-[30px] border border-[#e8dfcc] bg-[#fbfaf6] p-3">
             <svg
               viewBox={`0 0 ${width} ${height}`}
-              className="h-auto w-full"
+              className="classical-map-svg"
               role="img"
               aria-label="Western classical music influence world map"
             >
               <rect width={width} height={height} fill="#fbfaf6" />
 
               <g
-                transform={`translate(${pan.x} ${pan.y}) scale(${zoom})`}
-                style={{ transformOrigin: "center" }}
+                transform={`translate(${width / 2} ${height / 2}) scale(${zoom}) translate(${-width / 2} ${-height / 2})`}
               >
                 {countries.map((country, index) => {
                   const name = country.properties.name || "Unknown";
                   const info = scores[name];
                   const path = pathGenerator(country as never);
-
                   if (!path) return null;
 
                   return (
@@ -339,10 +166,9 @@ export default function ClassicalMusicMapPage() {
                       fill={getColor(info?.score)}
                       stroke="#ffffff"
                       strokeWidth={0.7 / zoom}
-                      className="transition duration-200 hover:fill-[#061a2f]"
+                      className="classical-map-country"
                       onMouseEnter={(event) => updateTooltip(event, name, info)}
                       onMouseMove={(event) => updateTooltip(event, name, info)}
-                      onMouseLeave={() => setHovered(null)}
                     />
                   );
                 })}
@@ -351,51 +177,37 @@ export default function ClassicalMusicMapPage() {
 
             {hovered && (
               <div
-                className="pointer-events-none absolute z-50 max-w-xs rounded-2xl border border-[#e8dfcc] bg-white px-4 py-3 text-sm shadow-2xl"
+                className="classical-map-tooltip"
                 style={{
-                  left: Math.min(hovered.x + 14, 760),
-                  top: Math.max(hovered.y + 14, 12),
+                  left: `min(${hovered.x + 16}px, calc(100% - 340px))`,
+                  top: `${Math.max(hovered.y + 16, 16)}px`,
                 }}
               >
-                <p className="font-black text-[#061a2f]">{hovered.name}</p>
+                <strong>{hovered.name}</strong>
 
                 {hovered.info ? (
                   <>
-                    <p className="mt-1 font-bold text-[#c9a24a]">
+                    <span>
                       {hovered.info.level} • Score {hovered.info.score}
-                    </p>
-                    <p className="mt-2 leading-6 text-[#405064]">
-                      {hovered.info.detail}
-                    </p>
+                    </span>
+                    <p>{hovered.info.detail}</p>
                   </>
                 ) : (
-                  <p className="mt-2 leading-6 text-[#405064]">
-                    No detailed classical music data added yet.
-                  </p>
+                  <p>No detailed classical music data added yet.</p>
                 )}
               </div>
             )}
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3 text-xs font-bold text-[#405064]">
-            <span className="rounded-full bg-[#5b1a1a] px-3 py-2 text-white">
-              Very High
-            </span>
-            <span className="rounded-full bg-[#9a3412] px-3 py-2 text-white">
-              High
-            </span>
-            <span className="rounded-full bg-[#c9822b] px-3 py-2 text-white">
-              Medium High
-            </span>
-            <span className="rounded-full bg-[#d6b35f] px-3 py-2 text-[#061a2f]">
-              Developing
-            </span>
-            <span className="rounded-full bg-[#8fa8bd] px-3 py-2 text-white">
-              Early Developing
-            </span>
+          <div className="classical-map-legend">
+            <span className="very-high">Very High</span>
+            <span className="high">High</span>
+            <span className="medium-high">Medium High</span>
+            <span className="developing">Developing</span>
+            <span className="early">Early Developing</span>
           </div>
 
-          <p className="mt-6 rounded-3xl bg-[#061a2f] p-5 text-sm leading-7 text-white/80">
+          <p className="classical-map-note">
             Note: This is an educational cultural-analysis map, not an official
             global ranking.
           </p>
