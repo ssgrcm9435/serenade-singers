@@ -127,13 +127,50 @@ export default function ClassicalMusicMapPage() {
             country to view details. Use your mouse wheel to zoom.
           </p>
 
-          <div
+          
+          <div className="classical-map-toolbar">
+            <button
+              type="button"
+              onClick={() =>
+                setZoom((value) =>
+                  Math.max(0.75, Number((value - 0.25).toFixed(2)))
+                )
+              }
+              aria-label="Zoom out"
+            >
+              −
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setZoom(1)}
+              aria-label="Reset zoom"
+            >
+              Reset
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setZoom((value) =>
+                  Math.min(3, Number((value + 0.25).toFixed(2)))
+                )
+              }
+              aria-label="Zoom in"
+            >
+              +
+            </button>
+
+            <span>Zoom {Math.round(zoom * 100)}%</span>
+          </div>
+
+<div
             ref={frameRef}
             className="classical-map-frame"
             onMouseLeave={() => setHovered(null)}
           >
             <div className="classical-map-hint">
-              Mouse wheel zoom • Hover countries
+              Hover countries for details
             </div>
 
             <svg

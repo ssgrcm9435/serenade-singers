@@ -5570,3 +5570,52 @@ footer {
     font-weight:700;
     color:#061a2f;
 }
+
+/* Manual map zoom toolbar */
+.classical-map-toolbar {
+  margin-top: 26px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.classical-map-toolbar button {
+  min-width: 46px;
+  height: 44px;
+  border: 1px solid #e8dfcc;
+  border-radius: 999px;
+  background: #061a2f;
+  color: #ffffff;
+  padding: 0 18px;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(6, 26, 47, 0.14);
+}
+
+.classical-map-toolbar button:hover {
+  background: #c9a24a;
+  color: #061a2f;
+}
+
+.classical-map-toolbar span {
+  margin-left: auto;
+  border-radius: 999px;
+  background: #f4ead3;
+  color: #061a2f;
+  padding: 11px 18px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.classical-map-frame {
+  cursor: default !important;
+}
+
+@media (max-width: 760px) {
+  .classical-map-toolbar span {
+    margin-left: 0;
+  }
+}
