@@ -6,5 +6,3 @@ declare module "react" {
     global?: boolean;
   }
 }
-
-export {};
