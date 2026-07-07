@@ -1,3 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Making Serenade Singers reviews section compact..."
+
+cat > src/components/home/TestimonialsSection.tsx <<'TSX'
 "use client";
 
 const testimonials = [
@@ -71,3 +77,79 @@ export default function TestimonialsSection() {
     </section>
   );
 }
+TSX
+
+cat >> src/app/globals.css <<'CSS'
+
+/* Compact horizontal reviews section */
+.compact-reviews-section {
+  padding: 70px 28px;
+}
+
+.compact-reviews-header {
+  margin-bottom: 26px;
+}
+
+.compact-reviews-header h2 {
+  font-size: clamp(32px, 4vw, 48px);
+}
+
+.compact-reviews-scroll {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(290px, 360px);
+  gap: 18px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 4px 22px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.compact-review-card {
+  scroll-snap-align: start;
+  min-height: 250px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #e8dfcc;
+  border-radius: 26px;
+  padding: 26px;
+  box-shadow: 0 16px 42px rgba(6, 26, 47, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.compact-review-card p {
+  margin: 18px 0 22px;
+  color: #26384d;
+  font-size: 15.5px;
+  line-height: 1.75;
+}
+
+.compact-review-card strong {
+  color: #061a2f;
+  font-size: 14px;
+}
+
+@media (max-width: 760px) {
+  .compact-reviews-section {
+    padding: 60px 20px;
+  }
+
+  .compact-reviews-scroll {
+    grid-auto-columns: minmax(260px, 85vw);
+  }
+
+  .compact-review-card {
+    min-height: 270px;
+  }
+}
+CSS
+
+npm run build
+
+git add .
+git commit -m "Make Serenade reviews section compact"
+git push origin main
+
+echo "Done. Reviews section is now compact with horizontal scroll."
