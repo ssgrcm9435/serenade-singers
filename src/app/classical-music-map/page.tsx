@@ -92,12 +92,7 @@ export default function ClassicalMusicMapPage() {
     loadMap();
   }, []);
 
-  function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
-    event.preventDefault();
-    const direction = event.deltaY > 0 ? -0.12 : 0.12;
-    setZoom((value) => Math.max(0.75, Math.min(3, Number((value + direction).toFixed(2)))));
-  }
-
+  
   function updateTooltip(
     event: React.MouseEvent<SVGPathElement, MouseEvent>,
     name: string,
@@ -135,7 +130,6 @@ export default function ClassicalMusicMapPage() {
           <div
             ref={frameRef}
             className="classical-map-frame"
-            onWheel={handleWheel}
             onMouseLeave={() => setHovered(null)}
           >
             <div className="classical-map-hint">
