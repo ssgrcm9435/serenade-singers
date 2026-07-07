@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 const faqs = [
   {
     question: "What is Serenade Singers?",
@@ -72,6 +76,8 @@ const faqs = [
 ];
 
 export default function FaqSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
   return (
     <section className="faq-section" id="faq">
       <div className="faq-inner">
@@ -84,13 +90,31 @@ export default function FaqSection() {
           </p>
         </div>
 
-        <div className="faq-list">
-          {faqs.map((item) => (
-            <details className="faq-item" key={item.question}>
-              <summary>{item.question}</summary>
-              <p>{item.answer}</p>
-            </details>
-          ))}
+        <div className="faq-accordion">
+          {faqs.map((item, index) => {
+            const isOpen = openIndex === index;
+
+            return (
+              <article className={`faq-card ${isOpen ? "is-open" : ""}`} key={item.question}>
+                <button
+                  className="faq-trigger"
+                  type="button"
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-panel-${index}`}
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                >
+                  <span>{item.question}</span>
+                  <span className="faq-toggle" aria-hidden="true">
+                    {isOpen ? "−" : "+"}
+                  </span>
+                </button>
+
+                <div id={`faq-panel-${index}`} className="faq-panel" hidden={!isOpen}>
+                  <p>{item.answer}</p>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>

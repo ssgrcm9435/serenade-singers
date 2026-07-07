@@ -5137,3 +5137,87 @@ footer {
     padding: 70px 20px;
   }
 }
+
+/* Single-open accordion refinements for Testimonials + FAQ */
+.testimonials-accordion,
+.faq-accordion {
+  display: grid;
+  gap: 16px;
+}
+
+.testimonial-accordion-card,
+.faq-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #e8dfcc;
+  border-radius: 24px;
+  box-shadow: 0 16px 42px rgba(6, 26, 47, 0.07);
+  overflow: hidden;
+}
+
+.testimonial-accordion-card.is-open,
+.faq-card.is-open {
+  border-color: rgba(201, 162, 74, 0.65);
+  box-shadow: 0 22px 56px rgba(6, 26, 47, 0.11);
+}
+
+.testimonial-accordion-trigger,
+.faq-trigger {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 22px 26px;
+  color: #061a2f;
+  font: inherit;
+  font-weight: 900;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.testimonial-accordion-trigger > span:first-child {
+  display: grid;
+  gap: 8px;
+}
+
+.testimonial-toggle,
+.faq-toggle {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(201, 162, 74, 0.14);
+  color: #c9a24a;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.testimonial-accordion-panel,
+.faq-panel {
+  padding: 0 26px 24px;
+}
+
+.testimonial-accordion-panel p,
+.faq-panel p {
+  margin: 0;
+  color: #405064;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+@media (max-width: 760px) {
+  .testimonial-accordion-trigger,
+  .faq-trigger {
+    padding: 20px;
+  }
+
+  .testimonial-accordion-panel,
+  .faq-panel {
+    padding: 0 20px 22px;
+  }
+}
