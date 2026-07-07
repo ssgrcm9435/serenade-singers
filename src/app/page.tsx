@@ -81,6 +81,28 @@ export default function Home() {
           <RecentEventGallery />
           <TestimonialsSection />
           <FaqSection />
+
+          <section className="mx-auto max-w-6xl px-5 py-16">
+            <div className="rounded-[32px] border border-[#e8dfcc] bg-white/90 p-8 shadow-xl">
+              <p className="text-xs font-black uppercase tracking-[0.35em] text-[#c9a24a]">
+                Music Knowledge
+              </p>
+              <h2 className="mt-4 text-3xl font-black text-[#061a2f] md:text-5xl">
+                Western Classical Music Around the World
+              </h2>
+              <p className="mt-4 max-w-3xl text-base leading-8 text-[#405064]">
+                Discover countries with strong Western classical music traditions
+                and learn how classical music continues to grow globally.
+              </p>
+              <a
+                href="/classical-music-map"
+                className="mt-6 inline-flex rounded-full bg-[#061a2f] px-6 py-3 text-sm font-black text-white"
+              >
+                Explore Music Map →
+              </a>
+            </div>
+          </section>
+
 </main>
   );
 }
