@@ -124,7 +124,7 @@ export default function ClassicalMusicMapPage() {
           <p className="classical-map-intro">
             Explore the historical development and global influence of Western
             classical music through an interactive world map. Hover over a
-            country to view details. Use your mouse wheel to zoom.
+            country to view details.
           </p>
 
           
