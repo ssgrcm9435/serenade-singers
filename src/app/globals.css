@@ -5285,3 +5285,78 @@ footer {
     min-height: 270px;
   }
 }
+
+/* Home Music Knowledge Map Card */
+.home-music-map-section {
+  padding: 80px 28px;
+  background: linear-gradient(180deg, #fbfaf6 0%, #f8f5ee 100%);
+}
+
+.home-music-map-card {
+  max-width: 1120px;
+  margin: 0 auto;
+  border: 1px solid #e8dfcc;
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at top right, rgba(201, 162, 74, 0.16), transparent 36%),
+    rgba(255, 255, 255, 0.92);
+  padding: 46px;
+  box-shadow: 0 24px 70px rgba(6, 26, 47, 0.09);
+}
+
+.home-music-map-eyebrow {
+  margin: 0 0 14px;
+  color: #c9a24a;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+.home-music-map-card h2 {
+  margin: 0;
+  max-width: 780px;
+  color: #061a2f;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+}
+
+.home-music-map-card p:not(.home-music-map-eyebrow) {
+  margin: 18px 0 0;
+  max-width: 760px;
+  color: #405064;
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.home-music-map-button {
+  margin-top: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #061a2f;
+  color: #ffffff;
+  padding: 14px 24px;
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: 0 14px 34px rgba(6, 26, 47, 0.18);
+}
+
+.home-music-map-button:hover {
+  background: #c9a24a;
+  color: #061a2f;
+}
+
+@media (max-width: 760px) {
+  .home-music-map-section {
+    padding: 60px 20px;
+  }
+
+  .home-music-map-card {
+    padding: 28px;
+    border-radius: 28px;
+  }
+}
