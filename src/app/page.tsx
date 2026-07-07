@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { site } from "@/data/site";
 import RecentEventGallery from "@/components/RecentEventGallery";
+import FaqSection from "@/components/home/FaqSection";
 
 export default function Home() {
   return (
@@ -77,6 +78,7 @@ export default function Home() {
 
       </section>
           <RecentEventGallery />
+          <FaqSection />
 </main>
   );
 }

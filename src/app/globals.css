@@ -4947,3 +4947,110 @@ footer {
     width: 76px !important;
   }
 }
+
+/* Serenade Singers FAQ Section */
+.faq-section {
+  padding: 90px 28px;
+  background:
+    radial-gradient(circle at top left, rgba(201, 162, 74, 0.12), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #f8f5ee 100%);
+}
+
+.faq-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.faq-header {
+  max-width: 780px;
+  margin-bottom: 34px;
+}
+
+.faq-eyebrow {
+  margin: 0 0 14px;
+  color: #c9a24a;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+.faq-header h2 {
+  margin: 0;
+  color: #061a2f;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+}
+
+.faq-header p {
+  margin: 18px 0 0;
+  color: #405064;
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.faq-list {
+  display: grid;
+  gap: 16px;
+}
+
+.faq-item {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e8dfcc;
+  border-radius: 22px;
+  padding: 0;
+  box-shadow: 0 16px 42px rgba(6, 26, 47, 0.07);
+  overflow: hidden;
+}
+
+.faq-item summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 22px 26px;
+  color: #061a2f;
+  font-size: 17px;
+  font-weight: 900;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::after {
+  content: "+";
+  color: #c9a24a;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.faq-item[open] summary::after {
+  content: "–";
+}
+
+.faq-item p {
+  margin: 0;
+  padding: 0 26px 24px;
+  color: #405064;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+@media (max-width: 760px) {
+  .faq-section {
+    padding: 70px 20px;
+  }
+
+  .faq-item summary {
+    padding: 20px;
+    font-size: 16px;
+  }
+
+  .faq-item p {
+    padding: 0 20px 22px;
+  }
+}
