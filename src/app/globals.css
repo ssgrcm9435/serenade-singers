@@ -5624,3 +5624,25 @@ footer {
 .classical-map-hint{
     display:none !important;
 }
+
+/* Fix classical map reset button width */
+.classical-map-toolbar button {
+  min-width: 46px !important;
+  width: auto !important;
+  padding: 0 16px !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+}
+
+.classical-map-toolbar button[aria-label="Reset map zoom"] {
+  min-width: 46px !important;
+  font-size: 20px !important;
+}
+
+.classical-map-intro {
+  max-width: 760px;
+}
+
+.classical-map-hint {
+  display: none !important;
+}

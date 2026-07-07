@@ -144,7 +144,7 @@ export default function ClassicalMusicMapPage() {
             <button
               type="button"
               onClick={() => setZoom(1)}
-              aria-label="Reset zoom"
+              aria-label="Reset map zoom"
             >
               Reset
             </button>
