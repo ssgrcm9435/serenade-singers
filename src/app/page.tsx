@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { site } from "@/data/site";
 import RecentEventGallery from "@/components/RecentEventGallery";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
 import FaqSection from "@/components/home/FaqSection";
 
 export default function Home() {
@@ -78,6 +79,7 @@ export default function Home() {
 
       </section>
           <RecentEventGallery />
+          <TestimonialsSection />
           <FaqSection />
 </main>
   );
