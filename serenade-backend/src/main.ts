@@ -5,10 +5,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: [
-      'https://serenade-singers.onrender.com',
-      'http://localhost:3000',
-    ],
+    origin: (process.env.MEETING_WEB_ORIGIN || 'https://serenade-singers.onrender.com,http://localhost:3000').split(',').map(s => s.trim()),
     credentials: true,
   });
 
