@@ -339,6 +339,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('host-mute-all')
   handleHostMuteAll(@ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string }) {
+    if (!this.isAdmin(client, payload.meetingId)) return;
     this.server.to(`meeting:${payload.meetingId}`).emit('host-mute-all', {
       meetingId: payload.meetingId,
       createdAt: new Date().toISOString(),
@@ -348,6 +349,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('host-end-meeting')
   handleHostEndMeeting(@ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string }) {
+    if (!this.isAdmin(client, payload.meetingId)) return;
     this.server.to(`meeting:${payload.meetingId}`).emit('host-end-meeting', {
       meetingId: payload.meetingId,
       message: 'The host ended this meeting.',
@@ -360,7 +362,6 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     
     @MessageBody() payload: { meetingId: string; socketId: string },
   ) {
-    if (!this.isAdmin(client, payload.meetingId)) return;
     if (!this.isAdmin(client, payload.meetingId)) return;
     if (!this.isAdmin(client, payload.meetingId)) return;
     this.server.to(payload.socketId).emit('host-remove-participant', {
