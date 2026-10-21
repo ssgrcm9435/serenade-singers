@@ -8,6 +8,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { verifyMeetToken, MeetClaims } from '../meetings/meeting-tokens';
+import { MeetingsService } from '../meetings/meetings.service';
 
 type Participant = {
   socketId: string;
@@ -19,15 +21,33 @@ const meetingParticipants = new Map<string, Participant[]>();
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
-    credentials: true,
+    origin: process.env.MEETING_WEB_ORIGIN || 'https://serenade-singers.onrender.com',
+    credentials: false,
   },
 })
 export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
+  constructor(private readonly meetings: MeetingsService) {}
+
+  private claim(client: Socket) {
+    return (client.data.meetClaims || null) as MeetClaims | null;
+  }
+  private inMeeting(client: Socket, meetingId: string) {
+    return typeof meetingId === 'string' && meetingId.length < 80 && client.rooms.has('meeting:' + meetingId);
+  }
+  private isAdmin(client: Socket, meetingId: string) {
+    return this.claim(client)?.role === 'admin' && client.rooms.has('host:' + meetingId);
+  }
+  private canRelay(client: Socket, meetingId: string, targetSocketId: string) {
+    const target = this.server.sockets.sockets.get(targetSocketId);
+    return this.inMeeting(client, meetingId) && Boolean(target?.rooms.has('meeting:' + meetingId));
+  }
+
   handleConnection(client: Socket) {
+    try { client.data.meetClaims = verifyMeetToken(client.handshake.auth?.meetingToken); }
+    catch { client.disconnect(true); return; }
     client.emit('connected', {
       socketId: client.id,
       message: 'Connected to Serenade Singers meeting server',
@@ -37,13 +57,15 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   
 
   @SubscribeMessage('chat-announcement')
-  handleAnnouncement(
+  handleAnnouncement(@ConnectedSocket() client: Socket,
+    
     @MessageBody()
     payload: {
       meetingId: string;
       message: string;
     },
   ) {
+    if (!this.isAdmin(client, payload.meetingId)) return;
     this.server.to(`meeting:${payload.meetingId}`).emit(
       'chat-announcement',
       {
@@ -54,13 +76,15 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('chat-delete')
-  handleDeleteMessage(
+  handleDeleteMessage(@ConnectedSocket() client: Socket,
+    
     @MessageBody()
     payload: {
       meetingId: string;
       messageId: string;
     },
   ) {
+    if (!this.isAdmin(client, payload.meetingId)) return;
     this.server.to(`meeting:${payload.meetingId}`).emit(
       'chat-delete',
       payload,
@@ -85,10 +109,14 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('join-meeting')
-  handleJoinMeeting(
+  async handleJoinMeeting(
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string; userId?: string; fullName?: string },
   ) {
+    const claims = this.claim(client);
+    if (!claims || claims.role !== 'admitted' || claims.meetingId !== payload.meetingId || !claims.participantId) return;
+    if (!(await this.meetings.canEnter(payload.meetingId, claims.participantId))) return;
+    if (this.inMeeting(client, payload.meetingId)) return;
     const room = `meeting:${payload.meetingId}`;
     const currentParticipants = meetingParticipants.get(payload.meetingId) || [];
 
@@ -124,6 +152,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string },
   ) {
+    if (!this.inMeeting(client, payload.meetingId)) return;
     const room = `meeting:${payload.meetingId}`;
     client.leave(room);
 
@@ -146,6 +175,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string; offer: unknown; targetSocketId: string },
   ) {
+    if (!this.canRelay(client, payload.meetingId, payload.targetSocketId)) return;
     client.to(payload.targetSocketId).emit('webrtc-offer', {
       fromSocketId: client.id,
       offer: payload.offer,
@@ -158,6 +188,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string; answer: unknown; targetSocketId: string },
   ) {
+    if (!this.canRelay(client, payload.meetingId, payload.targetSocketId)) return;
     client.to(payload.targetSocketId).emit('webrtc-answer', {
       fromSocketId: client.id,
       answer: payload.answer,
@@ -170,6 +201,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string; candidate: unknown; targetSocketId: string },
   ) {
+    if (!this.canRelay(client, payload.meetingId, payload.targetSocketId)) return;
     client.to(payload.targetSocketId).emit('ice-candidate', {
       fromSocketId: client.id,
       candidate: payload.candidate,
@@ -182,6 +214,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string; audio?: boolean; video?: boolean },
   ) {
+    if (!this.inMeeting(client, payload.meetingId)) return;
     client.to(`meeting:${payload.meetingId}`).emit('participant-media-updated', {
       socketId: client.id,
       audio: payload.audio,
@@ -194,6 +227,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string },
   ) {
+    if (!this.inMeeting(client, payload.meetingId)) return;
     client.to(`meeting:${payload.meetingId}`).emit('screen-share-started', {
       socketId: client.id,
       meetingId: payload.meetingId,
@@ -205,6 +239,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string },
   ) {
+    if (!this.inMeeting(client, payload.meetingId)) return;
     client.to(`meeting:${payload.meetingId}`).emit('screen-share-stopped', {
       socketId: client.id,
       meetingId: payload.meetingId,
@@ -216,6 +251,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string; fullName?: string },
   ) {
+    if (!this.inMeeting(client, payload.meetingId)) return;
     this.server.to(`meeting:${payload.meetingId}`).emit('hand-raised', {
       socketId: client.id,
       fullName: payload.fullName || 'Participant',
@@ -224,9 +260,11 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('host-announcement')
-  handleHostAnnouncement(
+  handleHostAnnouncement(@ConnectedSocket() client: Socket,
+    
     @MessageBody() payload: { meetingId: string; message: string },
   ) {
+    if (!this.isAdmin(client, payload.meetingId)) return;
     this.server.to(`meeting:${payload.meetingId}`).emit('host-announcement', {
       meetingId: payload.meetingId,
       message: payload.message,
@@ -239,6 +277,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: { meetingId: string },
   ) {
+    if (this.claim(client)?.role !== 'admin') return;
     client.join(`host:${payload.meetingId}`);
     client.emit('host-room-joined', { meetingId: payload.meetingId });
   }
@@ -254,6 +293,7 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
       memberId?: string;
     },
   ) {
+    if (this.claim(client)?.role !== 'admitted' || this.claim(client)?.meetingId !== payload.meetingId) return;
     this.server.to(`host:${payload.meetingId}`).emit('waiting-room-request', {
       socketId: client.id,
       meetingId: payload.meetingId,
@@ -271,9 +311,11 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('waiting-room-approved')
-  handleWaitingRoomApproved(
+  handleWaitingRoomApproved(@ConnectedSocket() client: Socket,
+    
     @MessageBody() payload: { meetingId: string; socketId: string },
   ) {
+    if (!this.isAdmin(client, payload.meetingId)) return;
     this.server.to(payload.socketId).emit('waiting-room-status', {
       meetingId: payload.meetingId,
       status: 'APPROVED',
@@ -282,9 +324,11 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('waiting-room-rejected')
-  handleWaitingRoomRejected(
+  handleWaitingRoomRejected(@ConnectedSocket() client: Socket,
+    
     @MessageBody() payload: { meetingId: string; socketId: string },
   ) {
+    if (!this.isAdmin(client, payload.meetingId)) return;
     this.server.to(payload.socketId).emit('waiting-room-status', {
       meetingId: payload.meetingId,
       status: 'REJECTED',
@@ -293,7 +337,8 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('host-mute-all')
-  handleHostMuteAll(@MessageBody() payload: { meetingId: string }) {
+  handleHostMuteAll(@ConnectedSocket() client: Socket,
+    @MessageBody() payload: { meetingId: string }) {
     this.server.to(`meeting:${payload.meetingId}`).emit('host-mute-all', {
       meetingId: payload.meetingId,
       createdAt: new Date().toISOString(),
@@ -301,7 +346,8 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('host-end-meeting')
-  handleHostEndMeeting(@MessageBody() payload: { meetingId: string }) {
+  handleHostEndMeeting(@ConnectedSocket() client: Socket,
+    @MessageBody() payload: { meetingId: string }) {
     this.server.to(`meeting:${payload.meetingId}`).emit('host-end-meeting', {
       meetingId: payload.meetingId,
       message: 'The host ended this meeting.',
@@ -310,9 +356,13 @@ export class WebrtcGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('host-remove-participant')
-  handleHostRemoveParticipant(
+  handleHostRemoveParticipant(@ConnectedSocket() client: Socket,
+    
     @MessageBody() payload: { meetingId: string; socketId: string },
   ) {
+    if (!this.isAdmin(client, payload.meetingId)) return;
+    if (!this.isAdmin(client, payload.meetingId)) return;
+    if (!this.isAdmin(client, payload.meetingId)) return;
     this.server.to(payload.socketId).emit('host-remove-participant', {
       meetingId: payload.meetingId,
       message: 'You have been removed from the meeting.',
