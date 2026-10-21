@@ -45,4 +45,4 @@ Frontend:
 9. Confirm unauthorized endpoints return 401/403, and attendees cannot access other meetings' signaling.
 10. Only after these checks, merge PR and deploy production.
 
-**Limitations:** Uses peer-to-peer mesh, best suited to small rehearsals. Large choir calls require an SFU and TURN. This is not Zoom-scale infrastructure. The existing non-meeting chat/presence endpoints require a separate authorization review.
+**Limitations:** Uses peer-to-peer mesh, best suited to small rehearsals. Large choir calls require an SFU and TURN. This is not Zoom-scale infrastructure. Legacy unverified /users, /chat, /notifications and presence endpoints are disabled in this release. They require independently verified member identity and access control before re-enabling.
