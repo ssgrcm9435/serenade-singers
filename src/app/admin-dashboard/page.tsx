@@ -128,6 +128,7 @@ export default function AdminDashboardPage() {
         return;
       }
 
+      sessionStorage.setItem("ss_admin_meeting_token", loginData.meetingToken);
       setLoggedIn(true);
       await loadDashboardData();
     } catch {
@@ -168,6 +169,7 @@ export default function AdminDashboardPage() {
 
 
   function logoutAdmin() {
+    sessionStorage.removeItem("ss_admin_meeting_token");
     setLoggedIn(false);
     setUsername("");
     setPassword("");
@@ -724,7 +726,7 @@ function AdminMeetingsPanel() {
       return;
     }
 
-    const res = await fetch(`${BACKEND_URL}/meetings`);
+    const res = await fetch(`${BACKEND_URL}/meetings`, { headers: { Authorization: `Bearer ${sessionStorage.getItem("ss_admin_meeting_token") || ""}` } });
     const data = await res.json();
     setMeetings(Array.isArray(data) ? data : []);
   }
@@ -744,7 +746,7 @@ function AdminMeetingsPanel() {
 
     const res = await fetch(`${BACKEND_URL}/meetings`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionStorage.getItem("ss_admin_meeting_token") || ""}` },
       body: JSON.stringify({
         title,
         description,
@@ -760,7 +762,7 @@ function AdminMeetingsPanel() {
       return;
     }
 
-    setMessage(`Meeting created: ${data.meetingId} / Passcode: ${data.passcode || "-"}`);
+    setMessage(`Meeting created: ${data.meetingId} / Passcode: ${data.passcode || "-"} (copy it now — it is not shown again)`);
     setTitle("");
     setDescription("");
     setStartTime("");
@@ -796,7 +798,7 @@ function AdminMeetingsPanel() {
             <article key={m.id || m.meetingId} style={{ ...card, marginTop: 0 }}>
               <h3 style={{ margin: 0 }}>{m.title}</h3>
               <p style={muted}>Meeting ID: <strong>{m.meetingId}</strong></p>
-              <p style={muted}>Passcode: <strong>{m.passcode || "-"}</strong></p>
+              <p style={muted}>Passcode is shown only at creation.</p>
               <p style={muted}>{m.startTime ? new Date(m.startTime).toLocaleString() : ""} · {m.status}</p>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
                 <a style={{ ...button, textDecoration: "none" }} href={`/meeting/${m.meetingId}/host`} target="_blank">Host Panel</a>

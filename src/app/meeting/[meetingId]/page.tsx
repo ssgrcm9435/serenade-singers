@@ -27,6 +27,7 @@ export default function MeetingRoomPage() {
   const peerConnectionsRef = useRef<Record<string, RTCPeerConnection>>({});
 
   const [participantId, setParticipantId] = useState("");
+  const [admissionToken, setAdmissionToken] = useState("");
   const [status, setStatus] = useState("Checking access...");
   const [approved, setApproved] = useState(false);
   const [audioOn, setAudioOn] = useState(true);
@@ -166,7 +167,7 @@ export default function MeetingRoomPage() {
 
     const res = await fetch(`${BACKEND_URL}/meetings/waiting-room/request`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${access.accessToken || ""}` },
       body: JSON.stringify({
         meetingId,
         fullName: access.fullName || "Serenade Member",
@@ -175,17 +176,20 @@ export default function MeetingRoomPage() {
     });
 
     const data = await res.json();
+    if (!res.ok || !data.id || !data.accessToken) { setStatus(data.message || "Waiting room request failed."); return; }
     setParticipantId(data.id);
+    setAdmissionToken(data.accessToken);
+    sessionStorage.setItem("ss_meeting_admission_token", data.accessToken);
 
     pollRef.current = setInterval(async () => {
-      const listRes = await fetch(`${BACKEND_URL}/meetings/${meetingId}/waiting-room`, {
-        cache: "no-store",
+      const listRes = await fetch(`${BACKEND_URL}/meetings/${meetingId}/waiting-room/status`, {
+        cache: "no-store", headers: { Authorization: `Bearer ${data.accessToken}` },
       });
 
       const list = await listRes.json();
-      const me = Array.isArray(list) ? list.find((x: any) => x.id === data.id) : null;
+      const me = list;
 
-      if (!me) return;
+      if (!me || !listRes.ok) return;
 
       if (me.status === "APPROVED") {
         clearInterval(pollRef.current);
@@ -195,7 +199,7 @@ export default function MeetingRoomPage() {
         connectSocket();
       }
 
-      if (me.status === "REJECTED") {
+      if (me.status === "REJECTED" || me.status === "ENDED") {
         clearInterval(pollRef.current);
         setStatus("Rejected by host.");
       }
@@ -206,6 +210,7 @@ export default function MeetingRoomPage() {
     if (socketRef.current) return socketRef.current;
 
     const socket = io(BACKEND_URL, {
+      auth: { meetingToken: sessionStorage.getItem("ss_meeting_admission_token") },
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: 10,
@@ -319,7 +324,7 @@ export default function MeetingRoomPage() {
     try {
       await fetch(`${BACKEND_URL}/meetings/${meetingId}/join-log`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionStorage.getItem("ss_meeting_admission_token") || ""}` },
         body: JSON.stringify({}),
       });
     } catch {}
@@ -349,6 +354,7 @@ export default function MeetingRoomPage() {
     await logLeave();
 
     sessionStorage.removeItem("ss_meeting_access");
+    sessionStorage.removeItem("ss_meeting_admission_token");
     window.location.href = "/meeting";
   }
 

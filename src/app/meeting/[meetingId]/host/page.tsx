@@ -14,6 +14,7 @@ export default function HostMeetingPage() {
   const meetingId = String(params.meetingId || "");
 
   const [meeting, setMeeting] = useState<any>(null);
+  const adminHeaders = () => ({ Authorization: `Bearer ${sessionStorage.getItem("ss_admin_meeting_token") || ""}` });
   const [waitingList, setWaitingList] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
@@ -22,7 +23,7 @@ export default function HostMeetingPage() {
   async function loadMeeting() {
     try {
       const res = await fetch(`${BACKEND_URL}/meetings/${meetingId}`, {
-        cache: "no-store",
+        cache: "no-store", headers: adminHeaders(),
       });
       const data = await res.json();
       setMeeting(data);
@@ -68,7 +69,7 @@ export default function HostMeetingPage() {
     try {
       await fetch(`${BACKEND_URL}/meetings/waiting-room/approve`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...adminHeaders() },
         body: JSON.stringify({ participantId: p.id }),
       });
 
@@ -109,6 +110,7 @@ export default function HostMeetingPage() {
   }
 
   useEffect(() => {
+    if (!sessionStorage.getItem("ss_admin_meeting_token")) { setMessage("Admin login required. Open Admin Dashboard to access host controls."); return; }
     refreshAll();
 
     const timer = setInterval(() => {
@@ -134,7 +136,7 @@ export default function HostMeetingPage() {
 
         <div style={topActions}>
           <button onClick={() => copy(meetingId)} style={button}>Copy ID</button>
-          <button onClick={() => copy(meeting?.passcode || "")} style={button}>Copy Passcode</button>
+          
           <button onClick={() => copy(`${window.location.origin}/meeting/${meetingId}`)} style={button}>Copy Link</button>
           <Link href={`/meeting/${meetingId}`} target="_blank" style={linkButton}>Open Room</Link>
         </div>
@@ -208,7 +210,7 @@ export default function HostMeetingPage() {
           <section style={card}>
             <h2 style={sectionTitle}>Meeting Details</h2>
             <p><strong>ID:</strong> {meetingId}</p>
-            <p><strong>Passcode:</strong> {meeting?.passcode || "-"}</p>
+            <p><strong>Passcode:</strong> Shared only when created</p>
             <p><strong>Status:</strong> {meeting?.status || "-"}</p>
             <p><strong>Waiting Room:</strong> {meeting?.waitingRoom ? "Enabled" : "Disabled"}</p>
             <p><strong>Start:</strong> {meeting?.startTime ? new Date(meeting.startTime).toLocaleString() : "-"}</p>
