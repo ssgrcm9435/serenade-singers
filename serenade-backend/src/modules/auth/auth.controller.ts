@@ -1,12 +1,11 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { Controller, Post, UnauthorizedException } from '@nestjs/common';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private auth: AuthService) {}
-
+  // Email-only login previously let any caller impersonate a member/admin.
+  // Disabled pending integration with verified Serenade member identity.
   @Post('login')
-  login(@Body() body: { email: string }) {
-    return this.auth.login(body.email);
+  login() {
+    throw new UnauthorizedException('Legacy email-only login has been disabled.');
   }
 }

@@ -1,212 +1,140 @@
-import { generateMeetingId, generatePasscode } from './utils/meeting-code';
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
+import { generateMeetingId, generatePasscode } from './utils/meeting-code';
+import { compare, hash } from 'bcrypt';
+import { signMeetToken } from './meeting-tokens';
+
+const safeMeeting = {
+  id: true, meetingId: true, title: true, description: true,
+  startTime: true, status: true, waitingRoom: true, locked: true, createdAt: true,
+} as const;
 
 @Injectable()
 export class MeetingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  create(dto: CreateMeetingDto) {
-    return this.prisma.meeting.create({
+  async create(dto: CreateMeetingDto) {
+    if (!dto.title?.trim() || dto.title.length > 140) throw new BadRequestException('A meeting title is required (max 140 characters).');
+    const startTime = new Date(dto.startTime);
+    if (!Number.isFinite(startTime.getTime())) throw new BadRequestException('Invalid start time');
+    const passcode = generatePasscode();
+    const meeting = await this.prisma.meeting.create({
       data: {
-        meetingId: dto.meetingId || generateMeetingId(),
-        title: dto.title,
-        description: dto.description,
-        hostId: dto.hostId,
-        startTime: new Date(dto.startTime),
-        roomName: dto.roomName,
-      passcode: generatePasscode(),
+        meetingId: generateMeetingId(),
+        title: dto.title.trim(),
+        description: dto.description?.slice(0, 500) || null,
+        startTime,
+        roomName: 'serenade-' + Date.now() + '-' + generateMeetingId(),
+        passcode: await hash(passcode, 12),
+        waitingRoom: true,
       },
+      select: safeMeeting,
     });
+    return { ...meeting, passcode, joinUrl: '/meeting/' + meeting.meetingId };
   }
 
   findAll() {
-    return this.prisma.meeting.findMany({
-      orderBy: { startTime: 'asc' },
-      include: { participants: true },
-    });
+    return this.prisma.meeting.findMany({ select: safeMeeting, orderBy: { startTime: 'desc' }, take: 100 });
   }
 
-  async requestJoin(meetingId: string, fullName: string, memberId?: string, socketId?: string) {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { meetingId },
-    });
-
+  async findOne(meetingId: string) {
+    const meeting = await this.prisma.meeting.findUnique({ where: { meetingId }, select: safeMeeting });
     if (!meeting) throw new NotFoundException('Meeting not found');
-
-    return this.prisma.waitingRoomParticipant.create({
-      data: {
-        meetingId,
-        fullName,
-        memberId,
-        socketId,
-        status: meeting.waitingRoom ? 'PENDING' : 'APPROVED',
-      },
-    });
-  }
-
-  waitingRoomList(meetingId: string) {
-    return this.prisma.waitingRoomParticipant.findMany({
-      where: { meetingId },
-      orderBy: { createdAt: 'asc' },
-    });
-  }
-
-  approveParticipant(participantId: string) {
-    return this.prisma.waitingRoomParticipant.update({
-      where: { id: participantId },
-      data: { status: 'APPROVED' },
-    });
-  }
-
-  rejectParticipant(participantId: string) {
-    return this.prisma.waitingRoomParticipant.update({
-      where: { id: participantId },
-      data: { status: 'REJECTED' },
-    });
+    return meeting;
   }
 
   async validateJoin(meetingId: string, passcode: string) {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { meetingId },
-    });
-
-    if (!meeting) throw new NotFoundException('Meeting not found');
-
-    if (meeting.passcode && meeting.passcode !== passcode) {
-      throw new UnauthorizedException('Invalid meeting passcode');
-    }
-
+    const meeting = await this.prisma.meeting.findUnique({ where: { meetingId } });
+    if (!meeting) throw new UnauthorizedException('Invalid meeting ID or passcode');
+    if (meeting.status === 'ENDED' || meeting.status === 'CANCELLED') throw new ForbiddenException('Meeting is closed');
+    if (meeting.locked) throw new ForbiddenException('The host locked this meeting');
+    const saved = meeting.passcode || '';
+    const valid = saved.startsWith('$2') ? await compare(passcode || '', saved) : saved === passcode;
+    if (!valid || !saved) throw new UnauthorizedException('Invalid meeting ID or passcode');
     return {
       success: true,
       meetingId: meeting.meetingId,
-      roomName: meeting.roomName,
-      status: meeting.status,
+      title: meeting.title,
+      accessToken: signMeetToken('member', meeting.meetingId, undefined, 2 * 3600),
       waitingRoom: meeting.waitingRoom,
-      joinUrl: `/meeting/${meeting.meetingId}`,
     };
   }
 
-  async recordJoin(meetingId: string, userId?: string) {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { meetingId },
-    });
-
+  async requestJoin(meetingId: string, fullName: string, memberId?: string) {
+    const meeting = await this.prisma.meeting.findUnique({ where: { meetingId } });
     if (!meeting) throw new NotFoundException('Meeting not found');
-
-    return this.prisma.callLog.create({
-      data: {
-        meetingId: meeting.id,
-        userId: userId || null,
-        action: 'PARTICIPANT_JOINED',
-      },
+    if (meeting.locked || meeting.status === 'ENDED' || meeting.status === 'CANCELLED') throw new ForbiddenException('Meeting unavailable');
+    const name = (fullName || '').trim();
+    if (name.length < 2 || name.length > 80) throw new BadRequestException('Enter your name (2–80 characters).');
+    const participant = await this.prisma.waitingRoomParticipant.create({
+      data: { meetingId, fullName: name, memberId: memberId?.slice(0, 100), status: meeting.waitingRoom ? 'PENDING' : 'APPROVED' },
     });
+    return {
+      id: participant.id, status: participant.status,
+      accessToken: signMeetToken('admitted', meetingId, participant.id, 4 * 3600),
+    };
   }
 
-  async recordLeave(meetingId: string, userId?: string) {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { meetingId },
-    });
+  async ownStatus(meetingId: string, participantId: string) {
+    const participant = await this.prisma.waitingRoomParticipant.findUnique({ where: { id: participantId } });
+    if (!participant || participant.meetingId !== meetingId) throw new NotFoundException('Request not found');
+    const meeting = await this.prisma.meeting.findUnique({ where: { meetingId } });
+    if (!meeting || meeting.status === 'ENDED' || meeting.status === 'CANCELLED') return { status: 'ENDED' };
+    return { status: participant.status };
+  }
 
+  async canEnter(meetingId: string, participantId: string) {
+    const state = await this.ownStatus(meetingId, participantId);
+    return state.status === 'APPROVED';
+  }
+
+  waitingRoomList(meetingId: string) {
+    return this.prisma.waitingRoomParticipant.findMany({ where: { meetingId }, orderBy: { createdAt: 'asc' }, take: 200 });
+  }
+
+  approveParticipant(participantId: string) {
+    return this.prisma.waitingRoomParticipant.update({ where: { id: participantId }, data: { status: 'APPROVED' } });
+  }
+
+  rejectParticipant(participantId: string) {
+    return this.prisma.waitingRoomParticipant.update({ where: { id: participantId }, data: { status: 'REJECTED' } });
+  }
+
+  async recordEvent(meetingId: string, action: string) {
+    const meeting = await this.prisma.meeting.findUnique({ where: { meetingId }, select: { id: true } });
     if (!meeting) throw new NotFoundException('Meeting not found');
-
-    return this.prisma.callLog.create({
-      data: {
-        meetingId: meeting.id,
-        userId: userId || null,
-        action: 'PARTICIPANT_LEFT',
-      },
-    });
+    return this.prisma.callLog.create({ data: { meetingId: meeting.id, action } });
   }
 
   async meetingAnalytics(meetingId: string) {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { meetingId },
-    });
-
+    const meeting = await this.prisma.meeting.findUnique({ where: { meetingId }, select: { id: true } });
     if (!meeting) throw new NotFoundException('Meeting not found');
-
-    const logs = await this.prisma.callLog.findMany({
-      where: { meetingId: meeting.id },
-    });
-
+    const logs = await this.prisma.callLog.findMany({ where: { meetingId: meeting.id } });
     return {
       meetingId,
-      totalJoinEvents: logs.filter((l) => l.action === 'PARTICIPANT_JOINED').length,
-      totalLeaveEvents: logs.filter((l) => l.action === 'PARTICIPANT_LEFT').length,
-      startedCount: logs.filter((l) => l.action === 'MEETING_STARTED').length,
-      endedCount: logs.filter((l) => l.action === 'MEETING_ENDED').length,
+      totalJoinEvents: logs.filter(l => l.action === 'PARTICIPANT_JOINED').length,
+      totalLeaveEvents: logs.filter(l => l.action === 'PARTICIPANT_LEFT').length,
       totalLogs: logs.length,
     };
   }
 
   async meetingHistory(meetingId: string) {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { meetingId },
-    });
-
+    const meeting = await this.prisma.meeting.findUnique({ where: { meetingId }, select: { id: true } });
     if (!meeting) throw new NotFoundException('Meeting not found');
-
-    return this.prisma.callLog.findMany({
-      where: { meetingId: meeting.id },
-      orderBy: { createdAt: 'asc' },
-    });
+    return this.prisma.callLog.findMany({ where: { meetingId: meeting.id }, orderBy: { createdAt: 'desc' }, take: 50 });
   }
 
-  async findOne(meetingId: string) {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { meetingId },
-      include: { participants: true, callLogs: true },
-    });
-
-    if (!meeting) throw new NotFoundException('Meeting not found');
-    return meeting;
+  start(meetingId: string) {
+    return this.prisma.meeting.update({ where: { meetingId }, data: { status: 'LIVE' }, select: safeMeeting });
   }
-
-  async start(meetingId: string) {
-    const meeting = await this.prisma.meeting.update({
-      where: { meetingId },
-      data: { status: 'LIVE' },
-    });
-
-    await this.prisma.callLog.create({
-      data: {
-        meetingId: meeting.id,
-        action: 'MEETING_STARTED',
-      },
-    });
-
-    return meeting;
+  end(meetingId: string) {
+    return this.prisma.meeting.update({ where: { meetingId }, data: { status: 'ENDED' }, select: safeMeeting });
   }
-
   lockMeeting(meetingId: string) {
-    return this.prisma.meeting.update({
-      where: { meetingId },
-      data: { locked: true },
-    });
+    return this.prisma.meeting.update({ where: { meetingId }, data: { locked: true }, select: safeMeeting });
   }
-
   unlockMeeting(meetingId: string) {
-    return this.prisma.meeting.update({
-      where: { meetingId },
-      data: { locked: false },
-    });
-  }
-
-  async end(meetingId: string) {
-    const meeting = await this.prisma.meeting.update({
-      where: { meetingId },
-      data: { status: 'ENDED' },
-    });
-
-    await this.prisma.callLog.create({
-      data: {
-        meetingId: meeting.id,
-        action: 'MEETING_ENDED',
-      },
-    });
-
-    return meeting;
+    return this.prisma.meeting.update({ where: { meetingId }, data: { locked: false }, select: safeMeeting });
   }
 }
