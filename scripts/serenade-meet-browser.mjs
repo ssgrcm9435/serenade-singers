@@ -34,6 +34,12 @@ async function main(){
     const guest=await memberContext.newPage();
     host.on('pageerror',e=>console.error('HOST PAGE',e.message));
     guest.on('pageerror',e=>console.error('MEMBER PAGE',e.message));
+    for (const [label,page] of [['HOST',host],['GUEST',guest]]) {
+      page.on('websocket',ws=>{
+        ws.on('framesent',f=>{if(/webrtc-offer|webrtc-answer|ice-candidate/.test(f.payload||''))console.log(label,'SEND',String(f.payload).slice(0,110));});
+        ws.on('framereceived',f=>{if(/webrtc-offer|webrtc-answer|ice-candidate/.test(f.payload||''))console.log(label,'RECV',String(f.payload).slice(0,110));});
+      });
+    }
     await host.addInitScript(v=>sessionStorage.setItem('ss_admin_meeting_token',v),admin);
     await guest.addInitScript(data=>sessionStorage.setItem('ss_meeting_access',JSON.stringify(data)),{
       meetingId:m.meetingId,accessToken:member.accessToken,fullName:'Alto Member',
@@ -61,7 +67,19 @@ async function main(){
       guestVideos: await guest.locator('.ssm-video video').count(),
     });
     // Each page must have one local tile plus the other participant's remote tile.
-    await host.waitForFunction(()=>document.querySelectorAll('.ssm-video video').length>=2,{timeout:30000});
+    try {
+      await host.waitForFunction(()=>document.querySelectorAll('.ssm-video video').length>=2,null,{timeout:12000});
+    } catch (err) {
+      console.error('Host room state', {
+        hostStatus: await host.locator('.ssm-status').innerText(),
+        guestStatus: await guest.locator('.ssm-status').innerText(),
+        hostTiles: await host.locator('.ssm-video video').count(),
+        guestTiles: await guest.locator('.ssm-video video').count(),
+        hostRoster: await host.locator('.ssm-tabs').innerText(),
+        guestRoster: await guest.locator('.ssm-tabs').innerText(),
+      });
+      throw err;
+    }
     await guest.waitForFunction(()=>document.querySelectorAll('.ssm-video video').length>=2,{timeout:30000});
     await host.waitForFunction(()=>{
       const vids=[...document.querySelectorAll('.ssm-video video')];
