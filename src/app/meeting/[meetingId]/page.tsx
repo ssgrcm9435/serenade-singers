@@ -218,17 +218,19 @@ export default function SerenadeMeetingRoom() {
       client.on("disconnect", () => { setConnected(false); setStatus("Disconnected. Reconnecting…"); });
       client.on("connect_error", e => setStatus("Signaling connection failed: " + e.message));
       client.on("meeting-error", (p: {message: string}) => setStatus(p.message));
-      client.on("existing-participants", async (p: { participants: Attendee[] }) => {
+      client.on("existing-participants", () => {
         setConnected(true);
         setStatus("Connected to rehearsal room.");
-        for (const attendee of p.participants || []) {
-          try {
-            const pc = await getPeer(attendee.socketId);
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            client.emit("webrtc-offer", { meetingId, targetSocketId: attendee.socketId, offer });
-          } catch { setStatus("A participant could not be connected."); }
-        }
+      });
+      // Participants already in the room initiate the offer to the newcomer.
+      // This avoids glare and makes the host's outgoing media available first.
+      client.on("participant-joined", async (participant: Attendee) => {
+        try {
+          const pc = await getPeer(participant.socketId);
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          client.emit("webrtc-offer", { meetingId, targetSocketId: participant.socketId, offer });
+        } catch (err) { setStatus("Unable to connect new participant: " + (err as Error).message); }
       });
       client.on("participants-updated", (p: { participants: Attendee[] }) => setAttendees(p.participants || []));
       client.on("webrtc-offer", async (p: { fromSocketId: string; offer: RTCSessionDescriptionInit }) => {
