@@ -85,7 +85,7 @@ export default function SerenadeMeetingRoom() {
       let access: { meetingId?: string; accessToken?: string; fullName?: string } = {};
       try { access = JSON.parse(sessionStorage.getItem("ss_meeting_access") || "{}"); } catch {}
       if (access.meetingId !== meetingId || !access.accessToken) {
-        router.replace("/meeting");
+        router.replace("/meeting?meetingId=" + encodeURIComponent(meetingId));
         return;
       }
       if (!cancelled) setName(access.fullName || "Serenade Member");
@@ -343,7 +343,7 @@ export default function SerenadeMeetingRoom() {
     router.push(host ? "/admin-dashboard" : "/meeting");
   }
   async function copyInvite() {
-    const link = window.location.origin + "/meeting";
+    const link = window.location.origin + "/meeting?meetingId=" + encodeURIComponent(meetingId);
     await navigator.clipboard.writeText("Serenade Singers meeting: " + link + "\nMeeting ID: " + meetingId + "\nAsk the host for the passcode.");
     setCopyText("Invitation details copied.");
   }

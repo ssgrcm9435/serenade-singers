@@ -31,7 +31,7 @@ export class MeetingsService {
       },
       select: safeMeeting,
     });
-    return { ...meeting, passcode, joinUrl: '/meeting/' + meeting.meetingId };
+    return { ...meeting, passcode, joinUrl: '/meeting?meetingId=' + meeting.meetingId };
   }
 
   findAll() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -11,6 +11,10 @@ const BACKEND_URL =
 
 export default function JoinMeetingPage() {
   const router = useRouter();
+  useEffect(() => {
+    const requestedId = new URL(window.location.href).searchParams.get("meetingId");
+    if (requestedId) setMeetingId(requestedId.toUpperCase());
+  }, []);
   const [meetingId, setMeetingId] = useState("");
   const [fullName, setFullName] = useState("");
   const [passcode, setPasscode] = useState("");

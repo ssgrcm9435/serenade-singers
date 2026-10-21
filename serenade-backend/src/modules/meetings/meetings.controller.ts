@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, Param, Patch, Post, Req, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { JoinMeetingDto } from './dto/join-meeting.dto';
 import { ApproveWaitingDto, RequestJoinDto } from './dto/waiting-room.dto';
@@ -7,6 +7,7 @@ import { MeetClaims, verifyMeetToken } from './meeting-tokens';
 
 @Controller('meetings')
 export class MeetingsController {
+  private static joinAttempts = new Map<string, { count: number; expires: number }>();
   constructor(private readonly meeting: MeetingsService) {}
 
   private claims(req: { headers: Record<string, string | undefined> }): MeetClaims {
@@ -35,8 +36,29 @@ export class MeetingsController {
   }
 
   @Post('join')
-  join(@Body() dto: JoinMeetingDto) {
-    return this.meeting.validateJoin(dto.meetingId.trim().toUpperCase(), dto.passcode);
+  async join(@Req() req: any, @Body() dto: JoinMeetingDto) {
+    const meetingId = (dto.meetingId || '').trim().toUpperCase();
+    const key = String(req.ip || req.socket?.remoteAddress || 'unknown') + ':' + meetingId;
+    const now = Date.now();
+    const current = MeetingsController.joinAttempts.get(key);
+    if (current && current.count >= 8 && current.expires > now) {
+      throw new HttpException('Too many attempts. Try again in 15 minutes.', 429);
+    }
+    try {
+      const result = await this.meeting.validateJoin(meetingId, dto.passcode);
+      MeetingsController.joinAttempts.delete(key);
+      return result;
+    } catch (error) {
+      const record = current?.expires && current.expires > now ? current : { count: 0, expires: now + 15 * 60 * 1000 };
+      record.count++;
+      MeetingsController.joinAttempts.set(key, record);
+      if (MeetingsController.joinAttempts.size > 3000) {
+        for (const [id, entry] of MeetingsController.joinAttempts) {
+          if (entry.expires <= now) MeetingsController.joinAttempts.delete(id);
+        }
+      }
+      throw error;
+    }
   }
 
   @Post('waiting-room/request')
