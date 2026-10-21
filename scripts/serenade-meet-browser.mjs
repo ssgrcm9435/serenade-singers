@@ -80,7 +80,19 @@ async function main(){
       });
       throw err;
     }
-    await guest.waitForFunction(()=>document.querySelectorAll('.ssm-video video').length>=2,{timeout:30000});
+    try {
+      await guest.waitForFunction(()=>document.querySelectorAll('.ssm-video video').length>=2,null,{timeout:12000});
+    } catch(err) {
+      console.error('Guest did not receive host media', {
+        hostStatus: await host.locator('.ssm-status').innerText(),
+        guestStatus: await guest.locator('.ssm-status').innerText(),
+        hostTiles: await host.locator('.ssm-video video').count(),
+        guestTiles: await guest.locator('.ssm-video video').count(),
+        hostRoster: await host.locator('.ssm-tabs').innerText(),
+        guestRoster: await guest.locator('.ssm-tabs').innerText(),
+      });
+      throw err;
+    }
     await host.waitForFunction(()=>{
       const vids=[...document.querySelectorAll('.ssm-video video')];
       return vids.some(v=>!v.muted && v.readyState>=2 && v.videoWidth>0);
