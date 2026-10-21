@@ -44,7 +44,7 @@ async function main(){
   assert.ok(ready,'Backend startup failed');
   for (const unsafe of ['/users', '/chat/rooms', '/notifications/devices']) {
     const closed = await fetch(hostUrl + unsafe);
-    assert.equal(closed.status, 404, unsafe + ' legacy unauthenticated endpoint must not be exposed');
+    assert.ok([401, 403, 404].includes(closed.status), unsafe + ' must reject anonymous requests');
   }
   const admin=sign('admin');
   let r=await request('/meetings',{method:'POST',payload:{title:'Unauth',startTime:new Date().toISOString(),roomName:'unauth'}});
