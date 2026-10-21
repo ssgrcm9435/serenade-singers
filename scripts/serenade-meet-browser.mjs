@@ -51,7 +51,15 @@ async function main(){
     assert.ok(waiting,'Guest never entered waiting room');
     await api('/meetings/waiting-room/approve','PATCH',admin,{participantId:waiting.id});
     await host.getByRole('button',{name:'Join the meeting'}).click();
+    await host.getByText('Connected to rehearsal room.').waitFor({timeout:15000});
     await guest.getByRole('button',{name:'Join the meeting'}).click({timeout:15000});
+    await guest.getByText('Connected to rehearsal room.').waitFor({timeout:15000});
+    console.log('Host and guest joined signaling namespace.', {
+      hostStatus: await host.locator('.ssm-status').innerText(),
+      guestStatus: await guest.locator('.ssm-status').innerText(),
+      hostVideos: await host.locator('.ssm-video video').count(),
+      guestVideos: await guest.locator('.ssm-video video').count(),
+    });
     // Each page must have one local tile plus the other participant's remote tile.
     await host.waitForFunction(()=>document.querySelectorAll('.ssm-video video').length>=2,{timeout:30000});
     await guest.waitForFunction(()=>document.querySelectorAll('.ssm-video video').length>=2,{timeout:30000});
