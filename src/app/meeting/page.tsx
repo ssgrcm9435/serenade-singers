@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -11,7 +11,12 @@ const BACKEND_URL =
 
 export default function JoinMeetingPage() {
   const router = useRouter();
+  useEffect(() => {
+    const requestedId = new URL(window.location.href).searchParams.get("meetingId");
+    if (requestedId) setMeetingId(requestedId.toUpperCase());
+  }, []);
   const [meetingId, setMeetingId] = useState("");
+  const [fullName, setFullName] = useState("");
   const [passcode, setPasscode] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -23,6 +28,8 @@ export default function JoinMeetingPage() {
       setMessage("Please enter Meeting ID.");
       return;
     }
+
+    if (fullName.trim().length < 2) { setMessage("Please enter your full name."); return; }
 
     if (!passcode.trim()) {
       setMessage("Please enter Passcode.");
@@ -54,7 +61,9 @@ export default function JoinMeetingPage() {
         "ss_meeting_access",
         JSON.stringify({
           meetingId: data.meetingId,
-          passcode,
+          passcode: undefined,
+          accessToken: data.accessToken,
+          fullName: fullName.trim(),
           approvedAt: new Date().toISOString(),
         })
       );
@@ -112,6 +121,8 @@ export default function JoinMeetingPage() {
           Enter the Meeting ID and Passcode provided by the host.
         </p>
 
+        <label style={label}>Your Name</label>
+        <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" style={input} />
         <label style={label}>Meeting ID</label>
         <input
           value={meetingId}

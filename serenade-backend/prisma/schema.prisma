@@ -73,6 +73,7 @@ model Meeting {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
+  chatMessages            MeetingChatMessage[]
   participants            MeetingParticipant[]
   callLogs                CallLog[]
   waitingRoomParticipants WaitingRoomParticipant[]
@@ -130,4 +131,16 @@ model WaitingRoomParticipant {
   meeting Meeting @relation(fields: [meetingId], references: [meetingId])
 
   @@index([meetingId])
+}
+
+model MeetingChatMessage {
+  id         String   @id @default(cuid())
+  meetingId  String
+  senderName String
+  content    String
+  createdAt  DateTime @default(now())
+
+  meeting Meeting @relation(fields: [meetingId], references: [meetingId], onDelete: Cascade)
+
+  @@index([meetingId, createdAt])
 }

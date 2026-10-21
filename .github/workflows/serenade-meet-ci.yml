@@ -1,0 +1,99 @@
+name: Serenade Meet validation
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: serenade-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma validate
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/serenade
+      - run: pnpm prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/serenade
+      - run: pnpm build
+      - run: pnpm test --runInBand
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: serenade
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d serenade"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/serenade?schema=public
+      MEETING_AUTH_SECRET: serenade-ci-temporary-secret-not-for-production-2026
+      JWT_SECRET: serenade-ci-jwt-secret-only-for-tests
+      MEETING_WEB_ORIGIN: http://localhost:3100
+      NEXT_PUBLIC_BACKEND_URL: http://127.0.0.1:3000
+      ADMIN_USERNAME: serenade-e2e-admin
+      ADMIN_PASSWORD: ci-test-admin-password-only
+      PORT: '3000'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: npm ci
+      - name: Install backend
+        run: cd serenade-backend && pnpm install --frozen-lockfile
+      - name: Generate client and migrate database
+        run: cd serenade-backend && pnpm prisma generate && pnpm prisma migrate deploy
+      - name: Build backend
+        run: cd serenade-backend && pnpm build
+      - name: Start backend
+        run: cd serenade-backend && (pnpm start:prod > /tmp/serenade-meet-ci.log 2>&1 &)
+      - name: Run REST, admission, Socket.IO, chat and moderation smoke test
+        run: node scripts/serenade-meet-smoke.mjs
+
+      - name: Install browser test dependencies
+        run: npm install --no-save playwright@1.55.0 && npx playwright install --with-deps chromium
+      - name: Build frontend for browser testing
+        run: npm run build
+      - name: Start frontend
+        run: (PORT=3100 npm start > /tmp/serenade-frontend-ci.log 2>&1 &)
+      - name: Two-browser camera, microphone, chat and host approval test
+        run: node scripts/serenade-meet-browser.mjs
+      - name: Show frontend logs on failure
+        if: failure()
+        run: cat /tmp/serenade-frontend-ci.log || true
+      - name: Show backend logs on failure
+        if: failure()
+        run: cat /tmp/serenade-meet-ci.log || true

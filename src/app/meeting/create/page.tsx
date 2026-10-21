@@ -25,6 +25,8 @@ export default function CreateMeetingPage() {
       return;
     }
 
+    const adminToken = sessionStorage.getItem("ss_admin_meeting_token");
+    if (!adminToken) { setMessage("Log in through the Admin Dashboard to create a meeting."); return; }
     setLoading(true);
 
     try {
@@ -36,7 +38,7 @@ export default function CreateMeetingPage() {
 
       const res = await fetch(`${BACKEND_URL}/meetings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` },
         body: JSON.stringify({
           title,
           description,

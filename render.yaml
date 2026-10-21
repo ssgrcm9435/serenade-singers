@@ -1,0 +1,38 @@
+# Serenade Singers Meeting API — staging Blueprint.
+# This Blueprint adds two Render resources (Postgres + API).
+# The existing public frontend service is NOT replaced by this file.
+# Free Postgres expires after 30 days; upgrade for durable production data.
+services:
+  - type: web
+    name: serenade-meet-api
+    runtime: node
+    repo: https://github.com/ssgrcm9435/serenade-singers
+    branch: main
+    rootDir: serenade-backend
+    region: oregon
+    plan: free
+    buildCommand: corepack enable && corepack pnpm install --frozen-lockfile && corepack pnpm prisma generate && corepack pnpm build
+    startCommand: corepack pnpm prisma migrate deploy && corepack pnpm start:prod
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: serenade-meet-db
+          property: connectionString
+      - key: MEETING_AUTH_SECRET
+        sync: false
+      - key: MEETING_WEB_ORIGIN
+        value: https://serenade-singers.onrender.com
+      - key: JWT_SECRET
+        generateValue: true
+
+databases:
+  - name: serenade-meet-db
+    databaseName: serenade_meet
+    user: serenade_meet
+    region: oregon
+    plan: free
+    postgresMajorVersion: "16"
+    ipAllowList: []

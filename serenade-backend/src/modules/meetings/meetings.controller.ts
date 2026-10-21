@@ -1,102 +1,147 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, Param, Patch, Post, Req, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { CreateMeetingDto } from './dto/create-meeting.dto';
 import { JoinMeetingDto } from './dto/join-meeting.dto';
 import { ApproveWaitingDto, RequestJoinDto } from './dto/waiting-room.dto';
 import { MeetingsService } from './meetings.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { MeetClaims, verifyMeetToken } from './meeting-tokens';
 
 @Controller('meetings')
 export class MeetingsController {
-  constructor(private readonly meetingsService: MeetingsService) {}
+  private static joinAttempts = new Map<string, { count: number; expires: number }>();
+  constructor(private readonly meeting: MeetingsService) {}
+
+  private claims(req: { headers: Record<string, string | undefined> }): MeetClaims {
+    const header = req.headers.authorization || '';
+    return verifyMeetToken(header.startsWith('Bearer ') ? header.slice(7) : undefined);
+  }
+  private admin(req: { headers: Record<string, string | undefined> }) {
+    if (this.claims(req).role !== 'admin') throw new ForbiddenException('Administrator access required');
+  }
+  private participant(req: { headers: Record<string, string | undefined> }, meetingId: string, role: MeetClaims['role']) {
+    const claims = this.claims(req);
+    if (claims.role !== role || claims.meetingId !== meetingId) throw new UnauthorizedException('Invalid meeting session');
+    return claims;
+  }
 
   @Post()
-  create(@Body() dto: CreateMeetingDto) {
-    return this.meetingsService.create(dto);
-  }
-
-  @Post('join')
-  join(@Body() dto: JoinMeetingDto) {
-    return this.meetingsService.validateJoin(dto.meetingId, dto.passcode);
-  }
-
-  @Post('waiting-room/request')
-  requestJoin(@Body() dto: RequestJoinDto) {
-    return this.meetingsService.requestJoin(
-      dto.meetingId,
-      dto.fullName,
-      dto.memberId,
-      dto.socketId,
-    );
-  }
-
-  @Get(':meetingId/waiting-room')
-  waitingRoomList(@Param('meetingId') meetingId: string) {
-    return this.meetingsService.waitingRoomList(meetingId);
-  }
-
-  @Patch('waiting-room/approve')
-  approveParticipant(@Body() dto: ApproveWaitingDto) {
-    return this.meetingsService.approveParticipant(dto.participantId);
-  }
-
-  @Patch('waiting-room/reject')
-  rejectParticipant(@Body() dto: ApproveWaitingDto) {
-    return this.meetingsService.rejectParticipant(dto.participantId);
+  create(@Req() req: any, @Body() dto: CreateMeetingDto) {
+    this.admin(req);
+    return this.meeting.create(dto);
   }
 
   @Get()
-  findAll() {
-    return this.meetingsService.findAll();
+  findAll(@Req() req: any) {
+    this.admin(req);
+    return this.meeting.findAll();
   }
 
-  @Post(':meetingId/join-log')
-  recordJoin(@Param('meetingId') meetingId: string, @Body() body: { userId?: string }) {
-    return this.meetingsService.recordJoin(meetingId, body.userId);
+  @Post('join')
+  async join(@Req() req: any, @Body() dto: JoinMeetingDto) {
+    const meetingId = (dto.meetingId || '').trim().toUpperCase();
+    const key = String(req.ip || req.socket?.remoteAddress || 'unknown') + ':' + meetingId;
+    const now = Date.now();
+    const current = MeetingsController.joinAttempts.get(key);
+    if (current && current.count >= 8 && current.expires > now) {
+      throw new HttpException('Too many attempts. Try again in 15 minutes.', 429);
+    }
+    try {
+      const result = await this.meeting.validateJoin(meetingId, dto.passcode);
+      MeetingsController.joinAttempts.delete(key);
+      return result;
+    } catch (error) {
+      const record = current?.expires && current.expires > now ? current : { count: 0, expires: now + 15 * 60 * 1000 };
+      record.count++;
+      MeetingsController.joinAttempts.set(key, record);
+      if (MeetingsController.joinAttempts.size > 3000) {
+        for (const [id, entry] of MeetingsController.joinAttempts) {
+          if (entry.expires <= now) MeetingsController.joinAttempts.delete(id);
+        }
+      }
+      throw error;
+    }
   }
 
-  @Post(':meetingId/leave-log')
-  recordLeave(@Param('meetingId') meetingId: string, @Body() body: { userId?: string }) {
-    return this.meetingsService.recordLeave(meetingId, body.userId);
+  @Post('waiting-room/request')
+  requestJoin(@Req() req: any, @Body() dto: RequestJoinDto) {
+    this.participant(req, dto.meetingId, 'member');
+    return this.meeting.requestJoin(dto.meetingId, dto.fullName, dto.memberId);
+  }
+
+  @Get(':meetingId/waiting-room/status')
+  waitingRoomStatus(@Req() req: any, @Param('meetingId') meetingId: string) {
+    const claims = this.participant(req, meetingId, 'admitted');
+    if (!claims.participantId) throw new UnauthorizedException('Missing participant');
+    return this.meeting.ownStatus(meetingId, claims.participantId);
+  }
+
+  @Get(':meetingId/waiting-room')
+  waitingRoomList(@Req() req: any, @Param('meetingId') meetingId: string) {
+    this.admin(req);
+    return this.meeting.waitingRoomList(meetingId);
+  }
+
+  @Patch('waiting-room/approve')
+  approveParticipant(@Req() req: any, @Body() dto: ApproveWaitingDto) {
+    this.admin(req);
+    return this.meeting.approveParticipant(dto.participantId);
+  }
+
+  @Patch('waiting-room/reject')
+  rejectParticipant(@Req() req: any, @Body() dto: ApproveWaitingDto) {
+    this.admin(req);
+    return this.meeting.rejectParticipant(dto.participantId);
   }
 
   @Get(':meetingId/history')
-  meetingHistory(@Param('meetingId') meetingId: string) {
-    return this.meetingsService.meetingHistory(meetingId);
+  history(@Req() req: any, @Param('meetingId') meetingId: string) {
+    this.admin(req);
+    return this.meeting.meetingHistory(meetingId);
   }
 
   @Get(':meetingId/analytics')
-  meetingAnalytics(@Param('meetingId') meetingId: string) {
-    return this.meetingsService.meetingAnalytics(meetingId);
+  analytics(@Req() req: any, @Param('meetingId') meetingId: string) {
+    this.admin(req);
+    return this.meeting.meetingAnalytics(meetingId);
   }
 
   @Get(':meetingId')
-  findOne(@Param('meetingId') meetingId: string) {
-    return this.meetingsService.findOne(meetingId);
+  findOne(@Req() req: any, @Param('meetingId') meetingId: string) {
+    this.admin(req);
+    return this.meeting.findOne(meetingId);
+  }
+
+  @Post(':meetingId/join-log')
+  recordJoin(@Req() req: any, @Param('meetingId') meetingId: string) {
+    const claims = this.claims(req);
+    if (claims.role !== 'admin' && (claims.role !== 'admitted' || claims.meetingId !== meetingId)) throw new ForbiddenException();
+    return this.meeting.recordEvent(meetingId, 'PARTICIPANT_JOINED');
+  }
+
+  @Post(':meetingId/leave-log')
+  recordLeave(@Req() req: any, @Param('meetingId') meetingId: string) {
+    const claims = this.claims(req);
+    if (claims.role !== 'admin' && (claims.role !== 'admitted' || claims.meetingId !== meetingId)) throw new ForbiddenException();
+    return this.meeting.recordEvent(meetingId, 'PARTICIPANT_LEFT');
   }
 
   @Patch(':meetingId/lock')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'MANAGEMENT')
-  lock(@Param('meetingId') meetingId: string) {
-    return this.meetingsService.lockMeeting(meetingId);
+  lock(@Req() req: any, @Param('meetingId') meetingId: string) {
+    this.admin(req);
+    return this.meeting.lockMeeting(meetingId);
   }
-
   @Patch(':meetingId/unlock')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'MANAGEMENT')
-  unlock(@Param('meetingId') meetingId: string) {
-    return this.meetingsService.unlockMeeting(meetingId);
+  unlock(@Req() req: any, @Param('meetingId') meetingId: string) {
+    this.admin(req);
+    return this.meeting.unlockMeeting(meetingId);
   }
-
   @Patch(':meetingId/start')
-  start(@Param('meetingId') meetingId: string) {
-    return this.meetingsService.start(meetingId);
+  start(@Req() req: any, @Param('meetingId') meetingId: string) {
+    this.admin(req);
+    return this.meeting.start(meetingId);
   }
-
   @Patch(':meetingId/end')
-  end(@Param('meetingId') meetingId: string) {
-    return this.meetingsService.end(meetingId);
+  end(@Req() req: any, @Param('meetingId') meetingId: string) {
+    this.admin(req);
+    return this.meeting.end(meetingId);
   }
 }
