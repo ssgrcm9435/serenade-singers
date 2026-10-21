@@ -127,6 +127,12 @@ export default function SerenadeMeetingRoom() {
   }, [meetingId, router]);
 
   useEffect(() => {
+    if (connected && localVideo.current) {
+      localVideo.current.srcObject = screen.current || camera.current;
+    }
+  }, [connected, sharing]);
+
+  useEffect(() => {
     if (!host || !approved) return;
     let cancelled = false;
     async function refresh() {
