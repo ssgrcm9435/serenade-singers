@@ -1,0 +1,40 @@
+name: Serenade Meet validation
+on:
+  pull_request:
+  push:
+    branches: [release/serenade-meet-20261021]
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: serenade-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma validate
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/serenade
+      - run: pnpm prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/serenade
+      - run: pnpm build
+      - run: pnpm test --runInBand
