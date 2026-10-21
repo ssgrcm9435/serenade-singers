@@ -235,10 +235,12 @@ export default function SerenadeMeetingRoom() {
         try {
           const pc = await getPeer(p.fromSocketId);
           await pc.setRemoteDescription(new RTCSessionDescription(p.offer));
-          await flushIce(p.fromSocketId);
+          // Signal the answer before processing queued ICE candidates. ICE gathering
+          // must never block the SDP answer needed by the offerer to create media tracks.
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           client.emit("webrtc-answer", { meetingId, targetSocketId: p.fromSocketId, answer });
+          void flushIce(p.fromSocketId);
         } catch { setStatus("Could not complete incoming call negotiation."); }
       });
       client.on("webrtc-answer", async (p: { fromSocketId: string; answer: RTCSessionDescriptionInit }) => {
