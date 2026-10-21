@@ -1,8 +1,6 @@
 name: Serenade Meet validation
 on:
   pull_request:
-  push:
-    branches: [release/serenade-meet-20261021]
 permissions:
   contents: read
 jobs:
@@ -59,7 +57,10 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/serenade?schema=public
       MEETING_AUTH_SECRET: serenade-ci-temporary-secret-not-for-production-2026
       JWT_SECRET: serenade-ci-jwt-secret-only-for-tests
-      MEETING_WEB_ORIGIN: http://localhost:3000
+      MEETING_WEB_ORIGIN: http://localhost:3100
+      NEXT_PUBLIC_BACKEND_URL: http://127.0.0.1:3000
+      ADMIN_USERNAME: serenade-e2e-admin
+      ADMIN_PASSWORD: ci-test-admin-password-only
       PORT: '3000'
     steps:
       - uses: actions/checkout@v4
@@ -81,6 +82,18 @@ jobs:
         run: cd serenade-backend && (pnpm start:prod > /tmp/serenade-meet-ci.log 2>&1 &)
       - name: Run REST, admission, Socket.IO, chat and moderation smoke test
         run: node scripts/serenade-meet-smoke.mjs
+
+      - name: Install browser test dependencies
+        run: npm install --no-save playwright@1.55.0 && npx playwright install --with-deps chromium
+      - name: Build frontend for browser testing
+        run: npm run build
+      - name: Start frontend
+        run: (PORT=3100 npm start > /tmp/serenade-frontend-ci.log 2>&1 &)
+      - name: Two-browser camera, microphone, chat and host approval test
+        run: node scripts/serenade-meet-browser.mjs
+      - name: Show frontend logs on failure
+        if: failure()
+        run: cat /tmp/serenade-frontend-ci.log || true
       - name: Show backend logs on failure
         if: failure()
         run: cat /tmp/serenade-meet-ci.log || true
