@@ -125,6 +125,20 @@ export class MeetingsService {
     return this.prisma.callLog.findMany({ where: { meetingId: meeting.id }, orderBy: { createdAt: 'desc' }, take: 50 });
   }
 
+  async chatHistory(meetingId: string) {
+    return (await this.prisma.meetingChatMessage.findMany({
+      where: { meetingId }, orderBy: { createdAt: 'desc' }, take: 100,
+      select: { id: true, senderName: true, content: true, createdAt: true },
+    })).reverse();
+  }
+
+  async saveChatMessage(meetingId: string, senderName: string, content: string) {
+    return this.prisma.meetingChatMessage.create({
+      data: { meetingId, senderName: senderName.slice(0, 80), content },
+      select: { id: true, senderName: true, content: true, createdAt: true },
+    });
+  }
+
   start(meetingId: string) {
     return this.prisma.meeting.update({ where: { meetingId }, data: { status: 'LIVE' }, select: safeMeeting });
   }
