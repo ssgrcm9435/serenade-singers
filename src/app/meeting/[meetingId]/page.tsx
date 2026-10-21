@@ -152,13 +152,16 @@ export default function SerenadeMeetingRoom() {
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
     peers.current[id] = pc;
-    const tracks = camera.current?.getTracks() || [];
-    const audio = pc.addTransceiver("audio", { direction: "sendrecv" });
-    const video = pc.addTransceiver("video", { direction: "sendrecv" });
-    await Promise.all([
-      audio.sender.replaceTrack(tracks.find(t => t.kind === "audio") || null),
-      video.sender.replaceTrack(screen.current?.getVideoTracks()[0] || tracks.find(t => t.kind === "video") || null),
-    ]);
+    const mediaStream = camera.current;
+    const tracks = mediaStream?.getTracks() || [];
+    // addTrack preserves the stream's MSID in SDP. Calling replaceTrack on a
+    // trackless transceiver before the first offer/answer can leave the
+    // answering peer without an advertised sending stream.
+    for (const track of tracks) {
+      if (mediaStream) pc.addTrack(track, mediaStream);
+    }
+    if (!tracks.some(t => t.kind === "audio")) pc.addTransceiver("audio", { direction: "recvonly" });
+    if (!tracks.some(t => t.kind === "video")) pc.addTransceiver("video", { direction: "recvonly" });
     const inbound = new MediaStream();
     pc.ontrack = e => {
       if (!inbound.getTracks().some(t => t.id === e.track.id)) inbound.addTrack(e.track);
